@@ -37,8 +37,6 @@ export function AuthProvider({ children }) {
     try {
       const { user } = await authService.register(userData);
       return { success: true, user };
-    } catch (error) {
-      throw error;
     } finally {
       setLoading(false);
     }
@@ -54,8 +52,6 @@ export function AuthProvider({ children }) {
       const { user } = await authService.login(credentials);
       setUser(user);
       return { success: true };
-    } catch (error) {
-      throw error;
     } finally {
       setLoading(false);
     }
