@@ -1,5 +1,6 @@
-import { safeExecute } from '../../db/config.js';
-import { getEmbedding } from '../embeddingServices/embeddingService.js';
+import crypto from "crypto";
+import { safeExecute } from "../../db/config.js";
+import { getEmbedding } from "../embeddingServices/embeddingService.js";
 
 /**
  * List Questions
@@ -18,7 +19,7 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
   `;
   const params = [];
 
-  if (mine === 'true' || mine === true) {
+  if (mine === "true" || mine === true) {
     query += ` AND q.user_id = ?`;
     params.push(userId);
   }
@@ -33,7 +34,7 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
 
   const rows = await safeExecute(query, params);
 
-  return rows.map(row => ({
+  return rows.map((row) => ({
     id: row.id,
     questionHash: row.questionHash,
     title: row.title,
@@ -44,10 +45,76 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
     author: {
       id: row.authorId,
       firstName: row.authorFirstName,
-      lastName: row.authorLastName
-    }
+      lastName: row.authorLastName,
+    },
   }));
 };
+
+
+/**
+ * T-07: Create Question & Auto-Embed
+ *
+ * Creates a question, generates its AI vector embedding,
+ * and stores the embedding in the question_vectors table.
+ */
+export const createQuestionWithVectorService = async ({
+  title,
+  content,
+  userId,
+}) => {
+  // Generate a unique 16-character hexadecimal hash
+  const questionHash = crypto.randomBytes(8).toString("hex");
+
+  // Insert the question into the questions table
+  const result = await safeExecute(
+    `
+      INSERT INTO questions
+        (question_hash, user_id, title, content)
+      VALUES (?, ?, ?, ?)
+    `,
+    [questionHash, userId, title, content],
+  );
+
+  // Get the ID of the newly created question
+  const questionId = result.insertId;
+
+  try {
+    // Generate Gemini embedding for the question title
+    const embedding = await getEmbedding(title, "RETRIEVAL_DOCUMENT");
+
+    // Store the embedding with ready status
+    await safeExecute(
+      `
+        INSERT INTO question_vectors
+          (question_id, embedding, status)
+        VALUES (?, ?, ?)
+      `,
+      [questionId, JSON.stringify(embedding), "ready"],
+    );
+  } catch (error) {
+    //  If embedding fails, store failed status
+    console.error("Question embedding failed:", error);
+
+    await safeExecute(
+      `
+        INSERT INTO question_vectors
+          (question_id, embedding, status)
+        VALUES (?, ?, ?)
+      `,
+      [questionId, JSON.stringify([]), "failed"],
+    );
+  }
+
+  // Return the newly created question
+  return {
+    id: questionId,
+    questionHash,
+    title,
+    content,
+    userId,
+  };
+};
+
 
 /**
  * Helper for Task T-11
@@ -69,37 +136,48 @@ const cosineSimilarity = (vecA, vecB) => {
  * Semantic Search Questions
  * Embeds the user query and computes cosine similarity against all stored vectors.
  */
-export const searchQuestionsSemanticService = async ({ query, k = 5, threshold }) => {
+export const searchQuestionsSemanticService = async ({
+  query,
+  k = 5,
+  threshold,
+}) => {
   const envThreshold = parseFloat(process.env.RECOMMEND_THRESHOLD || 0.75);
-  const minThreshold = threshold !== undefined ? parseFloat(threshold) : envThreshold;
+  const minThreshold =
+    threshold !== undefined ? parseFloat(threshold) : envThreshold;
   const limit = parseInt(k, 10);
 
   // 1. Embed query (using Gemini text-embedding-004)
-  const queryEmbedding = await getEmbedding(query, 'RETRIEVAL_QUERY');
+  const queryEmbedding = await getEmbedding(query, "RETRIEVAL_QUERY");
 
   // 2. Fetch vectors
-  const vectorRows = await safeExecute(`SELECT question_id, embedding FROM question_vectors WHERE status = 'ready'`, []);
-  
+  const vectorRows = await safeExecute(
+    `SELECT question_id, embedding FROM question_vectors WHERE status = 'ready'`,
+    [],
+  );
+
   // 3. Compute similarity
-  const scored = vectorRows.map(row => {
-    const dbVector = typeof row.embedding === 'string' ? JSON.parse(row.embedding) : row.embedding;
+  const scored = vectorRows.map((row) => {
+    const dbVector =
+      typeof row.embedding === "string"
+        ? JSON.parse(row.embedding)
+        : row.embedding;
     return {
       questionId: row.question_id,
-      score: cosineSimilarity(queryEmbedding, dbVector)
+      score: cosineSimilarity(queryEmbedding, dbVector),
     };
   });
 
   // 4. Filter and sort
   const filtered = scored
-    .filter(item => item.score >= minThreshold)
+    .filter((item) => item.score >= minThreshold)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 
   if (filtered.length === 0) return [];
 
   // 5. Fetch hydrated details
-  const questionIds = filtered.map(f => f.questionId);
-  const inClause = questionIds.map(() => '?').join(',');
+  const questionIds = filtered.map((f) => f.questionId);
+  const inClause = questionIds.map(() => "?").join(",");
   const querySql = `
     SELECT 
       q.question_id AS id, q.question_hash AS questionHash, q.title, q.content, q.created_at AS createdAt, q.updated_at AS updatedAt,
@@ -112,8 +190,8 @@ export const searchQuestionsSemanticService = async ({ query, k = 5, threshold }
   const hydratedRows = await safeExecute(querySql, questionIds);
 
   // Map and attach scores in original sorted order
-  return filtered.map(f => {
-    const row = hydratedRows.find(r => r.id === f.questionId);
+  return filtered.map((f) => {
+    const row = hydratedRows.find((r) => r.id === f.questionId);
     return {
       id: row.id,
       questionHash: row.questionHash,
@@ -125,9 +203,9 @@ export const searchQuestionsSemanticService = async ({ query, k = 5, threshold }
       author: {
         id: row.authorId,
         firstName: row.authorFirstName,
-        lastName: row.authorLastName
+        lastName: row.authorLastName,
       },
-      score: f.score
+      score: f.score,
     };
   });
 };
