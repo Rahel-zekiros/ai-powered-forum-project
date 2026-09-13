@@ -1,124 +1,125 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { safeExecute } from '../../../../db/config.js';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { safeExecute } from "../../../../db/config.js";
 import {
   BadRequestError,
   UnauthenticatedError,
-} from '../../../utils/errors/index.js';
+  NotFoundError,
+} from "../../../utils/errors/index.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
 
 if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
+  throw new Error("JWT_SECRET environment variable is missing.");
 }
 
-const normalizeEmail = email => email.trim().toLowerCase();
+const cleanEmailInput = (rawEmail) => rawEmail.trim().toLowerCase();
 
-/**
- * Checks if a user exists by email.
- *
- * @param {string} email - The email to check.
- * @returns {Promise<boolean>} True if the user exists, false otherwise.
- */
-export const checkUserExists = async email => {
-  const normalizedEmail = normalizeEmail(email);
-  const sql = 'SELECT user_id FROM users WHERE email = ? LIMIT 1';
-  const rows = await safeExecute(sql, [normalizedEmail]);
-  return rows.length > 0;
+export const isEmailAlreadyRegistered = async (userEmail) => {
+  const formattedEmail = cleanEmailInput(userEmail);
+  const query = "SELECT user_id FROM users WHERE email = ? LIMIT 1";
+  const records = await safeExecute(query, [formattedEmail]);
+  return records.length > 0;
 };
 
-/**
- * Registers a new user in the database.
- *
- * @param {Object} userData - The user data.
- * @param {string} userData.firstName - The first name.
- * @param {string} userData.lastName - The last name.
- * @param {string} userData.email - The email address.
- * @param {string} userData.password - The plain text password.
- * @returns {Promise<Object>} The created user object (without password).
- */
-export const registerService = async ({
+// Renamed Service Method 1
+export const createNewUserAccount = async ({
   firstName,
   lastName,
   email,
   password,
 }) => {
-  const normalizedEmail = normalizeEmail(email);
-  const userExists = await checkUserExists(normalizedEmail);
-  if (userExists) {
-    throw new BadRequestError('User already exists with this email.');
+  const formattedEmail = cleanEmailInput(email);
+  const isDuplicate = await isEmailAlreadyRegistered(formattedEmail);
+
+  if (isDuplicate) {
+    throw new BadRequestError("An account with this email already exists.");
   }
 
-  // every time we call bcrypt.genSalt, it generates a new random salt string.
-  const salt = await bcrypt.genSalt(10); // generates a unique random salt each call
-  const hashedPassword = await bcrypt.hash(password, salt);
-  const sql =
-    'INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)';
-  let result;
+  const saltRounds = await bcrypt.genSalt(10);
+  const encryptedPassword = await bcrypt.hash(password, saltRounds);
+  const insertQuery =
+    "INSERT INTO users (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)";
+
+  let queryResult;
   try {
-    result = await safeExecute(sql, [
+    queryResult = await safeExecute(insertQuery, [
       firstName,
       lastName,
-      normalizedEmail,
-      hashedPassword,
+      formattedEmail,
+      encryptedPassword,
     ]);
-  } catch (error) {
-    if (error?.code === 'ER_DUP_ENTRY') {
-      throw new BadRequestError('User already exists with this email.');
+  } catch (err) {
+    if (err?.code === "ER_DUP_ENTRY") {
+      throw new BadRequestError("An account with this email already exists.");
     }
-    throw error;
+    throw err;
   }
 
   return {
-    id: result.insertId,
+    id: queryResult.insertId,
     firstName,
     lastName,
-    email: normalizedEmail,
+    email: formattedEmail,
   };
 };
 
-/**
- * Authenticates a user and generates a JWT token.
- *
- * @param {Object} credentials - The login credentials.
- * @param {string} credentials.email - The user's email.
- * @param {string} credentials.password - The user's plain text password.
- * @returns {Promise<Object>} An object containing the user and token.
- * @throws {UnauthenticatedError} If authentication fails.
- */
-export const loginService = async ({ email, password }) => {
-  const normalizedEmail = normalizeEmail(email);
-  const sql =
-    'SELECT user_id, first_name, last_name, email, password_hash FROM users WHERE email = ? LIMIT 1';
-  const rows = await safeExecute(sql, [normalizedEmail]);
+// Renamed Service Method 2
+export const authenticateUserAccount = async ({ email, password }) => {
+  const formattedEmail = cleanEmailInput(email);
+  const findUserQuery =
+    "SELECT user_id, first_name, last_name, email, password_hash FROM users WHERE email = ? LIMIT 1";
+  const matchingUsers = await safeExecute(findUserQuery, [formattedEmail]);
 
-  if (rows.length === 0) {
-    throw new UnauthenticatedError('Invalid email or password');
+  if (matchingUsers.length === 0) {
+    throw new UnauthenticatedError("Invalid credentials provided.");
   }
 
-  const user = rows[0];
-  const isMatch = await bcrypt.compare(password, user.password_hash);
+  const account = matchingUsers[0];
+  const isPasswordValid = await bcrypt.compare(password, account.password_hash);
 
-  if (!isMatch) {
-    throw new UnauthenticatedError('Invalid email or password');
+  if (!isPasswordValid) {
+    throw new UnauthenticatedError("Invalid credentials provided.");
   }
 
-  const payload = {
-    id: user.user_id,
-    firstName: user.first_name,
-    lastName: user.last_name,
+  const tokenPayload = {
+    id: account.user_id,
+    email: account.email,
+    firstName: account.first_name,
+    lastName: account.last_name,
   };
 
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  const accessToken = jwt.sign(tokenPayload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
 
   return {
     user: {
-      id: user.user_id,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      email: user.email,
+      id: account.user_id,
+      firstName: account.first_name,
+      lastName: account.last_name,
+      email: account.email,
     },
-    token,
+    accessToken,
+  };
+};
+
+// Renamed Service Method 3
+export const fetchUserProfile = async (userId) => {
+  const query =
+    "SELECT user_id, first_name, last_name, email FROM users WHERE user_id = ? LIMIT 1";
+  const users = await safeExecute(query, [userId]);
+
+  if (users.length === 0) {
+    throw new NotFoundError("User profile not found.");
+  }
+
+  const userRecord = users[0];
+  return {
+    id: userRecord.user_id,
+    firstName: userRecord.first_name,
+    lastName: userRecord.last_name,
+    email: userRecord.email,
   };
 };
