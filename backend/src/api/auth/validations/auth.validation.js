@@ -1,44 +1,53 @@
-import { body } from 'express-validator';
-import { validationErrorHandler } from '../../../middleware/validation-handler.js';
-
-export const registerValidation = [
-  body('firstName')
-    .notEmpty()
-    .withMessage('First name is required')
-    .isString()
-    .withMessage('First name must be a string')
-    .isLength({ min: 3 })
-    .withMessage('First name must be at least 3 characters long'),
-  body('lastName')
-    .notEmpty()
-    .withMessage('Last name is required')
-    .isString()
-    .withMessage('Last name must be a string')
-    .isLength({ min: 3 })
-    .withMessage('Last name must be at least 3 characters long'),
-  body('email')
-    .notEmpty()
-    .withMessage('Email is required')
-    .isEmail()
-    .withMessage('A valid email address is required')
-    .normalizeEmail(),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
-
-  validationErrorHandler,
+import { validationResult } from "express-validator";
+import { BadRequestError } from "../../../utils/errors/index.js";
+// Custom validation error handler middleware
+export const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const firstErrorMessage = errors.array()[0].msg;
+    throw new BadRequestError(firstErrorMessage);
+  }
+  next();
+};
+export const validateUserRegistration = [
+  // Express validator field chains
+  (req, res, next) => {
+    const { firstName, lastName, email, password } = req.body;
+    if (!firstName || firstName.trim().length < 3) {
+      throw new BadRequestError(
+        "First name is required and must be at least 3 characters.",
+      );
+    }
+    if (!lastName || lastName.trim().length < 3) {
+      throw new BadRequestError(
+        "Last name is required and must be at least 3 characters.",
+      );
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestError("Please provide a valid email address.");
+    }
+    if (!password || password.length < 6) {
+      throw new BadRequestError("Password must be at least 6 characters long.");
+    }
+    if (!/\d/.test(password)) {
+      throw new BadRequestError(
+        "Password must contain at least one numeric digit.",
+      );
+    }
+    next();
+  },
+  handleValidationErrors,
 ];
-
-export const loginValidation = [
-  body('email')
-    .notEmpty()
-    .withMessage('Email is required')
-    .isEmail()
-    .withMessage('A valid email address is required')
-    .normalizeEmail(),
-  body('password').notEmpty().withMessage('Password is required'),
-
-  validationErrorHandler,
+export const validateUserLogin = [
+  (req, res, next) => {
+    const { email, password } = req.body;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestError("Please enter a valid email address.");
+    }
+    if (!password) {
+      throw new BadRequestError("Password field cannot be empty.");
+    }
+    next();
+  },
+  handleValidationErrors,
 ];
