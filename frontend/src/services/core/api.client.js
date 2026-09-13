@@ -4,8 +4,8 @@ import axios from "axios";
  * Configured axios instance for API communication.
  */
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3777",
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000",
+  timeout: 10000, // in milli-second or 10 seconds timeout
   headers: {
     "Content-Type": "application/json",
   },
@@ -16,10 +16,13 @@ const apiClient = axios.create({
  */
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken");
+
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => {
@@ -28,26 +31,25 @@ apiClient.interceptors.request.use(
 );
 
 /**
- * Response interceptor to handle global 401 unauthorized errors.
+ * Response interceptor to handle global errors and auth session expirations.
  */
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // Skip global 401 redirect for auth endpoints so components can handle login/register errors
     const isAuthEndpoint =
       error.config?.url?.includes("/api/auth/login") ||
-      error.config?.url?.includes("/api/auth/register");
+      error.config?.url?.includes("/api/auth/register") ||
+      error.config?.url?.includes("/api/auth/me");
 
     if (error.response?.status === 401 && !isAuthEndpoint) {
-      // Clear authentication data
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("activeUser");
 
-      // Redirect to login page
       window.location.href = "/auth";
     }
+
     return Promise.reject(error);
   },
 );
