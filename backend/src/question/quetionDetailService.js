@@ -77,14 +77,14 @@ export const getSingleQuestionService = async ({ questionHash }) => {
     answers,
     answersMeta: { limit: 100, total: answers.length },
   };
-};/**
+}; /**
  * 2. Answer Post (postAnswerService)
  */
 export const postAnswerService = async ({ questionHash, content, userId }) => {
   // 1. check if exist the question
   const [questionRows] = await safeExecute(
     `SELECT question_id FROM questions WHERE question_hash = ?`,
-    [questionHash]
+    [questionHash],
   );
 
   if (!questionRows || questionRows.length === 0) {
@@ -98,7 +98,7 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
   // 2. post answer
   const [insertResult] = await safeExecute(
     `INSERT INTO answers (question_id, user_id, content) VALUES (?, ?, ?)`,
-    [questionId, userId, content]
+    [questionId, userId, content],
   );
 
   const newAnswerId = insertResult.insertId;
@@ -117,7 +117,7 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
      FROM answers a
      JOIN users u ON a.user_id = u.user_id
      WHERE a.answer_id = ?`,
-    [newAnswerId]
+    [newAnswerId],
   );
 
   const row = newAnswerRows[0];
@@ -132,6 +132,92 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
       id: row.author_id,
       firstName: row.first_name,
       lastName: row.last_name,
+    },
+  };
+};
+
+/**
+ * Service to retrieve similar questions based on cosine similarity (Task 13) mulugeta bezabh
+ */
+export const getSimilarQuestionsService = async ({
+  questionHash,
+  userId,
+  k = 5,
+  threshold = 0.75,
+}) => {
+  const [sourceRows] = await safeExecute(
+    `SELECT qv.question_id, qv.embedding
+     FROM question_vectors qv
+     JOIN questions q ON qv.question_id = q.question_id
+     WHERE q.question_hash = ?`,
+    [questionHash],
+  );
+
+  if (!sourceRows || sourceRows.length === 0) {
+    const error = new Error("Source question vector not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const sourceQuestionId = sourceRows[0].question_id;
+  const sourceEmbedding =
+    typeof sourceRows[0].embedding === "string"
+      ? JSON.parse(sourceRows[0].embedding)
+      : sourceRows[0].embedding;
+
+  const [targetRows] = await safeExecute(
+    `SELECT qv.question_id, qv.embedding
+     FROM question_vectors qv
+     WHERE qv.question_id != ? AND qv.status = 'ready'`,
+    [sourceQuestionId],
+  );
+
+  const scoredQuestions = targetRows.map((row) => {
+    const targetEmbedding =
+      typeof row.embedding === "string"
+        ? JSON.parse(row.embedding)
+        : row.embedding;
+    return {
+      question_id: row.question_id,
+      score: cosSimilarity(sourceEmbedding, targetEmbedding),
+    };
+  });
+
+  const filtered = scoredQuestions
+    .filter((q) => q.score >= parseFloat(threshold))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, parseInt(k, 10));
+
+  const questionIds = filtered.map((q) => q.question_id);
+  let data = [];
+
+  if (questionIds.length > 0) {
+    const placeholders = questionIds.map(() => "?").join(",");
+    const [questionDetails] = await safeExecute(
+      `SELECT ${AUTHOR_SELECT},
+              (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.question_id) AS reply_count
+       FROM questions q
+       JOIN users u ON q.user_id = u.user_id
+       WHERE q.question_id IN (${placeholders})`,
+      questionIds,
+    );
+
+    data = filtered.map((similar) => {
+      const details = questionDetails.find(
+        (q) => q.question_id === similar.question_id,
+      );
+      return { ...mapQuestionRow(details), score: similar.score };
+    });
+  }
+
+  return {
+    data,
+    meta: {
+      total: data.length,
+      k: parseInt(k, 10),
+      threshold: parseFloat(threshold),
+      query: null,
+      questionHash,
     },
   };
 };

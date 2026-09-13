@@ -1,373 +1,332 @@
-/**
- * Auth: combined login + register form; switches mode without changing routes.
- */
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-    Sparkles,
-    Code,
-    ArrowRight,
-    Eye,
-    EyeOff,
-    MessageSquare,
-} from 'lucide-react';
+import { Sparkles, Code, ArrowRight, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './Auth.module.css';
+
+const COMMUNITY_AVATARS = [
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+];
+
+const validateAuthInput = ({ isSignInMode, email, password, firstName, lastName }) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const validEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!cleanEmail || !validEmailRegex.test(cleanEmail)) {
+        return 'Please enter a valid email address.';
+    }
+
+    if (!password.trim()) {
+        return 'Password cannot be empty.';
+    }
+
+    if (!isSignInMode) {
+        const isInvalidName = name => !name.trim() || name.trim().length < 2;
+
+        if (isInvalidName(firstName)) {
+            return 'First name must be at least 2 characters long.';
+        }
+        if (isInvalidName(lastName)) {
+            return 'Last name must be at least 2 characters long.';
+        }
+        if (password.length < 6 || !/\d/.test(password)) {
+            return 'Password must be 6+ characters and include a number.';
+        }
+    }
+
+    return null;
+};
 
 export default function Auth() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { register, login } = useAuth();
-    const [isLogin, setIsLogin] = useState(true);
+    const { signup, signin, authError, clearAuthError } = useAuth();
 
-    // Registration form state
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    const [isSignInMode, setIsSignInMode] = useState(true);
+    const [fnameInput, setFnameInput] = useState('');
+    const [lnameInput, setLnameInput] = useState('');
+    const [emailInput, setEmailInput] = useState('');
+    const [passInput, setPassInput] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
+    const [isPassVisible, setIsPassVisible] = useState(false);
 
-    // Error and loading state
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [successMessage, setSuccessMessage] = useState(null);
+    const [localError, setLocalError] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [authSuccessNotice, setAuthSuccessNotice] = useState(null);
 
-    // Handle form submission for both login and registration
-    const handleSubmit = async e => {
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('remembered_email');
+        if (savedEmail) {
+            setEmailInput(savedEmail);
+            setRememberMe(true);
+        }
+    }, []);
+
+    const toggleAuthMode = () => {
+        setIsSignInMode(prev => !prev);
+        setLocalError(null);
+        setAuthSuccessNotice(null);
+        clearAuthError();
+    };
+
+    const handleAuthSubmit = async e => {
         e.preventDefault();
-        setError(null);
-        setSuccessMessage(null);
-        const normalizedEmail = email.trim().toLowerCase();
-        // regex for email validation
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        setLocalError(null);
+        setAuthSuccessNotice(null);
+        clearAuthError();
 
-        if (!normalizedEmail) {
-            setError('Email is required.');
+        const cleanEmail = emailInput.trim().toLowerCase();
+
+        const validationError = validateAuthInput({
+            isSignInMode,
+            email: cleanEmail,
+            password: passInput,
+            firstName: fnameInput,
+            lastName: lnameInput,
+        });
+
+        if (validationError) {
+            setLocalError(validationError);
             return;
         }
 
-        if (!emailPattern.test(normalizedEmail)) {
-            setError('Please enter a valid email address.');
-            return;
+        setIsSubmitting(true);
+
+        if (rememberMe) {
+            localStorage.setItem('remembered_email', cleanEmail);
+        } else {
+            localStorage.removeItem('remembered_email');
         }
-
-        if (!password.trim()) {
-            setError('Password is required.');
-            return;
-        }
-
-        const trimmedFirstName = firstName.trim();
-        const trimmedLastName = lastName.trim();
-
-        if (!isLogin) {
-            if (!trimmedFirstName) {
-                setError('First name is required.');
-                return;
-            }
-            if (trimmedFirstName.length < 3) {
-                setError('First name must be at least 3 characters long.');
-                return;
-            }
-            if (!trimmedLastName) {
-                setError('Last name is required.');
-                return;
-            }
-            if (trimmedLastName.length < 3) {
-                setError('Last name must be at least 3 characters long.');
-                return;
-            }
-            if (password.length < 6) {
-                setError('Password must be at least 6 characters long.');
-                return;
-            }
-        }
-
-        setLoading(true);
 
         try {
-            if (isLogin) {
-                // Login flow
-                await login({ email: normalizedEmail, password });
-                setSuccessMessage('Sign-in successful. Redirecting...');
-                // Clear form fields
-                setEmail('');
-                setPassword('');
-                setShowPassword(false);
-                // Delay redirect to show successful message
-                await new Promise(resolve => setTimeout(resolve, 1000));
+            if (isSignInMode) {
+                const response = await signin({ email: cleanEmail, password: passInput });
+                if (response?.success) {
+                    setAuthSuccessNotice('Sign-in successful. Redirecting...');
+                    setPassInput('');
 
-                // Check location state for original URL after login
-                // Redirect to original URL if present, otherwise dashboard
-                const from = location.state?.from?.pathname || '/dashboard';
-                navigate(from, { replace: true });
-                navigate(from, { replace: true });
+                    await new Promise(res => setTimeout(res, 800));
+                    const targetPath = location.state?.from?.pathname || '/dashboard';
+                    navigate(targetPath, { replace: true });
+                }
             } else {
-                // Registration flow
-                await register({
-                    firstName: trimmedFirstName,
-                    lastName: trimmedLastName,
-                    email: normalizedEmail,
-                    password,
+                const response = await signup({
+                    firstName: fnameInput.trim(),
+                    lastName: lnameInput.trim(),
+                    email: cleanEmail,
+                    password: passInput,
                 });
-                setSuccessMessage('Registration successful! Please log in.');
-                // Clear form fields
-                setFirstName('');
-                setLastName('');
-                setEmail('');
-                setPassword('');
-                // Automatically switch to login form after 1.5 seconds
-                setTimeout(() => {
-                    setIsLogin(true);
-                    setSuccessMessage(null);
-                }, 1500);
+
+                if (response?.success) {
+                    setAuthSuccessNotice('Account created successfully! Switching to sign in...');
+                    setFnameInput('');
+                    setLnameInput('');
+
+                    setTimeout(() => {
+                        setIsSignInMode(true);
+                        setAuthSuccessNotice(null);
+                    }, 1500);
+                }
             }
         } catch (err) {
-            setError(err.message || 'An unexpected error occurred.');
+            setLocalError(err.message || 'An error occurred during authentication.');
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
+    const displayedError = localError || authError;
+
     return (
-        <div className={styles.auth}>
-            {/* Left: Info Section */}
-            <section className={styles.auth__info}>
-                <div className={styles.auth__infoContent}>
-                    <header className={styles.auth__infoHeader}>
+        <div className={styles.authContainer}>
+            <section className={styles.infoPanel}>
+                <div className={styles.infoContentWrapper}>
+                    <header className={styles.infoHeaderBlock}>
                         <div
-                            className={styles.auth__infoBranding}
+                            className={styles.brandWrapper}
                             onClick={() => navigate('/')}
                             title='Go to Home'
                             role='button'
                             tabIndex={0}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    navigate('/');
-                                }
-                            }}
                         >
-                            <div className={styles.auth__infoLogo} aria-hidden>
-                                <MessageSquare
-                                    className={styles.auth__infoLogoIcon}
-                                    size={22}
-                                />
+                            <div className={styles.brandLogoBox} aria-hidden>
+                                <MessageSquare className={styles.brandLogoIcon} size={22} />
                             </div>
-                            <div className={styles.auth__infoBrandCopy}>
-                                <p className={styles.auth__infoTitle}>Evangadi Forum</p>
-                                <p className={styles.auth__infoTagline}>
-                                    Learn together. Ask with context.
-                                </p>
+                            <div className={styles.brandTextGroup}>
+                                <p className={styles.brandTitle}>Evangadi Forum</p>
+                                <p className={styles.brandTagline}>Learn together. Ask with context.</p>
                             </div>
                         </div>
-                        <p className={styles.auth__infoDescription}>
-                            Sign in to post technical questions, follow threads, and search
-                            the forum with both keyword and AI similarity modes, built for
-                            Evangadi coursework and peer review.
+                        <p className={styles.infoDescriptionText}>
+                            Sign in to post technical questions, follow threads, and search the forum with both keyword and AI similarity modes.
                         </p>
                     </header>
 
-                    <div className={styles.auth__features}>
-                        <div className={styles.auth__feature}>
-                            <div className={styles.auth__featureIcon}>
-                                <Sparkles size={20} />
-                            </div>
-                            <div className={styles.auth__featureContent}>
-                                <h3 className={styles.auth__featureTitle}>Visible reasoning</h3>
-                                <p className={styles.auth__featureDescription}>
-                                    Threads stay readable: markdown, code blocks, and replies
-                                    build a mini knowledge base your cohort can revisit before
-                                    exams.
+                    <div className={styles.featureList}>
+                        <div className={styles.featureCard}>
+                            <div className={styles.featureIconBox}><Sparkles size={20} /></div>
+                            <div className={styles.featureBody}>
+                                <h3 className={styles.featureHeading}>Visible reasoning</h3>
+                                <p className={styles.featureText}>
+                                    Threads stay readable: markdown, code blocks, and replies build a knowledge base.
                                 </p>
                             </div>
                         </div>
-                        <div className={styles.auth__feature}>
-                            <div className={styles.auth__featureIcon}>
-                                <Code size={20} />
-                            </div>
-                            <div className={styles.auth__featureContent}>
-                                <h3 className={styles.auth__featureTitle}>
-                                    Low-friction workflow
-                                </h3>
-                                <p className={styles.auth__featureDescription}>
-                                    One layout for asking, answering, and scanning search results,
-                                    so you spend energy on the problem, not on hunting controls.
+                        <div className={styles.featureCard}>
+                            <div className={styles.featureIconBox}><Code size={20} /></div>
+                            <div className={styles.featureBody}>
+                                <h3 className={styles.featureHeading}>Low-friction workflow</h3>
+                                <p className={styles.featureText}>
+                                    One clean layout for asking, answering, and scanning search results.
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className={styles.auth__infoFooter}>
-                        <div className={styles.auth__infoFooterContent}>
-                            <div className={styles.auth__infoAvatars}>
-                                {[1, 2, 3].map(i => (
+                    <div className={styles.infoFooterSection}>
+                        <div className={styles.infoFooterContent}>
+                            <div className={styles.avatarGroup}>
+                                {COMMUNITY_AVATARS.map((url, i) => (
                                     <img
                                         key={i}
-                                        src={`https://picsum.photos/seed/${i + 50}/100/100`}
-                                        className={styles.auth__infoAvatar}
-                                        alt='u'
-                                        referrerPolicy='no-referrer'
+                                        src={url}
+                                        className={styles.avatarImage}
+                                        alt={`Community member ${i + 1}`}
                                     />
                                 ))}
                             </div>
-                            <span className={styles.auth__infoBadge}>
-                                Evangadi cohorts · weekly stand-ups · office-hour style help
+                            <span className={styles.communityBadge}>
+                                Evangadi cohorts · weekly stand-ups · peer review
                             </span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Right: Auth Forms */}
-            <section className={styles.auth__formSection}>
-                <div className={styles.auth__formContainer}>
+            <section className={styles.formAreaSection}>
+                <div className={styles.formCardContainer}>
                     <AnimatePresence mode='wait'>
                         <Motion.div
-                            key={isLogin ? 'login' : 'register'}
+                            key={isSignInMode ? 'signin' : 'signup'}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <div className={styles.auth__formHeader}>
-                                <h2 className={styles.auth__formTitle}>
-                                    {isLogin ? 'Sign in to your account' : 'Create an account'}
+                            <div className={styles.formHeadingBlock}>
+                                <h2 className={styles.formTitleText}>
+                                    {isSignInMode ? 'Sign in to your account' : 'Create an account'}
                                 </h2>
-                                <p className={styles.auth__formSubtitle}>
-                                    {isLogin
-                                        ? 'Enter your email address and password to continue.'
-                                        : 'Complete the form below to create your account.'}
+                                <p className={styles.formSubtitleText}>
+                                    {isSignInMode
+                                        ? 'Enter your credentials to access the forum.'
+                                        : 'Fill in your details below to get started.'}
                                 </p>
                             </div>
 
-                            <form className={styles.auth__form} onSubmit={handleSubmit}>
-                                {!isLogin && (
+                            <form className={styles.entryForm} onSubmit={handleAuthSubmit}>
+                                {!isSignInMode && (
                                     <>
-                                        <div className={styles.auth__inputGroup}>
-                                            <label htmlFor='firstName' className={styles.auth__label}>
-                                                First Name
-                                            </label>
+                                        <div className={styles.fieldGroup}>
+                                            <label htmlFor='fname' className={styles.fieldLabel}>First Name</label>
                                             <input
-                                                id='firstName'
+                                                id='fname'
                                                 type='text'
                                                 placeholder='First name'
-                                                className={styles.auth__input}
-                                                value={firstName}
-                                                onChange={e => setFirstName(e.target.value)}
+                                                className={styles.textInput}
+                                                value={fnameInput}
+                                                onChange={e => setFnameInput(e.target.value)}
                                             />
                                         </div>
 
-                                        <div className={styles.auth__inputGroup}>
-                                            <label htmlFor='lastName' className={styles.auth__label}>
-                                                Last Name
-                                            </label>
+                                        <div className={styles.fieldGroup}>
+                                            <label htmlFor='lname' className={styles.fieldLabel}>Last Name</label>
                                             <input
-                                                id='lastName'
+                                                id='lname'
                                                 type='text'
                                                 placeholder='Last name'
-                                                className={styles.auth__input}
-                                                value={lastName}
-                                                onChange={e => setLastName(e.target.value)}
+                                                className={styles.textInput}
+                                                value={lnameInput}
+                                                onChange={e => setLnameInput(e.target.value)}
                                             />
                                         </div>
                                     </>
                                 )}
 
-                                <div className={styles.auth__inputGroup}>
-                                    <label htmlFor='email' className={styles.auth__label}>
-                                        Email Address
-                                    </label>
+                                <div className={styles.fieldGroup}>
+                                    <label htmlFor='email' className={styles.fieldLabel}>Email Address</label>
                                     <input
                                         id='email'
                                         type='email'
                                         placeholder='Enter your email address'
-                                        className={styles.auth__input}
-                                        value={email}
-                                        onChange={e => setEmail(e.target.value)}
+                                        className={styles.textInput}
+                                        value={emailInput}
+                                        onChange={e => setEmailInput(e.target.value)}
                                     />
                                 </div>
 
-                                <div className={styles.auth__inputGroup}>
-                                    <div className={styles.auth__labelRow}>
-                                        <label htmlFor='password' className={styles.auth__label}>
-                                            Password
-                                        </label>
-                                    </div>
-                                    <div className={styles.auth__passwordWrap}>
+                                <div className={styles.fieldGroup}>
+                                    <label htmlFor='pass' className={styles.fieldLabel}>Password</label>
+                                    <div className={styles.passwordInputWrapper}>
                                         <input
-                                            id='password'
-                                            type={showPassword ? 'text' : 'password'}
+                                            id='pass'
+                                            type={isPassVisible ? 'text' : 'password'}
                                             placeholder='••••••••'
-                                            className={`${styles.auth__input} ${styles.auth__inputPassword}`}
-                                            value={password}
-                                            onChange={e => setPassword(e.target.value)}
+                                            className={`${styles.textInput} ${styles.passwordField}`}
+                                            value={passInput}
+                                            onChange={e => setPassInput(e.target.value)}
                                         />
                                         <button
                                             type='button'
-                                            className={styles.auth__passwordToggle}
-                                            onClick={() => setShowPassword(v => !v)}
-                                            aria-label={
-                                                showPassword ? 'Hide password' : 'Show password'
-                                            }
-                                            aria-pressed={showPassword}
+                                            className={styles.toggleEyeButton}
+                                            onClick={() => setIsPassVisible(!isPassVisible)}
+                                            aria-label={isPassVisible ? 'Hide password' : 'Show password'}
                                         >
-                                            {showPassword ? (
-                                                <EyeOff size={18} aria-hidden />
-                                            ) : (
-                                                <Eye size={18} aria-hidden />
-                                            )}
+                                            {isPassVisible ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
                                 </div>
 
-                                {successMessage && (
-                                    <div className={styles.auth__success}>{successMessage}</div>
+                                {isSignInMode && (
+                                    <div className={styles.rememberOptionGroup}>
+                                        <label className={styles.rememberLabel}>
+                                            <input
+                                                type='checkbox'
+                                                checked={rememberMe}
+                                                onChange={e => setRememberMe(e.target.checked)}
+                                            />
+                                            <span>Remember email</span>
+                                        </label>
+                                    </div>
                                 )}
 
-                                {error && <div className={styles.auth__error}>{error}</div>}
+                                {authSuccessNotice && <div className={styles.successNotification}>{authSuccessNotice}</div>}
+                                {displayedError && <div className={styles.errorNotification}>{displayedError}</div>}
 
-                                <div className={styles.auth__buttonContainer}>
+                                <div className={styles.submitActionContainer}>
                                     <button
                                         type='submit'
-                                        className={`${styles.auth__button} ${styles['auth__button--primary']}`}
-                                        disabled={loading}
+                                        className={styles.primaryActionButton}
+                                        disabled={isSubmitting}
                                     >
-                                        {loading
-                                            ? 'Processing...'
-                                            : isLogin
-                                                ? 'Sign In'
-                                                : 'Create Account'}
-                                        {!loading && (
-                                            <ArrowRight
-                                                size={16}
-                                                className={styles.auth__buttonIcon}
-                                            />
-                                        )}
+                                        {isSubmitting ? 'Processing...' : isSignInMode ? 'Sign In' : 'Create Account'}
+                                        {!isSubmitting && <ArrowRight size={16} className={styles.actionIcon} />}
                                     </button>
-                                </div>
-
-                                <div className={styles.auth__divider}>
-                                    <div className={styles.auth__dividerLine}>
-                                        <div className={styles.auth__dividerBorder}></div>
-                                    </div>
-                                    <div className={styles.auth__dividerText}>
-                                        Additional options
-                                    </div>
                                 </div>
                             </form>
 
-                            <footer className={styles.auth__formFooter}>
-                                <p className={styles.auth__formFooterText}>
-                                    {isLogin
-                                        ? "Don't have an account?"
-                                        : 'Already have an account?'}
+                            <footer className={styles.cardFooterBlock}>
+                                <p className={styles.footerPromptText}>
+                                    {isSignInMode ? "Don't have an account?" : 'Already have an account?'}
                                     <button
-                                        onClick={() => setIsLogin(!isLogin)}
-                                        className={styles.auth__formFooterLink}
+                                        type='button'
+                                        onClick={toggleAuthMode}
+                                        className={styles.switchModeBtn}
                                     >
-                                        {isLogin ? 'Create an account' : 'Back to sign in'}
+                                        {isSignInMode ? 'Create an account' : 'Back to sign in'}
                                     </button>
                                 </p>
                             </footer>
