@@ -2,93 +2,102 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth/auth.service.js';
 
-/**
- * Authentication Context providing user state and auth methods.
- */
 const AuthContext = createContext(undefined);
 
-/**
- * AuthProvider component that wraps the app to provide authentication context.
- */
 export function AuthProvider({ children }) {
-  // Authentication state
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [authError, setAuthError] = useState(null);
   const navigate = useNavigate();
 
-  // Initialize user state from localStorage on mount
+  // Runs once on mount: was there already a session saved from a previous
+  // visit? If so, confirm it against the backend rather than trusting
+  // whatever is cached in localStorage.
   useEffect(() => {
-    const token = authService.getStoredToken();
-    const storedUser = authService.getStoredUser();
+    const initializeAuthStatus = async () => {
+      const savedToken = authService.retrieveAuthToken();
 
-    if (token && storedUser) {
-      setUser(storedUser);
-    }
+      if (savedToken) {
+        try {
+          const verifiedUser = await authService.verifyActiveSession();
+          setCurrentUser(verifiedUser);
+        } catch (error) {
+          authService.clearSessionData();
+          setCurrentUser(null);
+        }
+      }
+      setIsAuthenticating(false);
+    };
 
-    setLoading(false);
+    initializeAuthStatus();
   }, []);
 
-  /**
-   * Registers a new user. Does not automatically log them in.
-   * @param {Object} userData - { firstName, lastName, email, password }
-   */
-  const register = async userData => {
-    setLoading(true);
+  const clearAuthError = () => setAuthError(null);
+
+  const signup = async data => {
+    setIsAuthenticating(true);
+    setAuthError(null);
     try {
-      const { user } = await authService.register(userData);
+      const result = await authService.registerAccount(data);
+      return { success: true, user: result.user };
+    } catch (err) {
+      const errorMsg = err.message || 'Registration failed. Please try again.';
+      setAuthError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const signin = async credentials => {
+    setIsAuthenticating(true);
+    setAuthError(null);
+    try {
+      const { user } = await authService.loginAccount(credentials);
+      setCurrentUser(user);
       return { success: true, user };
+    } catch (err) {
+      const errorMsg = err.message || 'Invalid email or password.';
+      setAuthError(errorMsg);
+      return { success: false, error: errorMsg };
     } finally {
-      setLoading(false);
+      setIsAuthenticating(false);
     }
   };
 
-  /**
-   * Authenticates a user and updates the session state.
-   * @param {Object} credentials - { email, password }
-   */
-  const login = async credentials => {
-    setLoading(true);
-    try {
-      const { user } = await authService.login(credentials);
-      setUser(user);
-      return { success: true };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
-   * Clears the user session and redirects to the login page.
-   */
-  const logout = () => {
-    authService.logout();
-    setUser(null);
+  const logoutUser = () => {
+    authService.clearSessionData();
+    setCurrentUser(null);
+    setAuthError(null);
     navigate('/auth');
   };
 
-  // Context value with state and methods
-  const value = {
-    user,
-    loading,
-    register,
-    login,
-    logout,
-    isAuthenticated: !!user,
+  const updateUserProfile = updatedFields => {
+    setCurrentUser(prev => (prev ? { ...prev, ...updatedFields } : null));
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const contextValue = {
+    currentUser,
+    isAuthenticating,
+    loading: isAuthenticating,
+    authError,
+    signup,
+    signin,
+    logoutUser,
+    updateUserProfile,
+    clearAuthError,
+    isLoggedIn: !!currentUser,
+    isAuthenticated: !!currentUser,
+  };
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
-/**
- * Custom hook to access the authentication context.
- * @throws {Error} If used outside of AuthProvider
- */
+/** Reads the auth context. Throws if called outside <AuthProvider>. */
 export function useAuth() {
-  const context = useContext(AuthContext);
-
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  const authVal = useContext(AuthContext);
+  if (!authVal) {
+    throw new Error('useAuth must be wrapped inside AuthProvider');
   }
-
-  return context;
+  return authVal;
 }
