@@ -25,6 +25,8 @@ export const getEmbedding = async (text, taskType = 'RETRIEVAL_DOCUMENT') => {
       contents: text,
       config: {
         taskType: taskType,
+       outputDimensionality: 768,
+
       }
     });
 
