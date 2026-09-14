@@ -1,7 +1,4 @@
-/**
- * Authentication routes mapping.
- */
-import express from "express";
+/** * Authentication routes mapping. */ import express from "express";
 import {
   registerController,
   loginController,
@@ -10,21 +7,9 @@ import {
   registerValidation,
   loginValidation,
 } from "../middlewares/auth.validation.js";
-
 const router = express.Router();
-
-/**
- * @route POST /api/auth/register
- * @desc Register a new user
- * @access Public
- */
+/** * Register a new user * POST /api/auth/register * Public route */
 router.post("/register", registerValidation, registerController);
-
-/**
- * @route POST /api/auth/login
- * @desc Authenticate user and get token
- * @access Public
- */
+/** * Authenticate user and return JWT token * POST /api/auth/login * Public route */
 router.post("/login", loginValidation, loginController);
-
 export default router;
