@@ -50,11 +50,9 @@ export const assessAnswerFit = async (questionHash, answerText) => {
   );
   return response.data;
 };
-
-export const createAnswer = async (questionId, content) => {
-  const response = await apiClient.post(`/api/answers`, {
-    questionId,
+export const createAnswer = async (questionHash, content) => {
+  const response = await apiClient.post(`/api/questions/${questionHash}/answers`, {
     content,
   });
-  return response.data;
+  return response.data; 
 };

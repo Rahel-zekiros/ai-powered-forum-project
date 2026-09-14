@@ -109,20 +109,28 @@ export default function QuestionDetail() {
     try {
       setIsSubmitting(true);
       setSubmitError(null);
-      await createAnswer(question.id, draftAnswer.trim());
+
+      // 1. Send request to backend with questionHash
+      const res = await createAnswer(questionHash, draftAnswer.trim());
+
+      // 2. Extract answer object (backend returns { success, message, data })
+      const newAnswer = res.data;
+
+      // 3. Append new answer to the state list immediately
+      setAnswers((prevAnswers) => [...prevAnswers, newAnswer]);
+
+      // 4. Clear state
       setDraftAnswer("");
       setFitResult(null);
-      await fetchQuestion();
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-          "Failed to post answer. Please try again.",
+          "Failed to post answer. Please try again."
       );
     } finally {
       setIsSubmitting(false);
     }
   };
-
   if (isLoading) {
     return (
       <div className={styles.page}>
