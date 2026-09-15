@@ -65,12 +65,20 @@ export default function Landing() {
             >
               Course RAG
             </button>
-            <button
+            {/* <button
               type="button"
               className={styles.navItem}
               onClick={() => scrollToSection(howItWorksRef)}
             >
               How it works
+            </button>
+             */}
+            <button
+              type="button"
+              className={styles.navItem}
+              onClick={() => scrollToSection(howItWorksRef)}
+            >
+              See how it works
             </button>
           </nav>
 
