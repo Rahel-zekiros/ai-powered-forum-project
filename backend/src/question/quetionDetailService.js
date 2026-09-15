@@ -221,3 +221,56 @@ export const getSimilarQuestionsService = async ({
     },
   };
 };
+/**
+ * Service for AI Answer Fit Evaluation (Task 14) Abdulhadi seid
+ */
+export const assessAnswerAgainstQuestionService = async ({
+  questionHash,
+  answerText,
+}) => {
+  const [questionRows] = await safeExecute(
+    `SELECT q.title, q.content FROM questions q WHERE q.question_hash = ?`,
+    [questionHash],
+  );
+
+  if (!questionRows || questionRows.length === 0) {
+    const error = new Error("Question not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const { title: questionTitle, content: questionContent } = questionRows[0];
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-3.6-flash",
+    generationConfig: { responseMimeType: "application/json" },
+  });
+
+  const prompt = `
+You are an expert technical evaluator. Evaluate whether the provided answer properly addresses the core issue in the question below.
+
+Original Question Title: ${questionTitle || "No title provided"}
+Original Question Content: ${questionContent}
+
+Draft Answer to Evaluate:
+${answerText}
+
+Respond ONLY in valid JSON with exactly these two keys:
+- "level": one of "strong", "partial", or "weak"
+- "note": a short (1-2 sentence) explanation of the rating and how the answer could improve
+  `;
+
+  const result = await model.generateContent(prompt);
+  const responseText = result.response.text();
+
+  try {
+    const parsed = JSON.parse(responseText);
+    return {
+      level: parsed.level || "unknown",
+      note: parsed.note || responseText,
+    };
+  } catch (parseError) {
+    return { level: "unknown", note: responseText };
+  }
+};
