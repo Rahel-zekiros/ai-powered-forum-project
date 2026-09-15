@@ -30,7 +30,13 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
     params.push(searchPattern, searchPattern);
   }
 
-  query += ` GROUP BY q.question_id ORDER BY q.created_at DESC LIMIT 100`;
+  query += ` 
+    GROUP BY 
+      q.question_id, q.question_hash, q.title, q.content, q.created_at, q.updated_at,
+      u.user_id, u.first_name, u.last_name
+    ORDER BY q.created_at DESC 
+    LIMIT 100
+  `;
 
   const rows = await safeExecute(query, params);
 
@@ -49,7 +55,6 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
     },
   }));
 };
-
 
 /**
  * T-07: Create Question & Auto-Embed
@@ -82,23 +87,23 @@ export const createQuestionWithVectorService = async ({
     // Generate Gemini embedding for the question title
     const embedding = await getEmbedding(title, "RETRIEVAL_DOCUMENT");
 
-    // Store the embedding with ready status
+    // Store the embedding with ready status (using embedding_vector column)
     await safeExecute(
       `
         INSERT INTO question_vectors
-          (question_id, embedding, status)
+          (question_id, embedding_vector, status)
         VALUES (?, ?, ?)
       `,
       [questionId, JSON.stringify(embedding), "ready"],
     );
   } catch (error) {
-    //  If embedding fails, store failed status
+    // If embedding fails, store failed status
     console.error("Question embedding failed:", error);
 
     await safeExecute(
       `
         INSERT INTO question_vectors
-          (question_id, embedding, status)
+          (question_id, embedding_vector, status)
         VALUES (?, ?, ?)
       `,
       [questionId, JSON.stringify([]), "failed"],
@@ -114,7 +119,6 @@ export const createQuestionWithVectorService = async ({
     userId,
   };
 };
-
 
 /**
  * Helper for Task T-11
@@ -141,7 +145,7 @@ export const searchQuestionsSemanticService = async ({
   k = 5,
   threshold,
 }) => {
-  const envThreshold = parseFloat(process.env.RECOMMEND_THRESHOLD || 0.75);
+  const envThreshold = parseFloat(process.env.RECOMMEND_THRESHOLD || 0.06);
   const minThreshold =
     threshold !== undefined ? parseFloat(threshold) : envThreshold;
   const limit = parseInt(k, 10);
@@ -149,18 +153,18 @@ export const searchQuestionsSemanticService = async ({
   // 1. Embed query (using Gemini text-embedding-004)
   const queryEmbedding = await getEmbedding(query, "RETRIEVAL_QUERY");
 
-  // 2. Fetch vectors
+  // 2. Fetch vectors (using embedding_vector column)
   const vectorRows = await safeExecute(
-    `SELECT question_id, embedding FROM question_vectors WHERE status = 'ready'`,
+    `SELECT question_id, embedding_vector FROM question_vectors WHERE status = 'ready'`,
     [],
   );
 
   // 3. Compute similarity
   const scored = vectorRows.map((row) => {
     const dbVector =
-      typeof row.embedding === "string"
-        ? JSON.parse(row.embedding)
-        : row.embedding;
+      typeof row.embedding_vector === "string"
+        ? JSON.parse(row.embedding_vector)
+        : row.embedding_vector;
     return {
       questionId: row.question_id,
       score: cosineSimilarity(queryEmbedding, dbVector),

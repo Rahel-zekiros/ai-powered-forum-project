@@ -1,15 +1,20 @@
-/** * Authentication routes mapping. */ import express from "express";
+import express from 'express';
 import {
-  registerController,
-  loginController,
-} from "../controllers/auth.controller.js";
+  handleUserRegistration,
+  handleUserLogin,
+  handleFetchCurrentUser,
+} from '../controller/auth.controller.js';
 import {
-  registerValidation,
-  loginValidation,
-} from "../middlewares/auth.validation.js";
+  validateUserRegistration,
+  validateUserLogin,
+} from '../validations/auth.validation.js';
+import { authenticateUser } from '../../../middleware/authentication.js';
+
 const router = express.Router();
-/** * Register a new user * POST /api/auth/register * Public route */
-router.post("/register", registerValidation, registerController);
-/** * Authenticate user and return JWT token * POST /api/auth/login * Public route */
-router.post("/login", loginValidation, loginController);
+
+router.post('/register', validateUserRegistration, handleUserRegistration);
+
+router.post('/login', validateUserLogin, handleUserLogin);
+router.get('/me', authenticateUser, handleFetchCurrentUser);
+
 export default router;

@@ -13,6 +13,8 @@ export class BadRequestError extends CustomAPIError {
   }
 }
 
+export { BadRequestError as InvalidInputError };
+
 export class NotFoundError extends CustomAPIError {
   constructor(message) {
     super(message);
