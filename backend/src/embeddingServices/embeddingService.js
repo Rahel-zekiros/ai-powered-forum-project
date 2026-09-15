@@ -17,7 +17,7 @@ export const getEmbedding = async (text, taskType = 'RETRIEVAL_DOCUMENT') => {
     throw new Error('Text is required to generate an embedding.');
   }
 
-  const model = process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004';
+  const model = process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-001';
   
   try {
     const response = await ai.models.embedContent({

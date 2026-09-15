@@ -1,4 +1,4 @@
-import { safeExecute } from "../../../../db/config.js";
+import { safeExecute } from "../../db/config.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const mapQuestionRow = (row) => ({
@@ -33,7 +33,7 @@ const cosSimilarity = (vecA, vecB) => {
  * 1. Question by Hash with Answer (getSingleQuestionService)
  */
 export const getSingleQuestionService = async ({ questionHash }) => {
-  const [questionRows] = await safeExecute(
+  const result = await safeExecute(
     `SELECT ${AUTHOR_SELECT},
             (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.question_id) AS reply_count
      FROM questions q
@@ -42,7 +42,9 @@ export const getSingleQuestionService = async ({ questionHash }) => {
     [questionHash],
   );
 
-  if (!questionRows || questionRows.length === 0) {
+  const questionRows = Array.isArray(result?.[0]) ? result[0] : result;
+
+  if (!questionRows || !Array.isArray(questionRows) || questionRows.length === 0 || !questionRows[0]) {
     const error = new Error("Question not found");
     error.statusCode = 404;
     throw error;
@@ -50,7 +52,7 @@ export const getSingleQuestionService = async ({ questionHash }) => {
 
   const question = mapQuestionRow(questionRows[0]);
 
-  const [answerRows] = await safeExecute(
+  const answerResult = await safeExecute(
     `SELECT a.answer_id, a.question_id, a.content, a.created_at, a.updated_at,
             u.user_id AS author_id, u.first_name, u.last_name
      FROM answers a
@@ -60,7 +62,9 @@ export const getSingleQuestionService = async ({ questionHash }) => {
     [questionRows[0].question_id],
   );
 
-  const answers = answerRows.map((row) => ({
+  const answerRows = Array.isArray(answerResult?.[0]) ? answerResult[0] : answerResult;
+
+  const answers = (answerRows || []).map((row) => ({
     id: row.answer_id,
     content: row.content,
     createdAt: row.created_at,
@@ -82,12 +86,14 @@ export const getSingleQuestionService = async ({ questionHash }) => {
  */
 export const postAnswerService = async ({ questionHash, content, userId }) => {
   // 1. check if exist the question
-  const [questionRows] = await safeExecute(
+  const result = await safeExecute(
     `SELECT question_id FROM questions WHERE question_hash = ?`,
     [questionHash],
   );
 
-  if (!questionRows || questionRows.length === 0) {
+  const questionRows = Array.isArray(result?.[0]) ? result[0] : result;
+
+  if (!questionRows || !Array.isArray(questionRows) || questionRows.length === 0 || !questionRows[0]) {
     const error = new Error("Question not found");
     error.statusCode = 404;
     throw error;
@@ -96,15 +102,15 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
   const questionId = questionRows[0].question_id;
 
   // 2. post answer
-  const [insertResult] = await safeExecute(
+  const insertResult = await safeExecute(
     `INSERT INTO answers (question_id, user_id, content) VALUES (?, ?, ?)`,
     [questionId, userId, content],
   );
 
-  const newAnswerId = insertResult.insertId;
+  const newAnswerId = insertResult?.[0]?.insertId ?? insertResult?.insertId;
 
   // 3. fetch the answer with user
-  const [newAnswerRows] = await safeExecute(
+  const newAnswerResult = await safeExecute(
     `SELECT 
         a.answer_id AS id, 
         a.question_id AS questionId, 
@@ -119,6 +125,14 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
      WHERE a.answer_id = ?`,
     [newAnswerId],
   );
+
+  const newAnswerRows = Array.isArray(newAnswerResult?.[0]) ? newAnswerResult[0] : newAnswerResult;
+
+  if (!newAnswerRows || !newAnswerRows[0]) {
+    const error = new Error("Failed to retrieve created answer");
+    error.statusCode = 500;
+    throw error;
+  }
 
   const row = newAnswerRows[0];
 
@@ -135,6 +149,8 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
     },
   };
 };
+ 
+
 
 /**
  * Service to retrieve similar questions based on cosine similarity (Task 13) mulugeta bezabh
@@ -145,18 +161,21 @@ export const getSimilarQuestionsService = async ({
   k = 5,
   threshold = 0.75,
 }) => {
-  const [sourceRows] = await safeExecute(
-    `SELECT qv.question_id, qv.embedding
+  const sourceResult = await safeExecute(
+    `SELECT qv.question_id, qv.embedding_vector AS embedding
      FROM question_vectors qv
      JOIN questions q ON qv.question_id = q.question_id
      WHERE q.question_hash = ?`,
     [questionHash],
   );
 
-  if (!sourceRows || sourceRows.length === 0) {
-    const error = new Error("Source question vector not found");
-    error.statusCode = 404;
-    throw error;
+  const sourceRows = Array.isArray(sourceResult?.[0]) ? sourceResult[0] : sourceResult;
+
+  if (!sourceRows || !Array.isArray(sourceRows) || sourceRows.length === 0 || !sourceRows[0]) {
+    return {
+      data: [],
+      meta: { total: 0, k: parseInt(k, 10), threshold: parseFloat(threshold), query: null, questionHash },
+    };
   }
 
   const sourceQuestionId = sourceRows[0].question_id;
@@ -165,14 +184,16 @@ export const getSimilarQuestionsService = async ({
       ? JSON.parse(sourceRows[0].embedding)
       : sourceRows[0].embedding;
 
-  const [targetRows] = await safeExecute(
-    `SELECT qv.question_id, qv.embedding
+  const targetResult = await safeExecute(
+    `SELECT qv.question_id, qv.embedding_vector AS embedding
      FROM question_vectors qv
      WHERE qv.question_id != ? AND qv.status = 'ready'`,
     [sourceQuestionId],
   );
 
-  const scoredQuestions = targetRows.map((row) => {
+  const targetRows = Array.isArray(targetResult?.[0]) ? targetResult[0] : targetResult;
+
+  const scoredQuestions = (targetRows || []).map((row) => {
     const targetEmbedding =
       typeof row.embedding === "string"
         ? JSON.parse(row.embedding)
@@ -193,7 +214,7 @@ export const getSimilarQuestionsService = async ({
 
   if (questionIds.length > 0) {
     const placeholders = questionIds.map(() => "?").join(",");
-    const [questionDetails] = await safeExecute(
+    const detailsResult = await safeExecute(
       `SELECT ${AUTHOR_SELECT},
               (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.question_id) AS reply_count
        FROM questions q
@@ -202,12 +223,14 @@ export const getSimilarQuestionsService = async ({
       questionIds,
     );
 
+    const questionDetails = Array.isArray(detailsResult?.[0]) ? detailsResult[0] : detailsResult;
+
     data = filtered.map((similar) => {
-      const details = questionDetails.find(
+      const details = (questionDetails || []).find(
         (q) => q.question_id === similar.question_id,
       );
-      return { ...mapQuestionRow(details), score: similar.score };
-    });
+      return details ? { ...mapQuestionRow(details), score: similar.score } : null;
+    }).filter(Boolean);
   }
 
   return {
@@ -221,6 +244,7 @@ export const getSimilarQuestionsService = async ({
     },
   };
 };
+
 /**
  * Service for AI Answer Fit Evaluation (Task 14) Abdulhadi seid
  */
@@ -228,12 +252,14 @@ export const assessAnswerAgainstQuestionService = async ({
   questionHash,
   answerText,
 }) => {
-  const [questionRows] = await safeExecute(
+  const result = await safeExecute(
     `SELECT q.title, q.content FROM questions q WHERE q.question_hash = ?`,
     [questionHash],
   );
 
-  if (!questionRows || questionRows.length === 0) {
+  const questionRows = Array.isArray(result?.[0]) ? result[0] : result;
+
+  if (!questionRows || !Array.isArray(questionRows) || questionRows.length === 0 || !questionRows[0]) {
     const error = new Error("Question not found");
     error.statusCode = 404;
     throw error;
@@ -261,8 +287,8 @@ Respond ONLY in valid JSON with exactly these two keys:
 - "note": a short (1-2 sentence) explanation of the rating and how the answer could improve
   `;
 
-  const result = await model.generateContent(prompt);
-  const responseText = result.response.text();
+  const responseResult = await model.generateContent(prompt);
+  const responseText = responseResult.response.text();
 
   try {
     const parsed = JSON.parse(responseText);

@@ -2,7 +2,7 @@ import express from "express";
 import {
   authenticateUser as auth,
   optionalAuth,
-} from "../../../middleware/authentication.js";
+} from "../../middleware/authentication.js";
 
 import {
   getSingleQuestionValidation,
@@ -16,7 +16,7 @@ import {
   postAnswerController,
   getSimilarQuestionsController,
   assessAnswerAgainstQuestionController,
-} from "../../question/questionDetailController.js";
+} from "../../question/quetionDetailController.js";
 
 const router = express.Router();
 

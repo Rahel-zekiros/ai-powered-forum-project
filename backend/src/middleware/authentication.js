@@ -45,6 +45,29 @@ export const verifyAuthToken = (req, res, next) => {
   }
 };
 
+/**
+ * Middleware: Optional JWT validation 
+ */
+export const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.split(" ")[1];
+    try {
+      const decodedPayload = jwt.verify(token, JWT_SECRET);
+      req.user = {
+        id: decodedPayload.id,
+        email: decodedPayload.email,
+        firstName: decodedPayload.firstName,
+        lastName: decodedPayload.lastName,
+      };
+    } catch (error) {
+    }
+  }
+
+  next();
+};
+
 // Backwards compatibility alias
 export const authenticateUser = verifyAuthToken;
 export default verifyAuthToken;

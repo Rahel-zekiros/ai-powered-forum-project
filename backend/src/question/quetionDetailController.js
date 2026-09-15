@@ -3,7 +3,7 @@ import {
   postAnswerService,
   getSimilarQuestionsService,
   assessAnswerAgainstQuestionService,
-} from "../question/questionDetailService.js";
+} from "./quetionDetailService.js";
 
 /**
  * 1. Question by Hash with Answer Controller
