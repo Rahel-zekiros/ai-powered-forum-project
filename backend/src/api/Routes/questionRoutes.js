@@ -1,6 +1,6 @@
 import express from "express";
 
-import { authentication } from "../../middleware/authentication.js";
+import { authenticateUser } from "../../middleware/authentication.js";
 
 import {
   createQuestionController, 
@@ -24,7 +24,7 @@ const router = express.Router();
  */
 router.post(
   "/",
-  authentication,
+ authenticateUser,
   createQuestionValidation,
   createQuestionController,
 );
@@ -39,7 +39,7 @@ router.post(
  */
 router.post(
   "/draft-coach",
-  authentication,
+  authenticateUser,
   generateQuestionDraftCoachValidation,
   generateQuestionDraftCoachController,
 );

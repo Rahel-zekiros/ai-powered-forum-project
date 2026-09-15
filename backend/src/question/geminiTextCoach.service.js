@@ -1,5 +1,4 @@
 import { GoogleGenAI } from "@google/genai";
-
 /*
 ==================================================
 GEMINI CONFIGURATION
@@ -8,10 +7,12 @@ GEMINI CONFIGURATION
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
+  options: {
+    apiVersion: 'v1'
+  }
 });
 
-const MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash-lite";
-
+const MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-3.6-flash";
 /*
 ==================================================
 HELPER
@@ -75,12 +76,10 @@ Return ONLY valid JSON using exactly this format:
 Do not use markdown.
 Do not include any text outside the JSON.
 `;
-
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents: prompt,
-  });
-
+const response = await ai.models.generateContent({
+  model: MODEL, 
+  contents: prompt,
+});
   const text = response.text;
 
   const result = parseJsonResponse(text);
