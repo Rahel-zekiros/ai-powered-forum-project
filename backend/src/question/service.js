@@ -145,7 +145,7 @@ export const searchQuestionsSemanticService = async ({
   k = 5,
   threshold,
 }) => {
-  const envThreshold = parseFloat(process.env.RECOMMEND_THRESHOLD || 0.06);
+  const envThreshold = parseFloat(process.env.RECOMMEND_THRESHOLD || 0.6);
   const minThreshold =
     threshold !== undefined ? parseFloat(threshold) : envThreshold;
   const limit = parseInt(k, 10);

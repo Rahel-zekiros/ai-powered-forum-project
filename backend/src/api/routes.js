@@ -1,15 +1,19 @@
 import express from 'express';
 import authRoutes from './auth/routes/auth.routes.js';
-import questionRoutes from '../question/routes.js'
-import  postQuestionRoutes from './Routes/questionRoutes.js'
+import questionRoutes from '../question/routes.js'; 
+import postQuestionRoutes from './Routes/questionRoutes.js';
+import questionDetailRoutes from './Routes/questionDetailAIroutes.js'; 
 
 export const mainRouter = express.Router();
 
 // Authentication routes
 mainRouter.use('/auth', authRoutes);
 
-// dashboard question fetch
+// 1. dashboard routes
 mainRouter.use('/questions', questionRoutes);
 
-// post question routes
+// 2. post question routes
 mainRouter.use('/questions', postQuestionRoutes);
+
+// 3. question detail routes
+mainRouter.use('/questions', questionDetailRoutes);
