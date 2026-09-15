@@ -63,7 +63,7 @@ export default function Layout() {
           <Outlet context={{ searchQuery, setSearchQuery }} />
         </main>
 
-        {/* Footer እዚህ ጋር ይገባል */}
+        {/* Footer  */}
         <footer className={styles.bottomFooter}>
           <div className={styles.footerInnerContent}>
             <div className={styles.footerInfoBlock}>
