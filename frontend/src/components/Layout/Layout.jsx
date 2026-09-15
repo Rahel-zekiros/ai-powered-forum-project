@@ -39,6 +39,7 @@ function resolvePageCopy(pathname) {
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(""); 
   const location = useLocation();
   const { currentUser, logoutUser } = useAuth();
   const { title, subtitle } = resolvePageCopy(location.pathname);
@@ -54,11 +55,43 @@ export default function Layout() {
           user={currentUser}
           onLogout={logoutUser}
           onToggleSidebar={() => setIsSidebarOpen((open) => !open)}
+          searchQuery={searchQuery} 
+          onSearchChange={setSearchQuery}
         />
 
         <main className={styles.content}>
-          <Outlet />
+          <Outlet context={{ searchQuery, setSearchQuery }} />
         </main>
+
+        {/* Footer እዚህ ጋር ይገባል */}
+        <footer className={styles.bottomFooter}>
+          <div className={styles.footerInnerContent}>
+            <div className={styles.footerInfoBlock}>
+              <h4 className={styles.footerHeading}>Evangadi Forum</h4>
+              <p className={styles.footerSubtext}>
+                A practice space for technical Q&A, peer feedback, and
+                AI-assisted search, built for Evangadi learners and mentors.
+              </p>
+              <p className={styles.copyrightText}>
+                © 2026 Evangadi Forum. For educational use.
+              </p>
+            </div>
+            <nav className={styles.footerNavigation}>
+              <a href='#' className={styles.footerNavLink}>
+                About
+              </a>
+              <a href='#' className={styles.footerNavLink}>
+                Privacy
+              </a>
+              <a href='#' className={styles.footerNavLink}>
+                Terms
+              </a>
+              <a href='#' className={styles.footerNavLink}>
+                Contact
+              </a>
+            </nav>
+          </div>
+        </footer>
       </div>
     </div>
   );

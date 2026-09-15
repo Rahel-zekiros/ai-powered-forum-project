@@ -6,7 +6,7 @@ import {
   getSimilarQuestions,
   assessAnswerFit,
   createAnswer,
-} from "../../services/question/question.service.js";
+} from "../../services/questionDetail.service.js";
 import styles from "./QuestionDetail.module.css";
 import ReactMarkdown from "react-markdown";
 
@@ -30,7 +30,7 @@ function initials(firstName, lastName) {
 export default function QuestionDetail() {
   const { questionHash } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
 
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
@@ -75,7 +75,7 @@ export default function QuestionDetail() {
     fetchQuestion();
   }, [fetchQuestion]);
 
-  const isOwnQuestion = !!user && !!question && question.author?.id === user.id;
+  const isOwnQuestion = !!currentUser && !!question && question.author?.id === currentUser.id;
 
   const insertMarkdown = (before) => {
     setDraftAnswer((prev) => prev + before);
