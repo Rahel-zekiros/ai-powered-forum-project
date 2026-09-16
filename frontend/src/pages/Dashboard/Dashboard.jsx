@@ -6,7 +6,7 @@ import { getQuestions, searchQuestionsSemantic } from '../../services/question.s
 import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { currentUser: user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,7 +22,6 @@ export default function Dashboard() {
         const params = new URLSearchParams(location.search);
         const q = params.get('q');
         const semantic = params.get('semantic');
-
         let data = [];
         if (semantic) {
           const result = await searchQuestionsSemantic({ query: semantic });
@@ -121,7 +120,7 @@ export default function Dashboard() {
             </div>
           </>
         )}
-        
+
         {(isLoading || error) && (
           <p className={styles.statsDisclaimer}>
             Loading snapshot for the list below...
@@ -158,16 +157,19 @@ export default function Dashboard() {
               {questions.map((q) => {
                 const isMine = q.author?.id === user?.id;
                 const excerpt = q.content ? q.content.substring(0, 100) + '...' : '';
+                const authorName = [q.author?.firstName, q.author?.lastName]
+                  .filter(Boolean)
+                  .join(' ') || 'Unknown user';
                 return (
-                  <div 
-                    key={q.id} 
+                  <div
+                    key={q.id}
                     className={`${styles.questionCard} ${isMine ? styles.myQuestion : ''}`}
                     onClick={() => navigate(`/question/${q.questionHash}`)}
                   >
                     <div className={styles.avatar}>
                       {q.author?.firstName?.charAt(0) || 'U'}{q.author?.lastName?.charAt(0) || ''}
                     </div>
-                    
+
                     <div className={styles.questionContent}>
                       <div className={styles.questionTitle}>{q.title}</div>
                       <div className={styles.questionExcerpt}>{excerpt}</div>
@@ -176,11 +178,11 @@ export default function Dashboard() {
                           <MessageSquare size={14} /> {q.answerCount || 0} replies
                         </span>
                         <span>
-                          {new Date(q.createdAt).toLocaleDateString()} by {isMine ? 'you' : `${q.author?.firstName} ${q.author?.lastName}`}
+                          {new Date(q.createdAt).toLocaleDateString()} by {isMine ? 'you' : authorName}
                         </span>
                       </div>
                     </div>
-                    
+
                     {isMine && <span className={styles.yoursBadge}>YOURS</span>}
                   </div>
                 );
