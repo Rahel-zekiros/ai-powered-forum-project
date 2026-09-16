@@ -14,11 +14,13 @@ export default function MyQuestions() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch the user's questions when the component mounts
   useEffect(() => {
     const fetchMyQuestions = async () => {
       setIsLoading(true);
       setError(null);
 
+      // Fetch questions created by the current user
       try {
         const result = await getQuestions({ mine: true });
         setMyQuestions(result.data);
