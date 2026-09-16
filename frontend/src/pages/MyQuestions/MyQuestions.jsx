@@ -5,6 +5,7 @@ import { getQuestions } from "../../services/question.service";
 import { useAuth } from "../../contexts/AuthContext";
 import styles from "./MyQuestions.module.css";
 
+// this component displays the questions created by the current user. It fetches the user's questions from the backend and displays them in a list. If there are no questions, it shows a message encouraging the user to ask their first question. The user can also navigate to the "Ask Question" page to create a new question.
 export default function MyQuestions() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
