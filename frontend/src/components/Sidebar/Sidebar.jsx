@@ -1,5 +1,5 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, MessageSquare, FileText, PlusCircle, MessageSquareCode } from 'lucide-react';
+import { LayoutDashboard, LogOut, MessageSquare, FileText, PlusCircle, MessageSquareCode, UserCog } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import styles from './Sidebar.module.css';
 
@@ -13,8 +13,8 @@ export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { currentUser, logoutUser } = useAuth();
 
-  const firstName = currentUser?.firstName || 'User';
-  const lastName = currentUser?.lastName || '';
+  const firstName = currentUser?.firstName || currentUser?.first_name || 'User';
+  const lastName = currentUser?.lastName || currentUser?.last_name || '';
   const fullName = `${firstName} ${lastName}`.trim();
   const initials = `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase() || 'U';
 
@@ -78,7 +78,12 @@ export default function Sidebar({ isOpen, onClose }) {
             <div className={styles.avatar}>{initials}</div>
             <div className={styles.profileInfo}>
               <span className={styles.profileName}>{fullName}</span>
-              <span className={styles.profileRole}>Learner</span>
+              
+              <Link to="/profile/update" onClick={onClose} className={styles.editProfileLink}>
+                <span className={`${styles.profileRole} ${styles.profileRoleWithIcon}`}>
+                  <UserCog size={12} /> Edit Profile
+                </span>
+              </Link>
             </div>
           </div>
 
