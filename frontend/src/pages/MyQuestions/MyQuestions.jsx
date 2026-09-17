@@ -99,8 +99,7 @@ export default function MyQuestions() {
               <article
                 key={question.id}
                 className={styles.questionCard}
-                // onClick={() => navigate(`/question/${question.questionHash}`)}
-                onClick={() => navigate(`/question/${question.id}`)}
+                onClick={() => navigate(`/question/${question.questionHash}`)}
               >
                 <div className={styles.leftAccent} />
 
