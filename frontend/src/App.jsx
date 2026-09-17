@@ -10,7 +10,7 @@ import Landing from "./pages/Landing/Landing";
 import AskQuestion from "./pages/PostQuestion/PostQuestion";
 // import RagAnswerBody from './components/RagAnswerBody/RagAnswerBody';
 import QuestionDetail from "./pages/QuestionDetail/QuestionDetail";
-
+import ProfileUpdate from './pages/profileUpdatePage/ProfileUpdate'
 function App() {
   return (
     <BrowserRouter>
@@ -56,6 +56,17 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+               <Route
+              path="/profile/update"
+              element={
+                <ProtectedRoute>
+                  <ProfileUpdate />
+                </ProtectedRoute>
+              }
+            />
+
+
 
             <Route
               path="/rag-documents"

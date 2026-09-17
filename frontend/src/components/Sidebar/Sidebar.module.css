@@ -205,6 +205,27 @@
   opacity: 0.8;
 }
 
+
+
+
+.editProfileLink:hover {
+ color: #111827;
+}
+.profileCardLink {
+  text-decoration: none;
+}
+
+.profileCard {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.profileRoleWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 @media (min-width: 900px) {
   .overlay {
     display: none;
