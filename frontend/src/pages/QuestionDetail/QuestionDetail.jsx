@@ -354,7 +354,7 @@ export default function QuestionDetail() {
                   <li key={r.id} className={styles.relatedItem}>
                     <button
                       className={styles.relatedLink}
-                      onClick={() => navigate(`/questions/${r.questionHash}`)}
+                      onClick={() => navigate(`/question/${r.questionHash}`)}
                     >
                       {r.title}
                     </button>

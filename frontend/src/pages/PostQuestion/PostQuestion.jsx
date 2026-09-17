@@ -89,7 +89,8 @@ export default function PostQuestion() {
         content,
       });
 
-      setCoachFeedback(response);
+      // ሰርቨሩ ከሚልከው res.status(...).json({ data }) ጋር እንዲጣጣም response.data ወይም response ይደረጋል
+      setCoachFeedback(response.data || response);
     } catch (err) {
       const message =
         err.response?.data?.message ||
