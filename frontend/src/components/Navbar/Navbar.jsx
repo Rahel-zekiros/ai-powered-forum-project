@@ -9,17 +9,22 @@ export default function Navbar({
   user,
   onLogout,
   onToggleSidebar,
-  searchQuery = "",
-  onSearchChange,
-  onAiSearch,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const queryParam = searchParams.get("q") || searchParams.get("semantic") || "";
+  const [searchQuery, setSearchQuery] = useState(queryParam);
+
+  useEffect(() => {
+    const currentQ = searchParams.get("q") || searchParams.get("semantic") || "";
+    setSearchQuery(currentQ);
+  }, [searchParams]);
+
   const handleInputChange = (e) => {
     const value = e.target.value;
-    if (onSearchChange) onSearchChange(value);
+    setSearchQuery(value);
 
     if (location.pathname === "/dashboard") {
       if (value.trim()) {
@@ -32,14 +37,13 @@ export default function Navbar({
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && searchQuery.trim()) {
-      executeSearch();
+      executeAISearch();
     }
   };
-const executeSearch = () => {
-    if (onAiSearch) {
-      onAiSearch(searchQuery);
-    }
-    
+
+  const executeAISearch = () => {
+    if (!searchQuery.trim()) return;
+
     if (location.pathname !== "/dashboard") {
       navigate(`/dashboard?semantic=${encodeURIComponent(searchQuery)}`);
     } else {
@@ -48,8 +52,7 @@ const executeSearch = () => {
   };
 
   const handleClear = () => {
-    if (onSearchChange) onSearchChange("");
-    
+    setSearchQuery("");
     if (location.pathname === "/dashboard") {
       setSearchParams({});
     }
@@ -97,7 +100,7 @@ const executeSearch = () => {
             <button
               type="button"
               className={styles.aiSearchButton}
-              onClick={executeSearch}
+              onClick={executeAISearch}
             >
               <Sparkles size={15} />
               <span>AI Search</span>
