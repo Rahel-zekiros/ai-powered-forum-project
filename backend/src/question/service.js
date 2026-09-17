@@ -9,7 +9,7 @@ import { getEmbedding } from "../embeddingServices/embeddingService.js";
 export const getQuestionsService = async ({ search, mine, userId }) => {
   let query = `
     SELECT 
-      q.question_id AS id, q.title, q.content, q.created_at AS createdAt, q.updated_at AS updatedAt,
+      q.question_id AS id, q.question_hash AS questionHash, q.title, q.content, q.created_at AS createdAt, q.updated_at AS updatedAt,
       u.user_id AS authorId, u.first_name AS authorFirstName, u.last_name AS authorLastName,
       COUNT(a.answer_id) AS answerCount
     FROM questions q
@@ -32,7 +32,7 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
 
   query += ` 
     GROUP BY 
-  q.question_id, q.title, q.content, q.created_at, q.UPDATED_AT, u.user_id, u.first_name, u.last_name
+  q.question_id, q.question_hash, q.title, q.content, q.created_at, q.UPDATED_AT, u.user_id, u.first_name, u.last_name
     ORDER BY q.created_at DESC 
     LIMIT 100
   `;
@@ -41,7 +41,7 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
 
   return rows.map((row) => ({
     id: row.id,
-    // questionHash: row.questionHash,
+    questionHash: row.questionHash,
     title: row.title,
     content: row.content,
     answerCount: row.answerCount,
@@ -183,7 +183,7 @@ export const searchQuestionsSemanticService = async ({
   const inClause = questionIds.map(() => "?").join(",");
   const querySql = `
     SELECT 
-      q.question_id AS id, q.title, q.content, q.created_at AS createdAt, q.UPDATED_AT AS updatedAt,
+      q.question_id AS id, q.question_hash AS questionHash, q.title, q.content, q.created_at AS createdAt, q.UPDATED_AT AS updatedAt,
       u.user_id AS authorId, u.first_name AS authorFirstName, u.last_name AS authorLastName,
       (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.question_id) AS answerCount
     FROM questions q
@@ -197,7 +197,7 @@ export const searchQuestionsSemanticService = async ({
     const row = hydratedRows.find((r) => r.id === f.questionId);
     return {
       id: row.id,
-      // questionHash: row.questionHash,
+      questionHash: row.questionHash,
       title: row.title,
       content: row.content,
       answerCount: row.answerCount,
