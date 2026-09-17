@@ -9,11 +9,11 @@ export const mainRouter = express.Router();
 // Authentication routes
 mainRouter.use('/auth', authRoutes);
 
-// 1. dashboard routes
-mainRouter.use('/questions', questionRoutes);
-
-// 2. post question routes
+// 1. post question routes
 mainRouter.use('/questions', postQuestionRoutes);
+
+// 2. dashboard routes
+mainRouter.use('/questions', questionRoutes);
 
 // 3. question detail routes
 mainRouter.use('/questions', questionDetailRoutes);
