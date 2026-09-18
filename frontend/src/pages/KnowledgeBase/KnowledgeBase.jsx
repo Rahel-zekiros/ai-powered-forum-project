@@ -340,26 +340,51 @@ export default function KnowledgeBase() {
             <h3 className={styles.cardTitle}>Library</h3>
             <p className={styles.cardSubtitle}>Add and manage your reference PDFs.</p>
 
-            {/* Feature 2: All Documents / Cross-Search Toggle */}
+            {/* Feature 2: All Documents / Cross-Search Toggle Button */}
             <div
               onClick={() => handleSelectDoc(null)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '10px 14px',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
                 marginBottom: '14px',
-                backgroundColor: selectedDoc === null ? '#eff6ff' : '#f8fafc',
-                border: `1px solid ${selectedDoc === null ? '#3b82f6' : '#e2e8f0'}`,
-                borderRadius: '8px',
+                backgroundColor: selectedDoc === null ? '#eff6ff' : '#ffffff',
+                border: `2px solid ${selectedDoc === null ? '#3b82f6' : '#cbd5e1'}`,
+                borderRadius: '10px',
                 cursor: 'pointer',
                 fontWeight: '600',
                 fontSize: '13px',
-                color: selectedDoc === null ? '#1d4ed8' : '#475569'
+                color: selectedDoc === null ? '#1d4ed8' : '#334155',
+                boxShadow: selectedDoc === null ? '0 4px 6px -1px rgba(59, 130, 246, 0.15)' : '0 1px 2px rgba(0, 0, 0, 0.05)',
+                transition: 'all 0.2s ease-in-out',
+              }}
+              onMouseEnter={(e) => {
+                if (selectedDoc !== null) {
+                  e.currentTarget.style.backgroundColor = '#f8fafc';
+                  e.currentTarget.style.borderColor = '#94a3b8';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedDoc !== null) {
+                  e.currentTarget.style.backgroundColor = '#ffffff';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                }
               }}
             >
-              <Globe size={16} />
-              <span>All Documents (Cross-Search & Chat)</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Globe size={18} color={selectedDoc === null ? '#2563eb' : '#64748b'} />
+                <span>All Documents (Cross-Search & Chat)</span>
+              </div>
+              <span style={{
+                fontSize: '11px',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                backgroundColor: selectedDoc === null ? '#dbeafe' : '#f1f5f9',
+                color: selectedDoc === null ? '#1d4ed8' : '#64748b'
+              }}>
+                {selectedDoc === null ? 'Active' : 'Click to select'}
+              </span>
             </div>
 
             <div className={styles.uploadDashedBox}>
