@@ -463,8 +463,22 @@ export default function KnowledgeBase() {
               <div className={styles.sectionDivider} />
             </div>
           ) : (
-            <div style={{ padding: '12px 16px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px', fontSize: '13px', color: '#475569' }}>
-              💡 <strong>All Documents Mode Active:</strong> You are currently searching and chatting across your entire library collection.
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px', 
+              padding: '12px 16px', 
+              backgroundColor: '#f8fafc', 
+              borderRadius: '8px', 
+              border: '1px solid #e2e8f0', 
+              marginBottom: '20px', 
+              fontSize: '13px', 
+              color: '#475569' 
+            }}>
+              <Sparkles size={16} color="#2563eb" />
+              <span>
+                <strong>All Documents Mode Active:</strong> You are currently searching and chatting across your entire library collection.
+              </span>
             </div>
           )}
 
