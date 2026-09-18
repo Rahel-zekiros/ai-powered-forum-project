@@ -37,6 +37,7 @@ export default function KnowledgeBase() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [searchMessage, setSearchMessage] = useState(''); // 💡 ሰርቨሩ የሚልከውን ማስጠንቀቂያ ሜሴጅ ለመያዝ
 
   // ==========================================
   // Chat / AI State (Streaming & Multi-turn)
@@ -151,6 +152,7 @@ export default function KnowledgeBase() {
         setSearchQuery('');
         setSearchResults([]);
         setSearchError('');
+        setSearchMessage('');
         setChatMessages([]);
         setAiQuestion('');
         setAiError('');
@@ -173,6 +175,7 @@ export default function KnowledgeBase() {
     setSearchQuery('');
     setSearchResults([]);
     setSearchError('');
+    setSearchMessage('');
     setChatMessages([]);
     setAiQuestion('');
     setAiError('');
@@ -196,6 +199,7 @@ export default function KnowledgeBase() {
       setIsSearching(true);
       setSearchError('');
       setSearchResults([]);
+      setSearchMessage(''); // 💡 አዲስ ሰርች ሲጀመር የቀድሞውን ሜሴጅ እናጸዳለን
 
       const payload = {
         query: searchQuery.trim()
@@ -206,7 +210,15 @@ export default function KnowledgeBase() {
       }
 
       const res = await apiClient.post('/api/rag/search', payload);
-      setSearchResults(res.data?.results || []);
+      
+      // 💡 ሰርቨሩ message ከላከ እንይዛለን፣ ካልሆነ ውጤቱን እናሳያለን
+      if (res.data?.message) {
+        setSearchMessage(res.data.message);
+        setSearchResults([]);
+      } else {
+        setSearchResults(res.data?.results || []);
+        setSearchMessage('');
+      }
 
     } catch (err) {
       console.error('Semantic Search Error:', err);
@@ -533,6 +545,14 @@ export default function KnowledgeBase() {
             </button>
 
             {searchError && <div className={styles.errorBanner} style={{ marginTop: '16px' }}>{searchError}</div>}
+
+            {/* 💡 ሰርቨሩ የላከውን ማስጠንቀቂያ ሜሴጅ እዚህ እናሳያለን */}
+            {searchMessage && (
+              <div style={{ marginTop: '16px', padding: '14px 18px', backgroundColor: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '8px', color: '#c2410c', fontSize: '13px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>⚠️</span>
+                <span>{searchMessage}</span>
+              </div>
+            )}
 
             {searchResults.length > 0 && (
               <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
