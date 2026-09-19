@@ -1,15 +1,41 @@
-import { StatusCodes } from 'http-status-codes';
+import { StatusCodes } from "http-status-codes";
 
-export const errorHandler = (err, req, res, next) => {
-  let customError = {
+/**
+ * Global Error Handling Middleware
+ */
+export const globalErrorHandler = (err, req, res, next) => {
+  // Default error shape
+  const errorResponse = {
     statusCode: err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
-    msg: err.message || 'Something went wrong try again later',
+    message:
+      err.message || "An unexpected error occurred. Please try again later.",
   };
 
-  if (err?.code === 'ER_DUP_ENTRY') {
-    customError.statusCode = StatusCodes.BAD_REQUEST;
-    customError.msg = 'Duplicate value entered for a unique field';
+  // Handle MySQL Duplicate Entry Errors (e.g. Unique Email constraint)
+  if (err?.code === "ER_DUP_ENTRY") {
+    errorResponse.statusCode = StatusCodes.BAD_REQUEST;
+    errorResponse.message =
+      "The entered email or unique identifier already exists.";
   }
 
-  return res.status(customError.statusCode).json({ msg: customError.msg });
+  // Handle JSON Syntax Errors in request body
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    errorResponse.statusCode = StatusCodes.BAD_REQUEST;
+    errorResponse.message = "Malformed JSON payload in request body.";
+  }
+
+  // Log error stack in development environment
+  if (process.env.NODE_ENV !== "production") {
+    console.error(" Internal Error Details:", err);
+  }
+
+  return res.status(errorResponse.statusCode).json({
+    success: false,
+    message: errorResponse.message,
+    ...(process.env.NODE_ENV !== "production" && { stack: err.stack }),
+  });
 };
+
+// Backwards compatibility alias
+export const errorHandler = globalErrorHandler;
+export default globalErrorHandler;

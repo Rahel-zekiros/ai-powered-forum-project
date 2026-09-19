@@ -1,27 +1,20 @@
 import express from 'express';
 import {
-  registerController,
-  loginController,
+  handleUserRegistration,
+  handleUserLogin,
+  handleFetchCurrentUser,
 } from '../controller/auth.controller.js';
 import {
-  registerValidation,
-  loginValidation,
+  validateUserRegistration,
+  validateUserLogin,
 } from '../validations/auth.validation.js';
+import { authenticateUser } from '../../../middleware/authentication.js';
 
 const router = express.Router();
 
-/**
- * @route POST /api/auth/register
- * @desc Register a new user
- * @access Public
- */
-router.post('/register', registerValidation, registerController);
+router.post('/register', validateUserRegistration, handleUserRegistration);
 
-/**
- * @route POST /api/auth/login
- * @desc Authenticate user and get token
- * @access Public
- */
-router.post('/login', loginValidation, loginController);
+router.post('/login', validateUserLogin, handleUserLogin);
+router.get('/me', authenticateUser, handleFetchCurrentUser);
 
 export default router;

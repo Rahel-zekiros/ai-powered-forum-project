@@ -1,0 +1,118 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--background, #fafafa);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  transition: margin-left 0.25s ease-in-out;
+}
+
+.content {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 80rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+  .main {
+    margin-left: var(--app-sidebar-width, 15rem);
+  }
+}
+
+
+
+
+
+.bottomFooter {
+  border-top: 1px solid var(--border);
+  background-color: var(--surface);
+  background-image: linear-gradient(
+    180deg,
+    var(--surface-container-low) 0%,
+    var(--surface) 28%
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+}
+
+.footerInnerContent {
+  max-width: var(--app-content-max, 80rem);
+  margin: 0 auto;
+  padding-left: var(--spacing-xl);
+  padding-right: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+}
+
+@media (min-width: 768px) {
+  .footerInnerContent {
+    flex-direction: row;
+  }
+}
+
+.footerInfoBlock {
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .footerInfoBlock {
+    text-align: left;
+  }
+}
+
+.footerHeading {
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.footerSubtext {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: var(--app-form-max, 28rem);
+  margin-bottom: var(--spacing-sm);
+}
+
+.copyrightText {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.footerNavigation {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.footerNavLink {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-base);
+}
+
+.footerNavLink:hover {
+  color: var(--primary);
+}
+
+.footerNavLink:focus {
+  outline: none;
+}
+
+.footerNavLink:focus-visible {
+  color: var(--primary);
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}

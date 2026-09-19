@@ -1,113 +1,89 @@
-import { apiClient } from '../core/api.client.js';
+import { apiClient } from "../core/api.client.js";
 
-/**
- * Registers a new user.
- * @param {Object} userData - User details for registration.
- */
-async function register(userData) {
+async function registerAccount(formData) {
   try {
-    const response = await apiClient.post('/api/auth/register', userData);
-    return { user: response.data.user };
-  } catch (error) {
-    throw handleAuthError(error);
+    const res = await apiClient.post("/api/auth/register", formData);
+    return { user: res.data.user };
+  } catch (err) {
+    throw parseAuthException(err);
   }
 }
 
-/**
- * Logs in an existing user and stores their session in localStorage.
- * @param {Object} credentials - User login credentials.
- */
-async function login(credentials) {
+async function loginAccount(credentials) {
   try {
-    const response = await apiClient.post('/api/auth/login', credentials);
-    const { user, token } = response.data;
+    const res = await apiClient.post("/api/auth/login", credentials);
 
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    const token = res.data.accessToken || res.data.token;
+    const user = res.data.user;
+
+    if (token) {
+      localStorage.setItem("authToken", token);
+    }
+
+    if (user) {
+      localStorage.setItem("activeUser", JSON.stringify(user));
+    }
 
     return { user, token };
-  } catch (error) {
-    throw handleAuthError(error);
+  } catch (err) {
+    throw parseAuthException(err);
   }
 }
 
-/**
- * Logs out the current user by clearing localStorage.
- */
-function logout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+async function verifyActiveSession() {
+  try {
+    const res = await apiClient.get("/api/auth/me");
+    const profile = res.data.user || res.data;
+    localStorage.setItem("activeUser", JSON.stringify(profile));
+    return profile;
+  } catch (err) {
+    throw parseAuthException(err);
+  }
 }
 
-/**
- * Retrieves the stored JWT token from localStorage.
- */
-function getStoredToken() {
-  return localStorage.getItem('token');
+function clearSessionData() {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("activeUser");
 }
 
-/**
- * Retrieves the stored user object from localStorage.
- */
-function getStoredUser() {
-  const userJson = localStorage.getItem('user');
-  if (!userJson) return null;
+function retrieveAuthToken() {
+  return localStorage.getItem("authToken");
+}
+
+function retrieveCachedUser() {
+  const cachedData = localStorage.getItem("activeUser");
+  if (!cachedData) return null;
 
   try {
-    return JSON.parse(userJson);
+    return JSON.parse(cachedData);
   } catch {
-    // If JSON parsing fails, clear invalid data
-    localStorage.removeItem('user');
+    localStorage.removeItem("activeUser");
     return null;
   }
 }
 
-/**
- * Checks if the user is currently authenticated based on local storage.
- */
-function isAuthenticated() {
-  return !!getStoredToken();
-}
-
-/**
- * Centralized error handler for auth service requests.
- */
-function handleAuthError(error) {
+function parseAuthException(error) {
   if (!error.response) {
-    if (error.code === 'ECONNABORTED') {
-      return new Error('Request timed out. Please try again.');
-    }
-    return new Error(
-      'Unable to connect to server. Please check your internet connection.',
-    );
+    return new Error("Server connection failed. Please check your network.");
   }
 
-  const status = error.response.status;
-  const backendMessage =
-    error.response.data?.msg || error.response.data?.message;
+  const statusCode = error.response.status;
+  const serverMsg = error.response.data?.msg || error.response.data?.message;
 
-  switch (status) {
-    case 400:
-      return new Error(backendMessage || 'Invalid input data.');
-    case 401:
-      return new Error(backendMessage || 'Invalid email or password.');
-    case 500:
-      return new Error(
-        'Something went wrong on our end. Please try again later.',
-      );
-    default:
-      return new Error(backendMessage || 'An unexpected error occurred.');
-  }
+  if (statusCode === 400)
+    return new Error(serverMsg || "Invalid data submitted.");
+  if (statusCode === 401)
+    return new Error(serverMsg || "Invalid email or password.");
+  if (statusCode === 500) return new Error("Internal server error.");
+
+  return new Error(serverMsg || "An unexpected error occurred.");
 }
 
-/**
- * Service for handling auth-related requests.
- */
 export const authService = {
-  register,
-  login,
-  logout,
-  getStoredToken,
-  getStoredUser,
-  isAuthenticated,
+  registerAccount,
+  loginAccount,
+  verifyActiveSession,
+  clearSessionData,
+  retrieveAuthToken,
+  retrieveCachedUser,
 };
