@@ -11,6 +11,7 @@ import AskQuestion from "./pages/PostQuestion/PostQuestion";
 // import RagAnswerBody from './components/RagAnswerBody/RagAnswerBody';
 import QuestionDetail from "./pages/QuestionDetail/QuestionDetail";
 import ProfileUpdate from './pages/profileUpdatePage/ProfileUpdate'
+import KnowledgeBase from "./pages/KnowledgeBase/KnowledgeBase";
 function App() {
   return (
     <BrowserRouter>
@@ -72,8 +73,8 @@ function App() {
               path="/rag-documents"
               element={
                 <ProtectedRoute>
-                  <h1>RAG Documents Page</h1>
-                </ProtectedRoute>
+             <KnowledgeBase />               
+              </ProtectedRoute>
               }
             />
           </Route>
