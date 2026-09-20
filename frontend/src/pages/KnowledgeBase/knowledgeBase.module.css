@@ -1,6 +1,6 @@
 /* ==========================================
-   KNOWLEDGE BASE COMPONENT STYLES (BODY ONLY)
-   ================================---------- */
+   KNOWLEDGE BASE COMPONENT
+   ========================================== */
 
 .contentArea {
   display: flex;
@@ -13,9 +13,16 @@
   box-sizing: border-box;
 }
 
-/* --- Top Banner Card --- */
+/* ==========================================
+   TOP BANNER
+   ========================================== */
+
 .bannerCard {
-  background: linear-gradient(135deg, #d2d7dd 0%, #c4c7cc(251 8% 56%) 100%);
+  background: linear-gradient(
+    135deg,
+    oklab(97.49% -0.00166 -0.00201) 0%,
+    lch(91.24% 0.63 256.17) 100%
+  );
   border: 1px solid #fed7aa;
   border-radius: 12px;
   padding: 24px 32px;
@@ -38,7 +45,7 @@
   font-size: 24px;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .bannerDesc {
@@ -49,7 +56,10 @@
   max-width: 900px;
 }
 
-/* --- Error Banner --- */
+/* ==========================================
+   ERROR
+   ========================================== */
+
 .errorBanner {
   background-color: #fef2f2;
   border: 1px solid #fecaca;
@@ -59,7 +69,10 @@
   font-size: 14px;
 }
 
-/* --- Split Grid Layout (Left & Right Columns) --- */
+/* ==========================================
+   GRID
+   ========================================== */
+
 .splitGrid {
   display: grid;
   grid-template-columns: 380px 1fr;
@@ -67,18 +80,20 @@
   align-items: start;
 }
 
-@media (max-width: 1024px) {
-  .splitGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* --- Left Column: Library & Upload --- */
 .leftColumn {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================
+   LIBRARY
+   ========================================== */
 
 .libraryCard {
   background: #ffffff;
@@ -92,14 +107,93 @@
   font-size: 18px;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
 }
 
 .cardSubtitle {
   font-size: 13px;
   color: #6b7280;
-  margin: 0 0 16px 0;
+  margin: 0 0 16px;
 }
+
+/* ==========================================
+   ALL DOCUMENTS BUTTON
+   ========================================== */
+
+.allDocumentsButton,
+.allDocumentsActive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease-in-out;
+  text-align: left;
+}
+
+.allDocumentsButton {
+  background: #ffffff;
+  border: 2px solid #cbd5e1;
+  color: #334155;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.allDocumentsActive {
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  color: #1d4ed8;
+  box-shadow: 0 4px 6px -1px rgba(
+    59,
+    130,
+    246,
+    0.15
+  );
+}
+
+.allDocumentsButton:hover {
+  border-color: #3b82f6;
+  background: #f8fbff;
+}
+
+.allDocumentsLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.allDocumentsIcon {
+  color: #64748b;
+}
+
+.allDocumentsIconActive {
+  color: #2563eb;
+}
+
+.activeDocumentBadge,
+.selectDocumentBadge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.activeDocumentBadge {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.selectDocumentBadge {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* ==========================================
+   UPLOAD
+   ========================================== */
 
 .uploadDashedBox {
   border: 2px dashed #d1d5db;
@@ -113,7 +207,7 @@
 .uploadInstruction {
   font-size: 12px;
   color: #6b7280;
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   line-height: 1.4;
 }
 
@@ -125,13 +219,11 @@
   margin-bottom: 8px;
 }
 
-.chooseFileBtn {
+.chooseFileBtn,
+.uploadBtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  color: #374151;
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 500;
@@ -140,23 +232,22 @@
   transition: background 0.2s;
 }
 
+.chooseFileBtn {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
 .chooseFileBtn:hover {
   background: #f3f4f6;
 }
 
 .uploadBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   background: #f97316;
   border: none;
   color: #ffffff;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .uploadBtn:hover:not(:disabled) {
@@ -168,6 +259,10 @@
   cursor: not-allowed;
 }
 
+.hiddenFileInput {
+  display: none;
+}
+
 .fileNameDisplay {
   display: block;
   font-size: 12px;
@@ -176,7 +271,12 @@
   margin-top: 4px;
 }
 
-.statusText, .emptyListText {
+/* ==========================================
+   DOCUMENTS
+   ========================================== */
+
+.statusText,
+.emptyListText {
   font-size: 13px;
   color: #6b7280;
   text-align: center;
@@ -184,7 +284,6 @@
   margin: 0;
 }
 
-/* Documents List */
 .documentsList {
   display: flex;
   flex-direction: column;
@@ -260,10 +359,9 @@
   background: #fee2e2;
 }
 
-/* --- Right Column: Active Reader & Features ---.rightColumn {
-  display: flex;
-  flex-direction: column;
-} */
+/* ==========================================
+   READER
+   ========================================== */
 
 .activeReaderContainer {
   background: #ffffff;
@@ -282,6 +380,12 @@
   gap: 4px;
 }
 
+.readerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .sectionTitle {
   font-size: 16px;
   font-weight: 600;
@@ -292,7 +396,16 @@
 .sectionSubtitle {
   font-size: 13px;
   color: #6b7280;
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
+}
+
+.clearHighlightBtn {
+  font-size: 11px;
+  padding: 3px 8px;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .readerBoxPlaceholder {
@@ -328,6 +441,31 @@
   margin: 4px 0;
 }
 
+/* ==========================================
+   ALL DOCUMENTS MODE
+   ========================================== */
+
+.allDocumentsModeBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.allDocumentsModeIcon {
+  color: #2563eb;
+}
+
+/* ==========================================
+   FEATURE
+   ========================================== */
+
 .featureSection {
   display: flex;
   flex-direction: column;
@@ -346,7 +484,8 @@
   color: #374151;
 }
 
-.textInput, .textareaInput {
+.textInput,
+.textareaInput {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #d1d5db;
@@ -359,9 +498,15 @@
   font-family: inherit;
 }
 
-.textInput:focus, .textareaInput:focus {
+.textInput:focus,
+.textareaInput:focus {
   border-color: #f97316;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+  box-shadow: 0 0 0 3px rgba(
+    249,
+    115,
+    22,
+    0.1
+  );
 }
 
 .textareaInput {
@@ -394,19 +539,955 @@
   cursor: not-allowed;
 }
 
-.readerPlaceholderCard {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 48px 24px;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+/* ==========================================
+   SEARCH
+   ========================================== */
+
+.searchErrorBanner {
+  margin-top: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
-.placeholderText {
+.searchMessageBanner {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-radius: 8px;
+  color: #c2410c;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchResultsContainer {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.searchResultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.searchResultsTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.blueIcon {
+  color: #2563eb;
+}
+
+.resultCount {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ==========================================
+   SEARCH RESULT CARD
+   ========================================== */
+
+.searchResultCard,
+.searchResultCardSelected {
+  padding: 18px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  word-break: break-word;
+}
+
+.searchResultCard {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 1px 3px rgba(
+    0,
+    0,
+    0,
+    0.05
+  );
+}
+
+.searchResultCardSelected {
+  background: #eff6ff;
+  border: 1px solid #3b82f6;
+  box-shadow: 0 4px 10px rgba(
+    59,
+    130,
+    246,
+    0.12
+  );
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 6px;
+}
+
+.resultChunkTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.resultSelectedText {
+  font-size: 11px;
+  color: #2563eb;
+}
+
+.resultInspectText {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ==========================================
+   MARKDOWN
+   ========================================== */
+
+.markdownContent {
+  width: 100%;
+  color: #1e293b;
+  font-size: 13px;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.markdownContent h1,
+.markdownContent h2,
+.markdownContent h3,
+.markdownContent h4,
+.markdownContent h5,
+.markdownContent h6 {
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+.markdownContent h1 {
+  font-size: 22px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.markdownContent h2 {
+  font-size: 19px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 6px;
+}
+
+.markdownContent h3 {
+  font-size: 17px;
+}
+
+.markdownContent h4 {
+  font-size: 15px;
+}
+
+.markdownContent h5 {
   font-size: 14px;
-  color: #6b7280;
-  max-width: 450px;
-  margin: 0 auto;
-  line-height: 1.6;
+}
+
+.markdownContent h6 {
+  font-size: 13px;
+}
+
+.markdownContent p {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.markdownContent strong {
+  font-weight: 800;
+  color: #111827;
+}
+
+.markdownContent em {
+  font-style: italic;
+}
+
+.markdownContent ul,
+.markdownContent ol {
+  margin-top: 8px;
+  margin-bottom: 14px;
+  padding-left: 28px;
+}
+
+.markdownContent li {
+  margin-bottom: 5px;
+}
+
+.markdownContent blockquote {
+  margin: 14px 0;
+  padding: 10px 14px;
+  border-left: 4px solid #3b82f6;
+  background: #eff6ff;
+  color: #334155;
+  border-radius: 0 8px 8px 0;
+}
+
+/* ==========================================
+   INLINE CODE
+   ========================================== */
+
+.markdownContent code {
+  background: #f1f5f9;
+  color: #be123c;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.92em;
+}
+
+/* ==========================================
+   DARK CODE BLOCK
+   ========================================== */
+
+.markdownContent pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 16px;
+  margin: 14px 0;
+  border-radius: 10px;
+  overflow-x: auto;
+  border: 1px solid #1e293b;
+  box-shadow: 0 4px 12px rgba(
+    15,
+    23,
+    42,
+    0.18
+  );
+}
+
+.markdownContent pre code {
+  display: block;
+  background: transparent;
+  color: #e2e8f0;
+  padding: 0;
+  border-radius: 0;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre;
+}
+
+.markdownContent br {
+  content: '';
+}
+
+.markdownContent p br {
+  display: block;
+  content: '';
+  margin-bottom: 4px;
+}
+
+/* ==========================================
+   MARKDOWN LINKS
+   ========================================== */
+
+.markdownContent a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.markdownContent a:hover {
+  color: #1d4ed8;
+}
+
+/* ==========================================
+   TABLE
+   ========================================== */
+
+.markdownContent table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 13px;
+}
+
+.markdownContent th,
+.markdownContent td {
+  border: 1px solid #cbd5e1;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.markdownContent th {
+  background: #f1f5f9;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.markdownContent tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.markdownContent hr {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 18px 0;
+}
+
+/* ==========================================
+   SEARCH CONTENT
+   ========================================== */
+
+.searchResultContent {
+  margin: 0;
+  font-size: 13px;
+  color: #343a40;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+/* ==========================================
+   NOTES
+   ========================================== */
+
+.noteDisplay {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #fef3c7;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #92400e;
+}
+
+.noteInputRow {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.noteInput {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  flex: 1;
+}
+
+.saveNoteBtn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  padding: 4px 8px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ==========================================
+   SELECTED RESULT
+   ========================================== */
+
+.selectedResultPanel {
+  margin-top: 24px;
+  padding: 20px;
+  background: #ffffff;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(
+    0,
+    0,
+    0,
+    0.08
+  );
+}
+
+.selectedResultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.selectedResultTitleArea {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.selectedResultTitle {
+  margin: 0;
+  font-size: 16px;
+  color: #1e293b;
+}
+
+.selectedResultSubtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.metadataGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    3,
+    minmax(0, 1fr)
+  );
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.metadataCard {
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.metadataLabel {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.metadataValue {
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.metadataRelevance {
+  font-size: 15px;
+  color: #2563eb;
+}
+
+.metadataChunkId {
+  font-size: 13px;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.documentInformation {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.contentTitle {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #334155;
+}
+
+.retrievedContent {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  line-height: 1.7;
+  font-size: 13px;
+  color: #334155;
+  word-break: break-word;
+}
+
+.similarityPanel {
+  margin-top: 18px;
+  padding: 15px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+.similarityHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 9px;
+}
+
+.similarityTitle {
+  margin: 0;
+  color: #1d4ed8;
+  font-size: 14px;
+}
+
+.similarityContent {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.8;
+}
+
+.similarityDecision {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid #bfdbfe;
+}
+
+.acceptedResult {
+  color: #15803d;
+}
+
+.rejectedResult {
+  color: #dc2626;
+}
+
+/* ==========================================
+   AI CHAT
+   ========================================== */
+
+.chatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.chatHeaderButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.exportButton,
+.clearButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.exportButton {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+}
+
+.clearButton {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+}
+
+.chatHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.userChatMessage,
+.assistantChatMessage {
+  padding: 18px 20px;
+  border-radius: 12px;
+}
+
+.userChatMessage {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.assistantChatMessage {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(
+    0,
+    0,
+    0,
+    0.05
+  );
+}
+
+.chatMessageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.userMessageLabel,
+.assistantMessageLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.userMessageLabel {
+  color: #15803d;
+}
+
+.assistantMessageLabel {
+  color: #64748b;
+}
+
+.copyButton,
+.copyButtonCopied {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.copyButton {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.copyButtonCopied {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.chatMarkdownContent {
+  word-break: break-word;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1e293b;
+}
+
+.sourcesContainer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.sourceLink {
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-right: 6px;
+}
+
+.aiQuestionForm {
+  margin-top: 16px;
+  position: relative;
+  z-index: 10;
+}
+
+.aiQuestionForm .inputGroup {
+  margin-bottom: 12px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media (max-width: 1024px) {
+  .splitGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .contentArea {
+    padding: 16px;
+  }
+
+  .bannerCard {
+    padding: 20px;
+  }
+
+  .metadataGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .readerHeader,
+  .chatHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chatHeaderButtons {
+    width: 100%;
+  }
+
+  .uploadControls {
+    flex-direction: column;
+  }
+
+  .chooseFileBtn,
+  .uploadBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .noteInputRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saveNoteBtn {
+    justify-content: center;
+  }
+}
+
+
+
+/* ================================
+   MARKDOWN CONTENT
+================================ */
+
+.markdownContent {
+  color: #334155;
+  line-height: 1.7;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+/* Headings */
+.markdownContent h1,
+.markdownContent h2,
+.markdownContent h3,
+.markdownContent h4,
+.markdownContent h5,
+.markdownContent h6 {
+  margin: 20px 0 12px;
+  color: #0f172a;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.markdownContent h1 {
+  font-size: 26px;
+}
+
+.markdownContent h2 {
+  font-size: 22px;
+}
+
+.markdownContent h3 {
+  font-size: 19px;
+}
+
+.markdownContent h4 {
+  font-size: 17px;
+}
+
+.markdownContent h5 {
+  font-size: 16px;
+}
+
+.markdownContent h6 {
+  font-size: 15px;
+}
+
+/* Paragraphs */
+.markdownContent p {
+  margin: 0 0 14px;
+}
+
+/* Bold */
+.markdownContent strong {
+  color: #111827;
+  font-weight: 800;
+}
+
+/* Italic */
+.markdownContent em {
+  font-style: italic;
+  color: #475569;
+}
+
+/* Lists */
+.markdownContent ul,
+.markdownContent ol {
+  margin: 10px 0 16px;
+  padding-left: 26px;
+}
+
+.markdownContent li {
+  margin: 5px 0;
+}
+
+/* Links */
+.markdownContent a {
+  color: #ea580c;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ================================
+   INLINE CODE
+================================ */
+
+.markdownContent :not(pre) > code {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 5px;
+
+  background: #e2e8f0;
+  color: #b42318;
+
+  font-family:
+    "Fira Code",
+    "Cascadia Code",
+    Consolas,
+    monospace;
+
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+/* ================================
+   CODE BLOCK
+================================ */
+
+.markdownContent pre {
+  margin: 16px 0;
+  padding: 18px;
+
+  overflow-x: auto;
+
+  background: #0f172a;
+  color: #e2e8f0;
+
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+
+  font-family:
+    "Fira Code",
+    "Cascadia Code",
+    Consolas,
+    monospace;
+
+  font-size: 14px;
+  line-height: 1.7;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Code inside pre */
+.markdownContent pre code {
+  display: block;
+
+  padding: 0;
+  margin: 0;
+
+  background: transparent;
+  color: #e2e8f0;
+
+  border: none;
+  border-radius: 0;
+
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+
+  white-space: pre;
+}
+
+/* Blockquote */
+.markdownContent blockquote {
+  margin: 16px 0;
+  padding: 10px 16px;
+
+  border-left: 4px solid #f97316;
+
+  background: #fff7ed;
+  color: #475569;
+
+  border-radius: 6px;
+}
+
+/* Horizontal line */
+.markdownContent hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Tables */
+.markdownContent table {
+  width: 100%;
+  margin: 16px 0;
+  border-collapse: collapse;
+}
+
+.markdownContent th,
+.markdownContent td {
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  text-align: left;
+}
+
+.markdownContent th {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+/* Images */
+.markdownContent img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* ================================
+   PDF / TEXT LINE BREAKS
+================================ */
+
+.markdownContent br {
+  display: block;
+  content: "";
+  margin-top: 4px;
 }
