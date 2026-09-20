@@ -15,7 +15,7 @@
 
 /* --- Top Banner Card --- */
 .bannerCard {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  background: linear-gradient(135deg, #d2d7dd 0%, #c4c7cc(251 8% 56%) 100%);
   border: 1px solid #fed7aa;
   border-radius: 12px;
   padding: 24px 32px;
