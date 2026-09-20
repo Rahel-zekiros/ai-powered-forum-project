@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
+import rehypeRaw from 'rehype-raw';
+
 import { apiClient } from "../../services/core/api.client.js";
+
 import {
   Upload,
   FileText,
@@ -18,6 +23,7 @@ import {
   Database,
   BarChart3
 } from 'lucide-react';
+
 import styles from './knowledgeBase.module.css';
 
 export default function KnowledgeBase() {
@@ -66,6 +72,25 @@ export default function KnowledgeBase() {
   const chatEndRef = useRef(null);
 
   // ==========================================
+  // Markdown Renderer
+  // ==========================================
+  const renderMarkdown = (content) => {
+    return (
+      <ReactMarkdown
+        remarkPlugins={[
+          remarkGfm,
+          remarkBreaks
+        ]}
+        rehypePlugins={[
+          rehypeRaw
+        ]}
+      >
+        {content || ''}
+      </ReactMarkdown>
+    );
+  };
+
+  // ==========================================
   // Auto-scroll Chat
   // ==========================================
   useEffect(() => {
@@ -82,13 +107,22 @@ export default function KnowledgeBase() {
       setIsLoading(true);
       setErrorMessage('');
 
-      const res = await apiClient.get('/api/rag/library');
+      const res = await apiClient.get(
+        '/api/rag/library'
+      );
 
       setDocuments(res.data || []);
 
     } catch (err) {
-      console.error('Error loading documents:', err);
-      setErrorMessage('Could not load documents.');
+      console.error(
+        'Error loading documents:',
+        err
+      );
+
+      setErrorMessage(
+        'Could not load documents.'
+      );
+
     } finally {
       setIsLoading(false);
     }
@@ -106,10 +140,17 @@ export default function KnowledgeBase() {
   // Select File
   // ==========================================
   const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
 
-      const file = e.target.files[0];
-      const fileName = file.name.toLowerCase();
+    if (
+      e.target.files &&
+      e.target.files[0]
+    ) {
+
+      const file =
+        e.target.files[0];
+
+      const fileName =
+        file.name.toLowerCase();
 
       const isPdf =
         file.type === 'application/pdf' ||
@@ -120,7 +161,11 @@ export default function KnowledgeBase() {
         fileName.endsWith('.txt');
 
       if (!isPdf && !isTxt) {
-        alert('Please select a valid PDF or TXT file.');
+
+        alert(
+          'Please select a valid PDF or TXT file.'
+        );
+
         return;
       }
 
@@ -135,9 +180,13 @@ export default function KnowledgeBase() {
 
     if (!selectedFile) return;
 
-    const formData = new FormData();
+    const formData =
+      new FormData();
 
-    formData.append('file', selectedFile);
+    formData.append(
+      'file',
+      selectedFile
+    );
 
     try {
 
@@ -149,7 +198,8 @@ export default function KnowledgeBase() {
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type':
+              'multipart/form-data'
           }
         }
       );
@@ -160,7 +210,10 @@ export default function KnowledgeBase() {
 
     } catch (err) {
 
-      console.error('Upload Error:', err);
+      console.error(
+        'Upload Error:',
+        err
+      );
 
       const message =
         err.response?.data?.msg ||
@@ -178,13 +231,17 @@ export default function KnowledgeBase() {
   // ==========================================
   // Delete Document
   // ==========================================
-  const handleDelete = async (docId, e) => {
+  const handleDelete = async (
+    docId,
+    e
+  ) => {
 
     e.stopPropagation();
 
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this document?'
-    );
+    const confirmed =
+      window.confirm(
+        'Are you sure you want to delete this document?'
+      );
 
     if (!confirmed) return;
 
@@ -195,7 +252,8 @@ export default function KnowledgeBase() {
       );
 
       if (
-        selectedDoc?.document_id === docId
+        selectedDoc?.document_id ===
+        docId
       ) {
 
         setSelectedDoc(null);
@@ -208,26 +266,28 @@ export default function KnowledgeBase() {
         setAiQuestion('');
         setAiError('');
         setHighlightedChunk(null);
-
       }
 
       setDocuments((prev) =>
         prev.filter(
           (doc) =>
-            doc.document_id !== docId
+            doc.document_id !==
+            docId
         )
       );
 
     } catch (err) {
 
-      console.error('Delete Error:', err);
+      console.error(
+        'Delete Error:',
+        err
+      );
 
       const message =
         err.response?.data?.msg ||
         'Failed to delete document.';
 
       alert(message);
-
     }
   };
 
@@ -258,100 +318,108 @@ export default function KnowledgeBase() {
       setTimeout(() => {
         setIsPreviewLoading(false);
       }, 600);
-
     }
   };
 
   // ==========================================
   // Select Search Result
   // ==========================================
-  const handleSelectResult = (result) => {
+  const handleSelectResult = (
+    result
+  ) => {
 
     const chunkIdx =
       result.chunkIndex ?? null;
 
     setSelectedResult(result);
 
-    setHighlightedChunk(chunkIdx);
+    setHighlightedChunk(
+      chunkIdx
+    );
   };
 
   // ==========================================
   // Semantic Search
   // ==========================================
-  const handleSemanticSearch = async () => {
+  const handleSemanticSearch =
+    async () => {
 
-    if (!searchQuery.trim()) return;
+      if (!searchQuery.trim())
+        return;
 
-    try {
+      try {
 
-      setIsSearching(true);
+        setIsSearching(true);
 
-      setSearchError('');
-      setSearchResults([]);
-      setSelectedResult(null);
-      setSearchMessage('');
-
-      const payload = {
-        query: searchQuery.trim()
-      };
-
-      if (selectedDoc) {
-
-        payload.documentId =
-          selectedDoc.document_id;
-
-      }
-
-      const res = await apiClient.post(
-        '/api/rag/search',
-        payload
-      );
-
-      if (res.data?.message) {
-
-        setSearchMessage(
-          res.data.message
-        );
-
+        setSearchError('');
         setSearchResults([]);
-
-      } else {
-
-        const results =
-          res.data?.results || [];
-
-        setSearchResults(results);
-
+        setSelectedResult(null);
         setSearchMessage('');
 
-        // Automatically select first result
-        // so the detail panel is immediately visible.
-        if (results.length > 0) {
-          setSelectedResult(results[0]);
-          setHighlightedChunk(
-            results[0].chunkIndex ?? 0
-          );
+        const payload = {
+          query:
+            searchQuery.trim()
+        };
+
+        if (selectedDoc) {
+
+          payload.documentId =
+            selectedDoc.document_id;
         }
+
+        const res =
+          await apiClient.post(
+            '/api/rag/search',
+            payload
+          );
+
+        if (res.data?.message) {
+
+          setSearchMessage(
+            res.data.message
+          );
+
+          setSearchResults([]);
+
+        } else {
+
+          const results =
+            res.data?.results || [];
+
+          setSearchResults(results);
+
+          setSearchMessage('');
+
+          if (results.length > 0) {
+
+            setSelectedResult(
+              results[0]
+            );
+
+            setHighlightedChunk(
+              results[0]
+                .chunkIndex ?? 0
+            );
+          }
+        }
+
+      } catch (err) {
+
+        console.error(
+          'Semantic Search Error:',
+          err
+        );
+
+        setSearchError(
+          err.response?.data?.msg ||
+          'Failed to perform semantic search.'
+        );
+
+      } finally {
+
+        setIsSearching(false);
       }
-
-    } catch (err) {
-
-      console.error(
-        'Semantic Search Error:',
-        err
-      );
-
-      setSearchError(
-        err.response?.data?.msg ||
-        'Failed to perform semantic search.'
-      );
-
-    } finally {
-
-      setIsSearching(false);
-
-    }
-  };
+    };
 
   // ==========================================
   // Ask Document AI
@@ -381,7 +449,10 @@ export default function KnowledgeBase() {
       }
     ];
 
-    setChatMessages(newHistory);
+    setChatMessages(
+      newHistory
+    );
+
     setIsAskingAI(true);
 
     try {
@@ -395,13 +466,13 @@ export default function KnowledgeBase() {
 
         payload.documentId =
           selectedDoc.document_id;
-
       }
 
-      const res = await apiClient.post(
-        '/api/rag/ask',
-        payload
-      );
+      const res =
+        await apiClient.post(
+          '/api/rag/ask',
+          payload
+        );
 
       const fullAnswer =
         res.data?.answer ||
@@ -445,7 +516,10 @@ export default function KnowledgeBase() {
 
         await new Promise(
           (resolve) =>
-            setTimeout(resolve, 25)
+            setTimeout(
+              resolve,
+              25
+            )
         );
       }
 
@@ -464,7 +538,6 @@ export default function KnowledgeBase() {
     } finally {
 
       setIsAskingAI(false);
-
     }
   };
 
@@ -495,7 +568,6 @@ export default function KnowledgeBase() {
 
     setChatMessages([]);
     setAiError('');
-
   };
 
   // ==========================================
@@ -576,7 +648,9 @@ export default function KnowledgeBase() {
   // ==========================================
   // Calculate Result Information
   // ==========================================
-  const getResultScore = (result) => {
+  const getResultScore = (
+    result
+  ) => {
 
     if (!result) return null;
 
@@ -588,22 +662,43 @@ export default function KnowledgeBase() {
   };
 
   return (
-    <div className={styles.contentArea}>
+    <div
+      className={
+        styles.contentArea
+      }
+    >
 
       {/* ==========================================
           TOP BANNER
       ========================================== */}
-      <div className={styles.bannerCard}>
 
-        <span className={styles.bannerTag}>
+      <div
+        className={
+          styles.bannerCard
+        }
+      >
+
+        <span
+          className={
+            styles.bannerTag
+          }
+        >
           KNOWLEDGE BASE & AI RAG
         </span>
 
-        <h1 className={styles.bannerTitle}>
+        <h1
+          className={
+            styles.bannerTitle
+          }
+        >
           Private Document library
         </h1>
 
-        <p className={styles.bannerDesc}>
+        <p
+          className={
+            styles.bannerDesc
+          }
+        >
           Upload study or reference PDFs and
           TXT files. Run semantic search across
           single or all documents, chat with
@@ -614,29 +709,55 @@ export default function KnowledgeBase() {
       </div>
 
       {errorMessage && (
-        <div className={styles.errorBanner}>
+        <div
+          className={
+            styles.errorBanner
+          }
+        >
           {errorMessage}
         </div>
       )}
 
-      <div className={styles.splitGrid}>
+      <div
+        className={
+          styles.splitGrid
+        }
+      >
 
         {/* ==========================================
             LEFT COLUMN
         ========================================== */}
-        <div className={styles.leftColumn}>
 
-          <div className={styles.libraryCard}>
+        <div
+          className={
+            styles.leftColumn
+          }
+        >
 
-            <h3 className={styles.cardTitle}>
+          <div
+            className={
+              styles.libraryCard
+            }
+          >
+
+            <h3
+              className={
+                styles.cardTitle
+              }
+            >
               Library
             </h3>
 
-            <p className={styles.cardSubtitle}>
+            <p
+              className={
+                styles.cardSubtitle
+              }
+            >
               Add and manage your reference files.
             </p>
 
             {/* All Documents */}
+
             <button
               type="button"
               onClick={() =>
@@ -645,7 +766,8 @@ export default function KnowledgeBase() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent:
+                  'space-between',
                 width: '100%',
                 padding: '12px 16px',
                 marginBottom: '14px',
@@ -724,8 +846,11 @@ export default function KnowledgeBase() {
             </button>
 
             {/* Upload */}
+
             <div
-              className={styles.uploadDashedBox}
+              className={
+                styles.uploadDashedBox
+              }
             >
 
               <p
@@ -737,7 +862,9 @@ export default function KnowledgeBase() {
               </p>
 
               <div
-                className={styles.uploadControls}
+                className={
+                  styles.uploadControls
+                }
               >
 
                 <label
@@ -753,7 +880,9 @@ export default function KnowledgeBase() {
                   <input
                     type="file"
                     accept=".pdf,.txt,application/pdf,text/plain"
-                    onChange={handleFileChange}
+                    onChange={
+                      handleFileChange
+                    }
                     style={{
                       display: 'none'
                     }}
@@ -765,7 +894,9 @@ export default function KnowledgeBase() {
                   className={
                     styles.uploadBtn
                   }
-                  onClick={handleUpload}
+                  onClick={
+                    handleUpload
+                  }
                   disabled={
                     !selectedFile ||
                     isUploading
@@ -795,6 +926,7 @@ export default function KnowledgeBase() {
             </div>
 
             {/* Documents */}
+
             {isLoading ? (
 
               <p
@@ -824,61 +956,71 @@ export default function KnowledgeBase() {
                 }
               >
 
-                {documents.map((doc) => (
-
-                  <div
-                    key={doc.document_id}
-                    className={`${styles.documentItem} ${
-                      selectedDoc?.document_id ===
-                      doc.document_id
-                        ? styles.selectedItem
-                        : ''
-                    }`}
-                    onClick={() =>
-                      handleSelectDoc(doc)
-                    }
-                  >
+                {documents.map(
+                  (doc) => (
 
                     <div
-                      className={styles.docInfo}
+                      key={
+                        doc.document_id
+                      }
+                      className={
+                        `${styles.documentItem} ${
+                          selectedDoc?.document_id ===
+                          doc.document_id
+                            ? styles.selectedItem
+                            : ''
+                        }`
+                      }
+                      onClick={() =>
+                        handleSelectDoc(doc)
+                      }
                     >
 
-                      <span
+                      <div
                         className={
-                          styles.docName
+                          styles.docInfo
                         }
                       >
-                        {doc.filename}
-                      </span>
 
-                      <span
+                        <span
+                          className={
+                            styles.docName
+                          }
+                        >
+                          {doc.filename}
+                        </span>
+
+                        <span
+                          className={
+                            styles.readyBadge
+                          }
+                        >
+                          READY
+                        </span>
+
+                      </div>
+
+                      <button
                         className={
-                          styles.readyBadge
+                          styles.deleteBtn
                         }
+                        onClick={(e) =>
+                          handleDelete(
+                            doc.document_id,
+                            e
+                          )
+                        }
+                        title="Delete"
                       >
-                        READY
-                      </span>
+                        <Trash2
+                          size={16}
+                        />
+                      </button>
 
                     </div>
 
-                    <button
-                      className={
-                        styles.deleteBtn
-                      }
-                      onClick={(e) =>
-                        handleDelete(
-                          doc.document_id,
-                          e
-                        )
-                      }
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-
-                  </div>
-
-                ))}
+                  )
+                )}
 
               </div>
 
@@ -891,11 +1033,15 @@ export default function KnowledgeBase() {
         {/* ==========================================
             RIGHT COLUMN
         ========================================== */}
-        <div className={styles.rightColumn}>
 
-          {/* ==========================================
-              READER
-          ========================================== */}
+        <div
+          className={
+            styles.rightColumn
+          }
+        >
+
+          {/* READER */}
+
           {selectedDoc ? (
 
             <div
@@ -926,7 +1072,11 @@ export default function KnowledgeBase() {
                         styles.sectionTitle
                       }
                     >
-                      Reader ({selectedDoc.filename})
+                      Reader (
+                      {
+                        selectedDoc.filename
+                      }
+                      )
                     </h3>
 
                     <p
@@ -939,7 +1089,9 @@ export default function KnowledgeBase() {
 
                   </div>
 
-                  {highlightedChunk !== null && (
+                  {highlightedChunk !==
+                    null && (
+
                     <button
                       onClick={() =>
                         setHighlightedChunk(
@@ -948,16 +1100,20 @@ export default function KnowledgeBase() {
                       }
                       style={{
                         fontSize: '11px',
-                        padding: '3px 8px',
+                        padding:
+                          '3px 8px',
                         backgroundColor:
                           '#e2e8f0',
                         border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
+                        borderRadius:
+                          '4px',
+                        cursor:
+                          'pointer'
                       }}
                     >
                       Clear Chunk Highlight
                     </button>
+
                   )}
 
                 </div>
@@ -1042,9 +1198,8 @@ export default function KnowledgeBase() {
 
           )}
 
-          {/* ==========================================
-              SEMANTIC SEARCH
-          ========================================== */}
+          {/* SEMANTIC SEARCH */}
+
           <div
             className={
               styles.featureSection
@@ -1087,13 +1242,16 @@ export default function KnowledgeBase() {
                   styles.textInput
                 }
                 placeholder="Enter keywords or concepts..."
-                value={searchQuery}
+                value={
+                  searchQuery
+                }
                 onChange={(e) =>
                   setSearchQuery(
                     e.target.value
                   )
                 }
                 onKeyDown={(e) => {
+
                   if (
                     e.key === 'Enter' &&
                     !isSearching &&
@@ -1101,6 +1259,7 @@ export default function KnowledgeBase() {
                   ) {
                     handleSemanticSearch();
                   }
+
                 }}
               />
 
@@ -1128,7 +1287,9 @@ export default function KnowledgeBase() {
             </button>
 
             {/* Search Error */}
+
             {searchError && (
+
               <div
                 className={
                   styles.errorBanner
@@ -1139,10 +1300,13 @@ export default function KnowledgeBase() {
               >
                 {searchError}
               </div>
+
             )}
 
             {/* Search Message */}
+
             {searchMessage && (
+
               <div
                 style={{
                   marginTop: '16px',
@@ -1168,18 +1332,19 @@ export default function KnowledgeBase() {
                 </span>
 
               </div>
+
             )}
 
-            {/* ==========================================
-                SEARCH RESULTS
-            ========================================== */}
+            {/* SEARCH RESULTS */}
+
             {searchResults.length > 0 && (
 
               <div
                 style={{
                   marginTop: '20px',
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection:
+                    'column',
                   gap: '16px'
                 }}
               >
@@ -1190,7 +1355,8 @@ export default function KnowledgeBase() {
                     justifyContent:
                       'space-between',
                     alignItems: 'center',
-                    paddingBottom: '8px',
+                    paddingBottom:
+                      '8px',
                     borderBottom:
                       '1px solid #e2e8f0'
                   }}
@@ -1226,10 +1392,15 @@ export default function KnowledgeBase() {
                       color: '#64748b'
                     }}
                   >
-                    {searchResults.length} result
-                    {searchResults.length !== 1
-                      ? 's'
-                      : ''}
+                    {
+                      searchResults.length
+                    } result
+                    {
+                      searchResults.length !==
+                      1
+                        ? 's'
+                        : ''
+                    }
                   </span>
 
                 </div>
@@ -1238,21 +1409,26 @@ export default function KnowledgeBase() {
                   (result, index) => {
 
                     const score =
-                      getResultScore(result);
+                      getResultScore(
+                        result
+                      );
 
                     const chunkIdx =
                       result.chunkIndex ??
                       index;
 
                     const chunkKey =
-                      `${result.documentId || selectedDoc?.document_id || 'doc'}-${chunkIdx}`;
+                      `${
+                        result.documentId ||
+                        selectedDoc?.document_id ||
+                        'doc'
+                      }-${chunkIdx}`;
 
                     const isSelected =
                       selectedResult?.chunkId ===
                         result.chunkId ||
-                      (
-                        selectedResult === result
-                      );
+                      selectedResult ===
+                        result;
 
                     return (
 
@@ -1291,10 +1467,10 @@ export default function KnowledgeBase() {
                       >
 
                         {/* Result Header */}
+
                         <div
                           style={{
-                            display:
-                              'flex',
+                            display: 'flex',
                             justifyContent:
                               'space-between',
                             alignItems:
@@ -1322,7 +1498,8 @@ export default function KnowledgeBase() {
 
                             {score !==
                               undefined &&
-                              score !== null &&
+                              score !==
+                                null &&
                               ` • relevance ${score}`}
                           </span>
 
@@ -1344,6 +1521,7 @@ export default function KnowledgeBase() {
                         </div>
 
                         {/* Content */}
+
                         <div
                           style={{
                             margin: 0,
@@ -1358,13 +1536,14 @@ export default function KnowledgeBase() {
                           }}
                         >
 
-                          <ReactMarkdown>
-                            {result.content}
-                          </ReactMarkdown>
+                          {renderMarkdown(
+                            result.content
+                          )}
 
                         </div>
 
                         {/* Note */}
+
                         {userNotes[
                           chunkKey
                         ] && (
@@ -1401,6 +1580,7 @@ export default function KnowledgeBase() {
                         )}
 
                         {/* Note Input */}
+
                         <div
                           style={{
                             marginTop:
@@ -1459,8 +1639,7 @@ export default function KnowledgeBase() {
                                 '4px 8px',
                               backgroundColor:
                                 '#0f172a',
-                              color:
-                                '#fff',
+                              color: '#fff',
                               border:
                                 'none',
                               borderRadius:
@@ -1483,7 +1662,6 @@ export default function KnowledgeBase() {
                       </div>
 
                     );
-
                   }
                 )}
 
@@ -1491,15 +1669,16 @@ export default function KnowledgeBase() {
 
             )}
 
-            {/* ==========================================
-                SELECTED RESULT DETAIL PANEL
-            ========================================== */}
+            {/* SELECTED RESULT DETAIL PANEL */}
+
             {selectedResult && (
 
               <div
                 style={{
-                  marginTop: '24px',
-                  padding: '20px',
+                  marginTop:
+                    '24px',
+                  padding:
+                    '20px',
                   backgroundColor:
                     '#ffffff',
                   border:
@@ -1512,10 +1691,10 @@ export default function KnowledgeBase() {
               >
 
                 {/* Detail Header */}
+
                 <div
                   style={{
-                    display:
-                      'flex',
+                    display: 'flex',
                     justifyContent:
                       'space-between',
                     alignItems:
@@ -1574,12 +1753,15 @@ export default function KnowledgeBase() {
                   <button
                     type="button"
                     onClick={() => {
+
                       setSelectedResult(
                         null
                       );
+
                       setHighlightedChunk(
                         null
                       );
+
                     }}
                     style={{
                       display:
@@ -1611,6 +1793,7 @@ export default function KnowledgeBase() {
                 </div>
 
                 {/* Metadata Cards */}
+
                 <div
                   style={{
                     display:
@@ -1624,6 +1807,7 @@ export default function KnowledgeBase() {
                 >
 
                   {/* Chunk */}
+
                   <div
                     style={{
                       padding:
@@ -1658,13 +1842,16 @@ export default function KnowledgeBase() {
                           '#1e293b'
                       }}
                     >
-                      {selectedResult.chunkIndex ??
-                        'N/A'}
+                      {
+                        selectedResult.chunkIndex ??
+                        'N/A'
+                      }
                     </strong>
 
                   </div>
 
                   {/* Relevance */}
+
                   <div
                     style={{
                       padding:
@@ -1699,14 +1886,18 @@ export default function KnowledgeBase() {
                           '#2563eb'
                       }}
                     >
-                      {getResultScore(
-                        selectedResult
-                      ) ?? 'N/A'}
+                      {
+                        getResultScore(
+                          selectedResult
+                        ) ??
+                        'N/A'
+                      }
                     </strong>
 
                   </div>
 
                   {/* Chunk ID */}
+
                   <div
                     style={{
                       padding:
@@ -1743,8 +1934,10 @@ export default function KnowledgeBase() {
                           'break-word'
                       }}
                     >
-                      {selectedResult.chunkId ??
-                        'N/A'}
+                      {
+                        selectedResult.chunkId ??
+                        'N/A'
+                      }
                     </strong>
 
                   </div>
@@ -1752,6 +1945,7 @@ export default function KnowledgeBase() {
                 </div>
 
                 {/* Document Information */}
+
                 <div
                   style={{
                     marginBottom:
@@ -1775,12 +1969,15 @@ export default function KnowledgeBase() {
                     Document:
                   </strong>{' '}
 
-                  {selectedDoc?.filename ||
-                    'All Documents'}
+                  {
+                    selectedDoc?.filename ||
+                    'All Documents'
+                  }
 
                 </div>
 
                 {/* Retrieved Content */}
+
                 <div>
 
                   <h4
@@ -1817,15 +2014,18 @@ export default function KnowledgeBase() {
                     }}
                   >
 
-                    <ReactMarkdown>
-                      {selectedResult.content}
-                    </ReactMarkdown>
+                    {
+                      renderMarkdown(
+                        selectedResult.content
+                      )
+                    }
 
                   </div>
 
                 </div>
 
                 {/* Similarity Calculation */}
+
                 <div
                   style={{
                     marginTop:
@@ -1893,9 +2093,11 @@ export default function KnowledgeBase() {
                       Cosine similarity
                       {' → '}
                       <strong>
-                        {getResultScore(
-                          selectedResult
-                        )}
+                        {
+                          getResultScore(
+                            selectedResult
+                          )
+                        }
                       </strong>
                     </div>
 
@@ -1918,31 +2120,35 @@ export default function KnowledgeBase() {
                       }}
                     >
 
-                      {getResultScore(
-                        selectedResult
-                      ) >= 0.6 ? (
+                      {
+                        getResultScore(
+                          selectedResult
+                        ) >= 0.6
+                          ? (
 
-                        <strong
-                          style={{
-                            color:
-                              '#15803d'
-                          }}
-                        >
-                          ✓ Relevant result accepted
-                        </strong>
+                            <strong
+                              style={{
+                                color:
+                                  '#15803d'
+                              }}
+                            >
+                              ✓ Relevant result accepted
+                            </strong>
 
-                      ) : (
+                          )
+                          : (
 
-                        <strong
-                          style={{
-                            color:
-                              '#dc2626'
-                          }}
-                        >
-                          ✕ Result below threshold
-                        </strong>
+                            <strong
+                              style={{
+                                color:
+                                  '#dc2626'
+                              }}
+                            >
+                              ✕ Result below threshold
+                            </strong>
 
-                      )}
+                          )
+                      }
 
                     </div>
 
@@ -1956,9 +2162,8 @@ export default function KnowledgeBase() {
 
           </div>
 
-          {/* ==========================================
-              AI CHAT
-          ========================================== */}
+          {/* AI CHAT */}
+
           <div
             className={
               styles.sectionDivider
@@ -1970,7 +2175,8 @@ export default function KnowledgeBase() {
               styles.featureSection
             }
             style={{
-              paddingBottom: '40px'
+              paddingBottom:
+                '40px'
             }}
           >
 
@@ -2016,8 +2222,11 @@ export default function KnowledgeBase() {
                 }}
               >
 
-                {chatMessages.length > 0 && (
+                {chatMessages.length >
+                  0 && (
+
                   <>
+
                     <button
                       onClick={
                         handleExportChat
@@ -2027,7 +2236,8 @@ export default function KnowledgeBase() {
                           'flex',
                         alignItems:
                           'center',
-                        gap: '4px',
+                        gap:
+                          '4px',
                         fontSize:
                           '12px',
                         padding:
@@ -2046,7 +2256,9 @@ export default function KnowledgeBase() {
                       title="Export Chat as Markdown"
                     >
 
-                      <Download size={12} />
+                      <Download
+                        size={12}
+                      />
 
                       Export
 
@@ -2061,7 +2273,8 @@ export default function KnowledgeBase() {
                           'flex',
                         alignItems:
                           'center',
-                        gap: '4px',
+                        gap:
+                          '4px',
                         fontSize:
                           '12px',
                         padding:
@@ -2077,12 +2290,16 @@ export default function KnowledgeBase() {
                       }}
                     >
 
-                      <RotateCcw size={12} />
+                      <RotateCcw
+                        size={12}
+                      />
 
                       Clear
 
                     </button>
+
                   </>
+
                 )}
 
               </div>
@@ -2090,7 +2307,9 @@ export default function KnowledgeBase() {
             </div>
 
             {/* Chat History */}
-            {chatMessages.length > 0 && (
+
+            {chatMessages.length >
+              0 && (
 
               <div
                 style={{
@@ -2098,7 +2317,8 @@ export default function KnowledgeBase() {
                     'flex',
                   flexDirection:
                     'column',
-                  gap: '16px',
+                  gap:
+                    '16px',
                   marginBottom:
                     '20px',
                   maxHeight:
@@ -2117,7 +2337,8 @@ export default function KnowledgeBase() {
                       key={index}
                       style={{
                         backgroundColor:
-                          msg.role === 'user'
+                          msg.role ===
+                          'user'
                             ? '#f0fdf4'
                             : '#ffffff',
                         padding:
@@ -2125,11 +2346,13 @@ export default function KnowledgeBase() {
                         borderRadius:
                           '12px',
                         border:
-                          msg.role === 'user'
+                          msg.role ===
+                          'user'
                             ? '1px solid #bbf7d0'
                             : '2px solid #e2e8f0',
                         boxShadow:
-                          msg.role === 'assistant'
+                          msg.role ===
+                          'assistant'
                             ? '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
                             : 'none'
                       }}
@@ -2168,87 +2391,105 @@ export default function KnowledgeBase() {
                           }}
                         >
 
-                          {msg.role ===
-                          'user'
-                            ? 'You'
-                            : 'AI Assistant Response'}
+                          {
+                            msg.role ===
+                            'user'
+                              ? 'You'
+                              : 'AI Assistant Response'
+                          }
 
                         </span>
 
-                        {msg.role ===
-                          'assistant' && (
+                        {
+                          msg.role ===
+                            'assistant' && (
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleCopyAnswer(
-                                msg.content,
-                                index
-                              )
-                            }
-                            style={{
-                              display:
-                                'flex',
-                              alignItems:
-                                'center',
-                              gap:
-                                '6px',
-                              backgroundColor:
-                                copiedIndex ===
-                                index
-                                  ? '#f0fdf4'
-                                  : '#f8fafc',
-                              color:
-                                copiedIndex ===
-                                index
-                                  ? '#16a34a'
-                                  : '#334155',
-                              border:
-                                `1px solid ${
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCopyAnswer(
+                                  msg.content,
+                                  index
+                                )
+                              }
+                              style={{
+                                display:
+                                  'flex',
+                                alignItems:
+                                  'center',
+                                gap:
+                                  '6px',
+                                backgroundColor:
                                   copiedIndex ===
                                   index
-                                    ? '#bbf7d0'
-                                    : '#cbd5e1'
-                                }`,
-                              borderRadius:
-                                '6px',
-                              padding:
-                                '5px 12px',
-                              fontSize:
-                                '12px',
-                              fontWeight:
-                                '600',
-                              cursor:
-                                'pointer'
-                            }}
-                          >
+                                    ? '#f0fdf4'
+                                    : '#f8fafc',
+                                color:
+                                  copiedIndex ===
+                                  index
+                                    ? '#16a34a'
+                                    : '#334155',
+                                border:
+                                  `1px solid ${
+                                    copiedIndex ===
+                                    index
+                                      ? '#bbf7d0'
+                                      : '#cbd5e1'
+                                  }`,
+                                borderRadius:
+                                  '6px',
+                                padding:
+                                  '5px 12px',
+                                fontSize:
+                                  '12px',
+                                fontWeight:
+                                  '600',
+                                cursor:
+                                  'pointer'
+                              }}
+                            >
 
-                            {copiedIndex ===
-                            index ? (
-                              <>
-                                <Check
-                                  size={13}
-                                  color="#16a34a"
-                                />
-                                <span>
-                                  Copied!
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy
-                                  size={13}
-                                  color="#64748b"
-                                />
-                                <span>
-                                  Copy
-                                </span>
-                              </>
-                            )}
+                              {
+                                copiedIndex ===
+                                index
+                                  ? (
 
-                          </button>
+                                    <>
 
-                        )}
+                                      <Check
+                                        size={13}
+                                        color="#16a34a"
+                                      />
+
+                                      <span>
+                                        Copied!
+                                      </span>
+
+                                    </>
+
+                                  )
+                                  : (
+
+                                    <>
+
+                                      <Copy
+                                        size={13}
+                                        color="#64748b"
+                                      />
+
+                                      <span>
+                                        Copy
+                                      </span>
+
+                                    </>
+
+                                  )
+                              }
+
+                            </button>
+
+                          )
+                        }
 
                       </div>
 
@@ -2265,15 +2506,20 @@ export default function KnowledgeBase() {
                         }}
                       >
 
-                        <ReactMarkdown>
-                          {msg.content}
-                        </ReactMarkdown>
+                        {
+                          renderMarkdown(
+                            msg.content
+                          )
+                        }
 
                       </div>
 
                       {/* Sources */}
-                      {msg.sources &&
-                        msg.sources.length > 0 && (
+
+                      {
+                        msg.sources &&
+                        msg.sources.length >
+                          0 && (
 
                           <div
                             style={{
@@ -2294,73 +2540,83 @@ export default function KnowledgeBase() {
                               Source references:{' '}
                             </strong>
 
-                            {msg.sources.map(
-                              (
-                                source,
-                                sIdx
-                              ) => {
+                            {
+                              msg.sources.map(
+                                (
+                                  source,
+                                  sIdx
+                                ) => {
 
-                                const sChunkIdx =
-                                  source.chunkIndex ??
-                                  sIdx;
+                                  const sChunkIdx =
+                                    source.chunkIndex ??
+                                    sIdx;
 
-                                return (
+                                  return (
 
-                                  <span
-                                    key={
-                                      source.chunkId ||
-                                      sIdx
-                                    }
-                                    onClick={() => {
-
-                                      setHighlightedChunk(
-                                        sChunkIdx
-                                      );
-
-                                      const matchingResult =
-                                        searchResults.find(
-                                          (result) =>
-                                            result.chunkId ===
-                                            source.chunkId
-                                        );
-
-                                      if (
-                                        matchingResult
-                                      ) {
-                                        setSelectedResult(
-                                          matchingResult
-                                        );
+                                    <span
+                                      key={
+                                        source.chunkId ||
+                                        sIdx
                                       }
+                                      onClick={() => {
 
-                                    }}
-                                    style={{
-                                      color:
-                                        '#2563eb',
-                                      cursor:
-                                        'pointer',
-                                      textDecoration:
-                                        'underline',
-                                      marginRight:
-                                        '6px'
-                                    }}
-                                    title="Click to inspect source chunk"
-                                  >
+                                        setHighlightedChunk(
+                                          sChunkIdx
+                                        );
 
-                                    [
-                                    {sIdx + 1}
-                                    ] (chunk{' '}
-                                    {sChunkIdx})
+                                        const matchingResult =
+                                          searchResults.find(
+                                            (
+                                              result
+                                            ) =>
+                                              result.chunkId ===
+                                              source.chunkId
+                                          );
 
-                                  </span>
+                                        if (
+                                          matchingResult
+                                        ) {
 
-                                );
+                                          setSelectedResult(
+                                            matchingResult
+                                          );
+                                        }
 
-                              }
-                            )}
+                                      }}
+                                      style={{
+                                        color:
+                                          '#2563eb',
+                                        cursor:
+                                          'pointer',
+                                        textDecoration:
+                                          'underline',
+                                        marginRight:
+                                          '6px'
+                                      }}
+                                      title="Click to inspect source chunk"
+                                    >
+
+                                      [
+                                      {
+                                        sIdx +
+                                        1
+                                      }
+                                      ] (chunk{' '}
+                                      {
+                                        sChunkIdx
+                                      })
+
+                                    </span>
+
+                                  );
+                                }
+                              )
+                            }
 
                           </div>
 
-                        )}
+                        )
+                      }
 
                     </div>
 
@@ -2368,7 +2624,9 @@ export default function KnowledgeBase() {
                 )}
 
                 <div
-                  ref={chatEndRef}
+                  ref={
+                    chatEndRef
+                  }
                 />
 
               </div>
@@ -2376,8 +2634,11 @@ export default function KnowledgeBase() {
             )}
 
             {/* Question Input */}
+
             <form
-              onSubmit={handleAskAI}
+              onSubmit={
+                handleAskAI
+              }
               style={{
                 marginTop:
                   '16px',
@@ -2412,7 +2673,9 @@ export default function KnowledgeBase() {
                     styles.textareaInput
                   }
                   placeholder="Ask a question or request a follow-up across your library..."
-                  value={aiQuestion}
+                  value={
+                    aiQuestion
+                  }
                   onChange={(e) =>
                     setAiQuestion(
                       e.target.value
@@ -2448,20 +2711,28 @@ export default function KnowledgeBase() {
                 }}
               >
 
-                {isAskingAI ? (
-                  <Sparkles
-                    size={14}
-                    className={
-                      styles.spin
-                    }
-                  />
-                ) : (
-                  <Send size={14} />
-                )}
+                {
+                  isAskingAI
+                    ? (
+                      <Sparkles
+                        size={14}
+                        className={
+                          styles.spin
+                        }
+                      />
+                    )
+                    : (
+                      <Send
+                        size={14}
+                      />
+                    )
+                }
 
-                {isAskingAI
-                  ? 'Thinking & Streaming...'
-                  : 'Ask AI'}
+                {
+                  isAskingAI
+                    ? 'Thinking & Streaming...'
+                    : 'Ask AI'
+                }
 
               </button>
 
