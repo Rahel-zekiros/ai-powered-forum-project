@@ -26,5 +26,14 @@ export const processDocument = async ({ userId, file }) => {
       [userId, filename, filePath, "processing"],
     );
     documentId = docResult.insertId;
+
+    // Read PDF
+
+    console.log("Reading PDF file...");
+
+    const pdfBuffer = await readPdfFile(file.path);
+
+
+
   } catch (error) {}
 };
