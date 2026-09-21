@@ -46,6 +46,16 @@ export const processDocument = async ({ userId, file }) => {
     console.log(`Extracted ${pages.length} pages.`);
 
 
+    // create chunks
+
+    const chunks = createChunks(pages);
+
+    if (!chunks || chunks.length === 0) {
+      throw new Error("No text chunks could be created from the PDF.");
+    }
+
+    console.log(`Created ${chunks.length} text chunks.`);
+
     
   } catch (error) {}
 };
