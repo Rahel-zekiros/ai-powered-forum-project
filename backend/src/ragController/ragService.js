@@ -33,7 +33,19 @@ export const processDocument = async ({ userId, file }) => {
 
     const pdfBuffer = await readPdfFile(file.path);
 
+    //Extract Pages
+
+    console.log("Extracting PDF pages...");
+
+    const pages = await extractPdfPages(pdfBuffer);
+
+    if (!pages || pages.length === 0) {
+      throw new Error("No readable text was found in the PDF.");
+    }
+
+    console.log(`Extracted ${pages.length} pages.`);
 
 
+    
   } catch (error) {}
 };
