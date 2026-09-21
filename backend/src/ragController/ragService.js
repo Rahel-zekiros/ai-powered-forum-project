@@ -120,5 +120,29 @@ export const processDocument = async ({ userId, file }) => {
         [chunkId, embeddingVectorJson, "ready"],
       );
     }
+
+    //mark document ready
+
+        await safeExecute(
+          `
+      UPDATE documents
+      SET status = ?
+      WHERE document_id = ?
+      `,
+          ["ready", documentId],
+        );
+
+        return {
+          msg: "PDF uploaded and processed successfully.",
+
+          documentId,
+
+          filename,
+
+          chunksCreated: chunks.length,
+
+          status: "ready",
+        };
+        
   } catch (error) {}
 };
