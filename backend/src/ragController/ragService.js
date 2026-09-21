@@ -11,8 +11,20 @@ import { generateGroundedAnswer } from "./aiService.js";
 export const processDocument = async ({ userId, file }) => {
   let documentId = null;
   try {
-    
-  } catch (error) {
-    
-  }
+    const filename = file.originalname;
+
+    const filePath = file.path.replace(/\\/g, "/");
+
+    console.log(`Starting RAG processing for: ${filename}`);
+
+    const docResult = await safeExecute(
+      `
+        INSERT INTO documents
+        (user_id, filename, file_path, status)
+        VALUES (?, ?, ?, ?)
+        `,
+      [userId, filename, filePath, "processing"],
+    );
+    documentId = docResult.insertId;
+  } catch (error) {}
 };
