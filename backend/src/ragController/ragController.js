@@ -24,5 +24,13 @@ export const uploadAndProcessDocument = async (req, res) => {
     });
 
     return res.status(201).json(result);
-  } catch (error) {}
+  } catch (error) {
+    console.error("RAG Pipeline Error:", err);
+
+    return res.status(500).json({
+      msg:
+        err.message ||
+        "Server error occurred during the AI RAG pipeline execution.",
+    });
+  }
 };
