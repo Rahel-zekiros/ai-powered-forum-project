@@ -45,7 +45,6 @@ export const processDocument = async ({ userId, file }) => {
 
     console.log(`Extracted ${pages.length} pages.`);
 
-
     // create chunks
 
     const chunks = createChunks(pages);
@@ -56,6 +55,70 @@ export const processDocument = async ({ userId, file }) => {
 
     console.log(`Created ${chunks.length} text chunks.`);
 
-    
+    // create embeddings
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+
+      const chunkContent = chunk.content;
+
+      console.log(`Creating embedding ${i + 1}/${chunks.length}...`);
+
+      if (!chunkContent || chunkContent.includes("%PDF")) {
+        throw new Error("Invalid text content extracted from PDF.");
+      }
+
+      // ----------------------------------
+      // Save chunk
+      // ----------------------------------
+
+      const chunkResult = await safeExecute(
+        `
+          INSERT INTO document_chunks
+          (
+            document_id,
+            content,
+            chunk_index,
+            page_start,
+            page_end
+          )
+          VALUES (?, ?, ?, ?, ?)
+          `,
+        [
+          documentId,
+          chunkContent,
+          chunk.chunkIndex,
+          chunk.pageStart,
+          chunk.pageEnd,
+        ],
+      );
+
+      const chunkId = chunkResult.insertId;
+
+      // ----------------------------------
+      // Create embedding
+      // ----------------------------------
+
+      const embedding = await createEmbedding(chunkContent);
+
+      const embeddingVectorJson = JSON.stringify(embedding);
+
+      // ----------------------------------
+      // Save embedding
+      // ----------------------------------
+
+      await safeExecute(
+        `
+        INSERT INTO document_chunk_vectors
+        (
+          chunk_id,
+          embedding_vector,
+          status
+        )
+        VALUES (?, ?, ?)
+        `,
+        [chunkId, embeddingVectorJson, "ready"],
+      );
+    }
   } catch (error) {}
 };
