@@ -143,6 +143,25 @@ export const processDocument = async ({ userId, file }) => {
 
           status: "ready",
         };
-        
-  } catch (error) {}
+
+  } catch (err) {
+      console.error("Document Processing Error:", err);
+
+      if (documentId) {
+        await safeExecute(
+          `
+        UPDATE documents
+        SET status = ?
+        WHERE document_id = ?
+        `,
+          ["error", documentId],
+        ).catch(() => {});
+      }
+
+      if (file?.path) {
+        await deletePdfFile(file.path);
+      }
+
+      throw err;
+  }
 };
