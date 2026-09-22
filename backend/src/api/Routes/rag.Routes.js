@@ -14,12 +14,12 @@ import {
   askDocumentAI,
   listDocumentsController,
   deleteDocumentController  
-} from '../../ragController/ragController.js';
+} from '../../ragController/rag.Controller.js';
 
 import { 
   saveChunkNote, 
   getUserNotes 
-} from '../../ragController/ragController.js';
+} from '../../ragController/rag.Controller.js';
 
 import { documentIdParamValidation } from '../../ragController/rag.validation.js';
 import authMiddleware from '../../middleware/authentication.js';

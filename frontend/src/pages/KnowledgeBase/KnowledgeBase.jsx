@@ -785,7 +785,7 @@ useEffect(() => {
                         <strong
                           className={`${styles.acceptedResult} flex items-center gap-2`}
                         >
-                          <CheckCircle2 className="w-4 h-4 text-green-500" />
+                          <CheckCircle2 className="w-2 h-2 text-green-500" />
                           Relevant result accepted
                         </strong>
                       ) : (

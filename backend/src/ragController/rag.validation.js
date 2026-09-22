@@ -1,5 +1,5 @@
 import { param } from "express-validator";
-import { validationErrorHandler } from "../middleware/validation-handler";
+import { validationErrorHandler } from "../middleware/validation-handler.js";
 
 // *======= get meta document and list documents========
 export const documentIdParamValidation = [
