@@ -48,3 +48,43 @@ export const extractPdfPages = async (pdfBuffer) => {
       if (!page || !Array.isArray(page.content)) {
         continue;
       }
+ // ==========================================
+      // Sort PDF Items
+      // First by Y position
+      // Then by X position
+      // ==========================================
+
+      const sortedItems = [...page.content].sort((a, b) => {
+        const yA = Number.isFinite(a.y) ? a.y : 0;
+
+        const yB = Number.isFinite(b.y) ? b.y : 0;
+
+        const xA = Number.isFinite(a.x) ? a.x : 0;
+
+        const xB = Number.isFinite(b.x) ? b.x : 0;
+
+        // Different lines
+        if (Math.abs(yA - yB) > 3) {
+          return yA - yB;
+        }
+
+        // Same line
+        return xA - xB;
+      });
+
+      // ==========================================
+      // Build Lines
+      // ==========================================
+
+      const lines = [];
+
+      for (const item of sortedItems) {
+        const text = typeof item.str === "string" ? item.str.trim() : "";
+
+        if (!text) {
+          continue;
+        }
+
+        const itemY = Number.isFinite(item.y) ? item.y : 0;
+
+        const lastLine = lines[lines.length - 1];
