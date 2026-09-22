@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import {
@@ -44,6 +44,7 @@ export default function QuestionDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const answerRef = useRef(null);
 
   const fetchQuestion = useCallback(async () => {
     try {
@@ -77,9 +78,26 @@ export default function QuestionDetail() {
 
   const isOwnQuestion = !!currentUser && !!question && question.author?.id === currentUser.id;
 
-  const insertMarkdown = (before) => {
-    setDraftAnswer((prev) => prev + before);
-  };
+  const insertMarkdown = (before, after = "", placeholder = "text") => {
+  const textarea = answerRef.current;
+  if (!textarea) return;
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const value = textarea.value;
+  const selected = value.slice(start, end) || placeholder;
+
+  const newValue = value.slice(0, start) + before + selected + after + value.slice(end);
+  setDraftAnswer(newValue);
+  setFitResult(null);
+
+  requestAnimationFrame(() => {
+    textarea.focus();
+    const selStart = start + before.length;
+    const selEnd = selStart + selected.length;
+    textarea.setSelectionRange(selStart, selEnd);
+  });
+};
 
   const handleCheckFit = async () => {
     if (draftAnswer.trim().length < 20) {
