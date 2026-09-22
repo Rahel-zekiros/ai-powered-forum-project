@@ -26,22 +26,17 @@
 
 .eyebrow {
   margin: 0 0 8px;
-
   color: #f97316;
-
   font-size: 11px;
   line-height: 1.2;
   font-weight: 700;
-
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .header h1 {
   margin: 0 0 8px;
-
   color: #172033;
-
   font-size: 28px;
   line-height: 1.2;
   font-weight: 700;
@@ -51,9 +46,7 @@
 .headerDescription {
   max-width: 690px;
   margin: 0;
-
   color: #40516b;
-
   font-size: 14px;
   line-height: 1.7;
 }
@@ -65,22 +58,16 @@
 .guidelines {
   margin-bottom: 24px;
   padding: 24px 26px;
-
   background: #f0f4f8;
-
   border: 1px solid #f97316;
   border-left: 3px solid #f97316;
-
   border-radius: 9px;
-
   box-sizing: border-box;
 }
 
 .guidelines h2 {
   margin: 0 0 8px;
-
   color: #172033;
-
   font-size: 18px;
   line-height: 1.4;
   font-weight: 700;
@@ -88,18 +75,14 @@
 
 .guidelines > p {
   margin: 0 0 18px;
-
   color: #66809f;
-
   font-size: 14px;
   line-height: 1.65;
 }
 
 .guidelines h3 {
   margin: 17px 0 8px;
-
   color: #172033;
-
   font-size: 14px;
   line-height: 1.4;
   font-weight: 700;
@@ -112,9 +95,7 @@
 
 .guidelines li {
   margin-bottom: 7px;
-
   color: #66809f;
-
   font-size: 14px;
   line-height: 1.6;
 }
@@ -134,14 +115,10 @@
 
 .formCard {
   width: 100%;
-
-  padding: 34px 34px 28px;
-
+  padding: 34px;
   background: #ffffff;
-
   border: 1px solid #dfe6ee;
   border-radius: 12px;
-
   box-sizing: border-box;
 }
 
@@ -159,11 +136,8 @@
 
 .formGroup label {
   display: block;
-
   margin-bottom: 7px;
-
   color: #172033;
-
   font-size: 17px;
   line-height: 1.4;
   font-weight: 700;
@@ -171,9 +145,7 @@
 
 .helperText {
   margin: 0 0 11px;
-
   color: #40516b;
-
   font-size: 15px;
   line-height: 1.55;
 }
@@ -185,23 +157,15 @@
 .input {
   width: 100%;
   height: 44px;
-
   padding: 0 13px;
-
   background: #ffffff;
-
   border: 1px solid #d9e1ea;
   border-radius: 6px;
-
   outline: none;
-
   color: #172033;
-
   font-family: inherit;
   font-size: 14px;
-
   box-sizing: border-box;
-
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -213,7 +177,6 @@
 
 .input:focus {
   border-color: #f97316;
-
   box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.08);
 }
 
@@ -228,20 +191,15 @@
 
 .editor {
   width: 100%;
-
   overflow: hidden;
-
   background: #ffffff;
-
   border: 1px solid #d9e1ea;
   border-radius: 6px;
-
   box-sizing: border-box;
 }
 
 .editor:focus-within {
   border-color: #f97316;
-
   box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.08);
 }
 
@@ -251,17 +209,13 @@
 
 .editorHeader {
   min-height: 36px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
+  gap: 8px;
   padding: 0 9px;
-
   background: #eef3f8;
-
   border-bottom: 1px solid #d9e1ea;
-
   box-sizing: border-box;
 }
 
@@ -269,29 +223,24 @@
   display: flex;
   align-items: center;
   gap: 2px;
+  flex-wrap: wrap;
 }
 
 .toolbar button {
   width: 30px;
   height: 30px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
+  flex-shrink: 0;
   padding: 0;
-
   background: transparent;
   border: 0;
   border-radius: 4px;
-
   color: #334155;
-
   font-family: inherit;
   font-size: 14px;
-
   cursor: pointer;
-
   transition:
     background 0.15s ease,
     color 0.15s ease;
@@ -308,7 +257,6 @@
 
 .toolbar button strong {
   color: #334155;
-
   font-size: 15px;
   font-weight: 800;
 }
@@ -323,7 +271,6 @@
 
 .toolbar button em {
   color: #334155;
-
   font-size: 15px;
   font-weight: 700;
   font-style: italic;
@@ -339,7 +286,6 @@
 
 .toolbar button span {
   color: #334155;
-
   font-size: 12px;
   font-weight: 700;
 }
@@ -353,11 +299,10 @@
 ================================================== */
 
 .characterCount {
+  flex-shrink: 0;
   color: #64748b;
-
   font-size: 14px;
   line-height: 1;
-
   white-space: nowrap;
 }
 
@@ -368,24 +313,16 @@
 .textarea {
   width: 100%;
   min-height: 185px;
-
   display: block;
-
   padding: 14px;
-
   background: #ffffff;
-
   border: 0;
   outline: none;
-
   resize: vertical;
-
   color: #172033;
-
   font-family: inherit;
   font-size: 14px;
   line-height: 1.65;
-
   box-sizing: border-box;
 }
 
@@ -405,36 +342,25 @@
 .aiArea {
   display: flex;
   align-items: center;
-
   gap: 12px;
-
   margin-top: 14px;
 }
 
 .aiButton {
   min-height: 38px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   gap: 7px;
-
   padding: 0 14px;
-
   background: #f1f5f9;
-
   border: 1px solid #e1e7ee;
   border-radius: 6px;
-
   color: #40516b;
-
   font-family: inherit;
   font-size: 15px;
   font-weight: 700;
-
   cursor: pointer;
-
   transition:
     background 0.2s ease,
     color 0.2s ease,
@@ -443,9 +369,7 @@
 
 .aiButton:hover:not(:disabled) {
   background: #fff7ed;
-
   border-color: #fed7aa;
-
   color: #f97316;
 }
 
@@ -456,16 +380,13 @@
 
 .aiIcon {
   color: inherit;
-
   font-size: 15px;
   line-height: 1;
 }
 
 .aiHint {
   margin: 0;
-
   color: #64748b;
-
   font-size: 14px;
   line-height: 1.5;
 }
@@ -476,14 +397,10 @@
 
 .coachPanel {
   margin-top: 22px;
-
   padding: 18px;
-
   background: #f8fafc;
-
   border: 1px solid #dfe6ee;
   border-radius: 8px;
-
   box-sizing: border-box;
 }
 
@@ -491,17 +408,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   gap: 15px;
-
   margin-bottom: 15px;
 }
 
 .coachPanel h2 {
   margin: 0;
-
   color: #172033;
-
   font-size: 17px;
   line-height: 1.4;
   font-weight: 700;
@@ -509,9 +422,7 @@
 
 .coachPanel h3 {
   margin: 0 0 7px;
-
   color: #172033;
-
   font-size: 14px;
   line-height: 1.4;
   font-weight: 700;
@@ -524,9 +435,7 @@
 .feedback p,
 .improvedSection p {
   margin: 0;
-
   color: #40516b;
-
   font-size: 14px;
   line-height: 1.6;
 }
@@ -542,9 +451,7 @@
 
 .suggestions li {
   margin-bottom: 6px;
-
   color: #40516b;
-
   font-size: 14px;
   line-height: 1.55;
 }
@@ -556,7 +463,6 @@
 .improvedSection {
   margin-top: 16px;
   padding-top: 15px;
-
   border-top: 1px solid #e2e8f0;
 }
 
@@ -566,20 +472,14 @@
 
 .applyButton {
   padding: 8px 12px;
-
   background: #fff7ed;
-
   border: 1px solid #fed7aa;
   border-radius: 5px;
-
   color: #ea580c;
-
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
-
   cursor: pointer;
-
   transition:
     background 0.2s ease,
     border-color 0.2s ease;
@@ -587,7 +487,6 @@
 
 .applyButton:hover:not(:disabled) {
   background: #ffedd5;
-
   border-color: #fdba74;
 }
 
@@ -603,30 +502,22 @@
 .error,
 .success {
   margin-bottom: 22px;
-
   padding: 11px 12px;
-
   border-radius: 5px;
-
   font-size: 13px;
   line-height: 1.4;
-
   box-sizing: border-box;
 }
 
 .error {
   color: #dc2626;
-
   background: #fef0f0;
-
   border: 1px solid #fecaca;
 }
 
 .success {
   color: #15803d;
-
   background: #f0fdf4;
-
   border: 1px solid #bbf7d0;
 }
 
@@ -638,12 +529,9 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-
   gap: 20px;
-
   margin-top: 32px;
   padding-top: 24px;
-
   border-top: 1px solid #e2e8f0;
 }
 
@@ -653,21 +541,14 @@
 
 .cancelButton {
   height: 40px;
-
   padding: 0 8px;
-
   background: transparent;
-
   border: 0;
-
   color: #40516b;
-
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-
   cursor: pointer;
-
   transition: color 0.2s ease;
 }
 
@@ -687,28 +568,19 @@
 .submitButton {
   min-width: 150px;
   height: 40px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   gap: 7px;
-
   padding: 0 18px;
-
   background: #f97316;
-
   border: 1px solid #f97316;
   border-radius: 6px;
-
   color: #ffffff;
-
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-
   cursor: pointer;
-
   transition:
     background 0.2s ease,
     border-color 0.2s ease;
@@ -716,7 +588,6 @@
 
 .submitButton:hover:not(:disabled) {
   background: #ea580c;
-
   border-color: #ea580c;
 }
 
@@ -730,13 +601,110 @@
 }
 
 /* ==================================================
+   PUBLISHED SCREEN
+================================================== */
+
+.publishedCard {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 56px 24px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.publishedIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.publishedCard h1 {
+  margin: 24px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.publishedCard > p {
+  max-width: 480px;
+  margin: 12px auto 0;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.publishedActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.backDashboardButton {
+  background: transparent;
+  border: none;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+}
+
+.backDashboardButton:hover {
+  text-decoration: underline;
+}
+
+.viewQuestionButton {
+  background: #f97316;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.viewQuestionButton:hover:not(:disabled) {
+  background: #ea580c;
+}
+
+.viewQuestionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.askAnotherButton {
+  background: #e2e8f0;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.askAnotherButton:hover {
+  background: #cbd5e1;
+}
+
+/* ==================================================
    TABLET - 900px
 ================================================== */
 
 @media (max-width: 900px) {
   .container {
     max-width: 100%;
-
     padding: 36px 22px 60px;
   }
 
@@ -768,6 +736,23 @@
 
   .formCard {
     padding: 28px 23px 25px;
+  }
+
+  .publishedCard {
+    padding: 45px 22px;
+  }
+
+  .publishedIcon {
+    width: 84px;
+    height: 84px;
+  }
+
+  .publishedCard h1 {
+    font-size: 22px;
+  }
+
+  .publishedActions {
+    gap: 12px;
   }
 }
 
@@ -825,21 +810,42 @@
     font-size: 14px;
   }
 
+  /* Editor */
+  .editorHeader {
+    min-height: 40px;
+    padding: 4px 7px;
+  }
+
+  .toolbar {
+    gap: 1px;
+  }
+
+  .toolbar button {
+    width: 28px;
+    height: 28px;
+  }
+
+  .characterCount {
+    font-size: 12px;
+  }
+
   .textarea {
     min-height: 175px;
   }
 
+  /* AI */
   .aiArea {
     align-items: flex-start;
-
     flex-direction: column;
-
     gap: 8px;
+  }
+
+  .aiButton {
+    width: auto;
   }
 
   .coachHeader {
     align-items: flex-start;
-
     flex-direction: column;
   }
 
@@ -847,8 +853,42 @@
     width: 100%;
   }
 
+  /* Form actions */
   .actions {
     gap: 14px;
+  }
+
+  /* Published screen */
+  .publishedCard {
+    padding: 40px 18px;
+    border-radius: 12px;
+  }
+
+  .publishedIcon {
+    width: 76px;
+    height: 76px;
+  }
+
+  .publishedCard h1 {
+    margin-top: 20px;
+    font-size: 21px;
+  }
+
+  .publishedCard > p {
+    font-size: 14px;
+  }
+
+  .publishedActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .backDashboardButton,
+  .viewQuestionButton,
+  .askAnotherButton {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -901,12 +941,10 @@
     font-size: 13px;
   }
 
+  /* Editor toolbar */
   .editorHeader {
-    padding: 0 6px;
-  }
-
-  .toolbar {
-    gap: 1px;
+    min-height: 36px;
+    padding: 4px 5px;
   }
 
   .toolbar button {
@@ -915,18 +953,18 @@
   }
 
   .characterCount {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .textarea {
     min-height: 155px;
-
     padding: 11px;
-
     font-size: 13px;
   }
 
+  /* AI */
   .aiButton {
+    width: 100%;
     font-size: 14px;
   }
 
@@ -934,16 +972,87 @@
     font-size: 13px;
   }
 
+  /* Form actions */
   .actions {
     flex-direction: column-reverse;
-
     align-items: stretch;
-
     gap: 8px;
   }
 
   .cancelButton,
   .submitButton {
     width: 100%;
+  }
+
+  /* Published screen */
+  .publishedCard {
+    padding: 32px 14px;
+    border-radius: 10px;
+  }
+
+  .publishedIcon {
+    width: 68px;
+    height: 68px;
+  }
+
+  .publishedCard h1 {
+    font-size: 19px;
+  }
+
+  .publishedCard > p {
+    font-size: 13px;
+  }
+
+  .publishedActions {
+    margin-top: 24px;
+    gap: 8px;
+  }
+
+  .backDashboardButton,
+  .viewQuestionButton,
+  .askAnotherButton {
+    padding: 11px 16px;
+    font-size: 13px;
+  }
+}
+
+/* ==================================================
+   VERY SMALL PHONES - 360px
+================================================== */
+
+@media (max-width: 360px) {
+  .container {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .formCard {
+    padding: 18px 10px;
+  }
+
+  .guidelines {
+    padding: 15px;
+  }
+
+  .header h1 {
+    font-size: 21px;
+  }
+
+  .toolbar button {
+    width: 25px;
+    height: 25px;
+  }
+
+  .characterCount {
+    font-size: 10px;
+  }
+
+  .publishedCard {
+    padding: 28px 12px;
+  }
+
+  .publishedIcon {
+    width: 62px;
+    height: 62px;
   }
 }

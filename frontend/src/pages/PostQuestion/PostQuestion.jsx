@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link as LinkIcon } from "lucide-react";
-
+import { CheckCircle2 } from "lucide-react";
+// Import the two API-calling functions from the service layer
+// createQuestion -> sends POST /api/questions
+// generateQuestionDraftCoach -> sends POST /api/questions/draft-coach
 import {
   createQuestion,
   generateQuestionDraftCoach,
@@ -9,21 +12,35 @@ import {
 
 import styles from "./PostQuestion.module.css";
 
+// Main page component for the "Post Question" screen
 export default function PostQuestion() {
+  // Function used to redirect the user to another route (e.g. after submit)
   const navigate = useNavigate();
 
+  // Holds both form fields together in one state object
   const [formData, setFormData] = useState({
     title: "",
     content: "",
   });
 
+  // True while the "Post Question" request is in progress
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCoaching, setIsCoaching] = useState(false);
-  const [coachFeedback, setCoachFeedback] = useState(null);
 
+  // True while the AI draft-coach request is in progress
+  const [isCoaching, setIsCoaching] = useState(false);
+
+  // Holds the AI's feedback response once it arrives; null = nothing to show yet
+  const [coachFeedback, setCoachFeedback] = useState(null);
+  const [isPublished, setIsPublished] = useState(false);
+  const [createdQuestionHash, setCreatedQuestionHash] = useState(null);
+
+  // Holds the current error message to display (empty string = no error)
   const [error, setError] = useState("");
+  // Holds the current success message to display (empty string = no message)
   const [success, setSuccess] = useState("");
 
+  // Runs on every keystroke in the title input or content textarea
+  // Update formData  copy old values, overwrite only the changed field
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -36,6 +53,9 @@ export default function PostQuestion() {
     setSuccess("");
   };
 
+  // Full validation used right before actually submitting the question
+  // Trim whitespace so blank/space-only input doesn't pass length checks
+  // Reject if title is missing or too short
   const validateForm = () => {
     const title = formData.title.trim();
     const content = formData.content.trim();
@@ -55,9 +75,12 @@ export default function PostQuestion() {
       return false;
     }
 
+    // All checks passed
     return true;
   };
 
+  // Runs when the "AI suggestions" button is clicked
+  // Reset messages and clear any previous AI feedback before a new request
   const handleGetFeedback = async () => {
     setError("");
     setSuccess("");
@@ -80,7 +103,7 @@ export default function PostQuestion() {
       setError("Question content must be at least 10 characters long.");
       return;
     }
-
+    // Turn on loading state -> disables button, shows "Getting suggestions..."
     try {
       setIsCoaching(true);
 
@@ -89,7 +112,6 @@ export default function PostQuestion() {
         content,
       });
 
-      // ሰርቨሩ ከሚልከው res.status(...).json({ data }) ጋር እንዲጣጣም response.data ወይም response ይደረጋል
       setCoachFeedback(response.data || response);
     } catch (err) {
       const message =
@@ -133,18 +155,15 @@ export default function PostQuestion() {
         content: formData.content.trim(),
       });
 
-      setSuccess(response.message || "Question posted successfully.");
+      console.log("CREATE QUESTION RESPONSE:", response);
 
-      setFormData({
-        title: "",
-        content: "",
-      });
+      const hash =
+        response?.data?.questionHash ??
+        response?.questionHash ??
+        response?.data?.hash;
+      setCreatedQuestionHash(hash);
 
-      setCoachFeedback(null);
-
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+      setIsPublished(true);
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -165,6 +184,69 @@ export default function PostQuestion() {
     : Array.isArray(coachFeedback?.suggestions)
       ? coachFeedback.suggestions
       : [];
+  if (isPublished) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.container}>
+          <section className={styles.publishedCard}>
+            <div className={styles.publishedIcon}>
+              <CheckCircle2 size={48} strokeWidth={2} />
+            </div>
+
+            <h1>Thread published</h1>
+
+            <p>
+              Your post is indexed for keyword search and embedding-based
+              similarity. Share the link in study groups, or stay on the thread
+              to answer follow-up questions from peers.
+            </p>
+
+            <div className={styles.publishedActions}>
+              <button
+                type="button"
+                className={styles.backDashboardButton}
+                onClick={() => navigate("/dashboard")}
+              >
+                Back to Dashboard
+              </button>
+
+              <button
+                type="button"
+                className={styles.viewQuestionButton}
+                onClick={() => {
+                  if (createdQuestionHash) {
+                    navigate(`/question/${createdQuestionHash}`);
+                  }
+                }}
+                disabled={!createdQuestionHash}
+              >
+                View Question
+              </button>
+
+              <button
+                type="button"
+                className={styles.askAnotherButton}
+                onClick={() => {
+                  setIsPublished(false);
+
+                  setFormData({
+                    title: "",
+                    content: "",
+                  });
+
+                  setCoachFeedback(null);
+                  setError("");
+                  setSuccess("");
+                }}
+              >
+                Ask Another
+              </button>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className={styles.page}>
