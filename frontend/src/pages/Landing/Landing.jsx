@@ -20,7 +20,7 @@ import styles from "./Landing.module.css";
 export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-
+  // holds a reference to the input DOM node (no re-render on change)
   // useRef  Smooth Scrolling
   const howItWorksRef = useRef(null);
   const courseRagRef = useRef(null);
@@ -504,6 +504,7 @@ export default function Landing() {
             <span className={styles.bulletSeparator} aria-hidden>
               ·
             </span>
+
             <a href="#" className={styles.footerLink}>
               Terms
             </a>

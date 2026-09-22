@@ -123,45 +123,77 @@ export const processDocument = async ({ userId, file }) => {
 
     //mark document ready
 
-        await safeExecute(
-          `
+    await safeExecute(
+      `
       UPDATE documents
       SET status = ?
       WHERE document_id = ?
       `,
-          ["ready", documentId],
-        );
+      ["ready", documentId],
+    );
 
-        return {
-          msg: "PDF uploaded and processed successfully.",
+    return {
+      msg: "PDF uploaded and processed successfully.",
 
-          documentId,
+      documentId,
 
-          filename,
+      filename,
 
-          chunksCreated: chunks.length,
+      chunksCreated: chunks.length,
 
-          status: "ready",
-        };
-
+      status: "ready",
+    };
   } catch (err) {
-      console.error("Document Processing Error:", err);
+    console.error("Document Processing Error:", err);
 
-      if (documentId) {
-        await safeExecute(
-          `
+    if (documentId) {
+      await safeExecute(
+        `
         UPDATE documents
         SET status = ?
         WHERE document_id = ?
         `,
-          ["error", documentId],
-        ).catch(() => {});
-      }
+        ["error", documentId],
+      ).catch(() => {});
+    }
 
-      if (file?.path) {
-        await deletePdfFile(file.path);
-      }
+    if (file?.path) {
+      await deletePdfFile(file.path);
+    }
 
-      throw err;
+    throw err;
   }
+};
+
+// *==== list document:GET /api/rag/documents ======
+
+export const listDocumentsForUserService = async ({ userId }) => {
+  const rows = await safeExecute(
+    `
+    SELECT
+      document_id,
+      title,
+      mime_type,
+      byte_size,
+      status,
+      error_message,
+      created_at,
+      updated_at
+    FROM documents
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    `,
+    [userId],
+  );
+
+  return rows.map((document) => ({
+    documentId: document.document_id,
+    title: document.title,
+    mimeType: document.mime_type,
+    byteSize: document.byte_size,
+    status: document.status,
+    errorMessage: document.error_message,
+    createdAt: document.created_at,
+    updatedAt: document.updated_at,
+  }));
 };

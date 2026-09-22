@@ -4,7 +4,8 @@ import {
   removeDocument,
   searchDocument,
   askDocument,
-} from "./ragService.js";
+  listDocumentsForUserService,
+} from "./rag.Service.js";
 
 // Upload and Process Documents
 
@@ -34,3 +35,22 @@ export const uploadAndProcessDocument = async (req, res) => {
     });
   }
 };
+// *==== list document:GET /api/rag/documents ======
+
+export const listDocumentsController = async (req, res, next) => {
+  try {
+    const documents = await listDocumentsForUserService({
+      userId: req.user.id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Documents fetched successfully.",
+      data: documents,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// * ======= DELETE /api/rag/documents/:documentId ====
