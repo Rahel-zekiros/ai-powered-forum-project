@@ -144,3 +144,94 @@ export const extractPdfPages = async (pdfBuffer) => {
         });
       }
     }
+    // ==========================================
+    // Make Sure We Found Text
+    // ==========================================
+
+    if (pages.length === 0) {
+      throw new Error(
+        "No readable text found in this PDF. It might be a scanned image-only PDF.",
+      );
+    }
+
+    return pages;
+  } catch (err) {
+    throw new Error(err.message || "Failed to parse PDF file");
+  }
+};
+
+// ==========================================
+// Clean PDF Text
+// ==========================================
+
+export const cleanPdfText = (text) => {
+  if (!text) {
+    return "";
+  }
+
+  let cleaned = text;
+
+  // ==========================================
+  // Normalize Line Endings
+  // ==========================================
+
+  cleaned = cleaned.replace(/\r\n/g, "\n");
+
+  cleaned = cleaned.replace(/\r/g, "\n");
+
+  // ==========================================
+  // Remove HTML Tags
+  // Example:
+  // <h1>0</h1> -> 0
+  // <p>Hello</p> -> Hello
+  // ==========================================
+
+  cleaned = cleaned.replace(/<\/?[a-z][^>]*>/gi, "");
+
+  // ==========================================
+  // Remove Spaces at Line Start
+  // ==========================================
+
+  cleaned = cleaned.replace(/^[ \t]+/gm, "");
+
+  // ==========================================
+  // Remove Spaces at Line End
+  // ==========================================
+
+  cleaned = cleaned.replace(/[ \t]+$/gm, "");
+
+  // ==========================================
+  // Convert PDF Bullet Symbols
+  // to Markdown Bullets
+  // ==========================================
+
+  cleaned = cleaned.replace(/^[●•]\s*/gm, "- ");
+
+  cleaned = cleaned.replace(/^[○◦]\s*/gm, "  - ");
+
+  // ==========================================
+  // Keep Maximum Two New Lines
+  // ==========================================
+
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
+
+  return cleaned.trim();
+};
+
+// ==========================================
+// Delete PDF File
+// ==========================================
+
+export const deletePdfFile = async (filePath) => {
+  if (!filePath) {
+    return;
+  }
+
+  try {
+    await fs.unlink(filePath);
+  } catch (fileErr) {
+    if (fileErr.code !== "ENOENT") {
+      console.error("File Cleanup Error:", fileErr.message);
+    }
+  }
+};
