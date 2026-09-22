@@ -4,6 +4,7 @@ import {
   removeDocument,
   searchDocument,
   askDocument,
+  listDocumentsForUserService,
 } from "./rag.Service.js";
 
 // Upload and Process Documents
