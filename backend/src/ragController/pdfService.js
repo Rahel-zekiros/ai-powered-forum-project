@@ -22,3 +22,29 @@ export const extractTextFile = async (filePath) => {
     throw new Error(err.message || "Failed to read text file");
   }
 };
+// ==========================================
+// Extract PDF Pages
+// ==========================================
+
+export const extractPdfPages = async (pdfBuffer) => {
+  try {
+    const pdfExtract = new PDFExtract();
+
+    const data = await pdfExtract.extractBuffer(pdfBuffer);
+
+    if (!data || !Array.isArray(data.pages)) {
+      throw new Error("Invalid PDF file structure or empty pages.");
+    }
+
+    const pages = [];
+
+    // ==========================================
+    // Process Every PDF Page
+    // ==========================================
+
+    for (let pageIndex = 0; pageIndex < data.pages.length; pageIndex++) {
+      const page = data.pages[pageIndex];
+
+      if (!page || !Array.isArray(page.content)) {
+        continue;
+      }
