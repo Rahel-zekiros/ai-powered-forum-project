@@ -316,6 +316,7 @@ export default function QuestionDetail() {
                     }}
                     rows={7}
                     placeholder="Type your answer here... You can use Markdown to format your code!"
+                    ref={answerRef}
                   />
                 </div>
 
