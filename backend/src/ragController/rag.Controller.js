@@ -36,6 +36,7 @@ export const uploadAndProcessDocument = async (req, res) => {
   }
 };
 // *==== list document:GET /api/rag/documents ======
+
 export const listDocumentsController = async (req, res, next) => {
   try {
     const documents = await listDocumentsForUserService({
@@ -51,3 +52,5 @@ export const listDocumentsController = async (req, res, next) => {
     next(error);
   }
 };
+
+// * ======= DELETE /api/rag/documents/:documentId ====

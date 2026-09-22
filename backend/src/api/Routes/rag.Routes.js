@@ -6,4 +6,6 @@ const router = express.Router();
 // *==== list document:GET /api/rag/documents ======
 router.get("/document", authenticateUser, listDocumentsController);
 
+// * ======= DELETE /api/rag/documents/:documentId ====
+router.delete("/document/:documentId", authenticateUser);
 export default router;
