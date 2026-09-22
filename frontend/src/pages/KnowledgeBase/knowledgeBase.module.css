@@ -1445,3 +1445,18 @@
   content: "";
   margin-top: 4px;
 }
+
+
+
+/* ==========================================
+   SEMANTIC SIMILARITY ARROW ICON FIX
+   ========================================== */
+
+.similarityContent svg, 
+.similarityContent img,
+.similarityHeader svg {
+  width: 1.5em;     
+  height: 1.5em;
+  vertical-align: middle; 
+  flex-shrink: 0;
+}
