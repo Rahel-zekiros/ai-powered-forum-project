@@ -197,3 +197,52 @@ export const listDocumentsForUserService = async ({ userId }) => {
     updatedAt: document.updated_at,
   }));
 };
+
+// * ======= DELETE /api/rag/documents/:documentId ======
+
+export const deleteDocumentService = async ({ documentId, userId }) => {
+  const rows = await safeExecute(
+    `
+    SELECT
+      document_id,
+      user_id,
+      storage_path
+    FROM documents
+    WHERE document_id = ?
+      AND user_id = ?
+    LIMIT 1
+    `,
+    [documentId, userId],
+  );
+
+  if (!rows.length) {
+    const error = new Error("Document not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const document = rows[0];
+
+  const uploadDir = path.resolve(process.cwd(), "upload", "rag");
+
+  const absoluteFilePath = path.resolve(uploadDir, document.storage_path);
+
+  try {
+    await fs.unlink(absoluteFilePath);
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      throw error;
+    }
+  }
+  await safeExecute(
+    `
+    DELETE FROM documents
+    WHERE document_id = ?
+      AND user_id = ?
+    `,
+    [documentId, userId],
+  );
+  return {
+    id: documentId,
+  };
+};
