@@ -1,11 +1,22 @@
 import express from "express";
 import { authenticateUser } from "../../middleware/authentication";
-import { listDocumentsController } from "../../ragController/rag.Controller";
+import {
+  listDocumentsController,
+  deleteDocumentController,
+} from "../../ragController/rag.Controller";
+import { documentIdParamValidation } from "../../ragController/rag.validation";
+
 const router = express.Router();
+// *===============get document:Stream RAG Document
 
 // *==== list document:GET /api/rag/documents ======
-router.get("/document", authenticateUser, listDocumentsController);
+router.get("/documents", authenticateUser, listDocumentsController);
 
 // * ======= DELETE /api/rag/documents/:documentId ====
-router.delete("/document/:documentId", authenticateUser);
+router.delete(
+  "/documents/:documentId",
+  authenticateUser,
+  documentIdParamValidation,
+  deleteDocumentController,
+);
 export default router;

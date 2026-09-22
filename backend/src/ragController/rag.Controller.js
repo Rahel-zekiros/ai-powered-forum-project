@@ -5,6 +5,7 @@ import {
   searchDocument,
   askDocument,
   listDocumentsForUserService,
+  deleteDocumentService,
 } from "./rag.Service.js";
 
 // Upload and Process Documents
@@ -52,5 +53,23 @@ export const listDocumentsController = async (req, res, next) => {
     next(error);
   }
 };
+// * ======= DELETE /api/rag/documents/:documentId ======
 
-// * ======= DELETE /api/rag/documents/:documentId ====
+export const deleteDocumentController = async (req, res, next) => {
+  try {
+    const { documentId } = req.params;
+
+    const result = await deleteDocumentService({
+      documentId: Number(documentId),
+      userId: req.user.id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Document deleted successfully.",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
