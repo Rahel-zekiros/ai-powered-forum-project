@@ -4,7 +4,7 @@ import {
   removeDocument,
   searchDocument,
   askDocument,
-} from "./ragService.js";
+} from "./rag.Service.js";
 
 // Upload and Process Documents
 
@@ -32,5 +32,21 @@ export const uploadAndProcessDocument = async (req, res) => {
         err.message ||
         "Server error occurred during the AI RAG pipeline execution.",
     });
+  }
+};
+// *==== list document:GET /api/rag/documents ======
+export const listDocumentsController = async (req, res, next) => {
+  try {
+    const documents = await listDocumentsForUserService({
+      userId: req.user.id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Documents fetched successfully.",
+      data: documents,
+    });
+  } catch (error) {
+    next(error);
   }
 };
