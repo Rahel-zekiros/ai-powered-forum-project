@@ -334,6 +334,19 @@
   background: #f8fafc;
   cursor: not-allowed;
 }
+.inputError {
+  border-color: #dc2626;
+}
+
+.editorError {
+  border-color: #dc2626;
+}
+
+.fieldError {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #dc2626;
+}
 
 /* ==================================================
    AI AREA

@@ -38,6 +38,7 @@ export default function PostQuestion() {
   const [error, setError] = useState("");
   // Holds the current success message to display (empty string = no message)
   const [success, setSuccess] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // Runs on every keystroke in the title input or content textarea
   // Update formData  copy old values, overwrite only the changed field
@@ -51,6 +52,7 @@ export default function PostQuestion() {
 
     setError("");
     setSuccess("");
+    setFieldErrors((previous) => ({ ...previous, [name]: "" }));
   };
 
   // Full validation used right before actually submitting the question
@@ -59,24 +61,22 @@ export default function PostQuestion() {
   const validateForm = () => {
     const title = formData.title.trim();
     const content = formData.content.trim();
+    const nextFieldErrors = {};
 
     if (title.length < 5) {
-      setError("Title must be at least 5 characters long.");
-      return false;
-    }
-
-    if (title.length > 255) {
-      setError("Title cannot be longer than 255 characters.");
-      return false;
+      nextFieldErrors.title = "Title must be at least 5 characters long.";
+    } else if (title.length > 255) {
+      nextFieldErrors.title = "Title cannot be longer than 255 characters.";
     }
 
     if (content.length < 10) {
-      setError("Question content must be at least 10 characters long.");
-      return false;
+      nextFieldErrors.content =
+        "Question content must be at least 10 characters long.";
     }
 
-    // All checks passed
-    return true;
+    setFieldErrors(nextFieldErrors);
+
+    return Object.keys(nextFieldErrors).length === 0;
   };
 
   // Runs when the "AI suggestions" button is clicked
@@ -184,6 +184,7 @@ export default function PostQuestion() {
     : Array.isArray(coachFeedback?.suggestions)
       ? coachFeedback.suggestions
       : [];
+  // Render the "Thread published" confirmation screen if the question was successfully posted
   if (isPublished) {
     return (
       <main className={styles.page}>
@@ -351,9 +352,16 @@ export default function PostQuestion() {
                 onChange={handleChange}
                 maxLength={255}
                 disabled={isSubmitting}
-                className={styles.input}
+                className={
+                  fieldErrors.title
+                    ? `${styles.input} ${styles.inputError}`
+                    : styles.input
+                }
                 placeholder="e.g. How do I handle state management using Context API in React?"
               />
+              {fieldErrors.title && (
+                <p className={styles.fieldError}>{fieldErrors.title}</p>
+              )}
             </div>
 
             {/* QUESTION CONTENT */}
@@ -367,7 +375,13 @@ export default function PostQuestion() {
                 Minimum 10 characters.
               </p>
 
-              <div className={styles.editor}>
+              <div
+                className={
+                  fieldErrors.content
+                    ? `${styles.editor} ${styles.editorError}`
+                    : styles.editor
+                }
+              >
                 {/* TOOLBAR */}
                 <div className={styles.editorHeader}>
                   <div className={styles.toolbar}>
@@ -404,6 +418,9 @@ export default function PostQuestion() {
                   placeholder="Include all the information someone would need to answer your question... You can use Markdown to format your code!"
                 />
               </div>
+              {fieldErrors.content && (
+                <p className={styles.fieldError}>{fieldErrors.content}</p>
+              )}
 
               {/* AI COACH BUTTON */}
               <div className={styles.aiArea}>
