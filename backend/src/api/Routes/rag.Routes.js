@@ -14,7 +14,7 @@ router.get("/documents", authenticateUser, listDocumentsController);
 
 // * ======= DELETE /api/rag/documents/:documentId ====
 router.delete(
-  "/document/:documentId",
+  "/documents/:documentId",
   authenticateUser,
   documentIdParamValidation,
   deleteDocumentController,
