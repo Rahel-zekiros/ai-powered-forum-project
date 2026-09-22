@@ -4,6 +4,7 @@ import questionRoutes from "../question/routes.js";
 import postQuestionRoutes from "./Routes/questionRoutes.js";
 import questionDetailRoutes from "./Routes/questionDetailAIroutes.js";
 import userRoutes from "./Routes/userRoutes.js";
+import ragRoutes from "./Routes/rag.Routes.js";
 export const mainRouter = express.Router();
 
 // Authentication routes
@@ -22,4 +23,4 @@ mainRouter.use("/questions", questionDetailRoutes);
 mainRouter.use("/users", userRoutes);
 
 //* 5. RAG
-mainRouter.use("/rag", ragRouter);
+mainRouter.use("/rag", ragRoutes);
