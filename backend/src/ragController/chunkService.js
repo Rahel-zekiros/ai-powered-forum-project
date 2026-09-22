@@ -76,3 +76,53 @@ export const createChunks = (
           end = spaceBreak;
         }
       }
+
+      // ==========================================
+      // Keep formatting
+      // ==========================================
+
+      const chunkText = pageText.slice(start, end).trim();
+
+      if (chunkText) {
+        chunks.push({
+          content: chunkText,
+          chunkIndex: globalChunkIndex,
+          pageStart: page.pageNumber,
+          pageEnd: page.pageNumber,
+        });
+
+        globalChunkIndex++;
+      }
+
+      // Last chunk
+      if (end >= pageText.length) {
+        break;
+      }
+
+      // ==========================================
+      // Overlap
+      // ==========================================
+
+      let nextStart = end - overlap;
+
+      // Don't start in the middle of a word
+      while (
+        nextStart > start &&
+        nextStart < pageText.length &&
+        pageText[nextStart - 1] !== " " &&
+        pageText[nextStart - 1] !== "\n"
+      ) {
+        nextStart--;
+      }
+
+      // Safety
+      if (nextStart <= start || nextStart >= end) {
+        start = end;
+      } else {
+        start = nextStart;
+      }
+    }
+  }
+
+  return chunks;
+};
