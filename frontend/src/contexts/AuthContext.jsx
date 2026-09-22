@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
 
       if (savedToken) {
         try {
-          const verifiedUser = await authService.verifyActiveSession();
+            const verifiedUser = await authService.verifyActiveSession();
           setCurrentUser(verifiedUser);
         } catch (error) {
           authService.clearSessionData();

@@ -74,27 +74,26 @@ export default function Sidebar({ isOpen, onClose }) {
             <span>New Question</span>
           </button>
 
-          <div className={styles.profileCard}>
-            <div className={styles.avatar}>{initials}</div>
-            <div className={styles.profileInfo}>
-              <span className={styles.profileName}>{fullName}</span>
-              
-              <Link to="/profile/update" onClick={onClose} className={styles.editProfileLink}>
-                <span className={`${styles.profileRole} ${styles.profileRoleWithIcon}`}>
-                  <UserCog size={12} /> Edit Profile
-                </span>
-              </Link>
-            </div>
-          </div>
+          {/* Profile & Logout Section */}
+          <div className={styles.profileWrapper}>
+            <Link to="/profile/update" onClick={onClose} className={styles.profileLinkSection}>
+              <div className={styles.avatar}>{initials}</div>
+              <div className={styles.profileInfo}>
+                <span className={styles.profileName}>{fullName}</span>
+               
+              </div>
+            </Link>
 
-          <button
-            type="button"
-            className={styles.logoutButton}
-            onClick={logoutUser}
-          >
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
+            <button
+              type="button"
+              className={styles.logoutIconBtn}
+              onClick={logoutUser}
+              title="Logout"
+            >
+               <span className={styles.logoutText}>Log Out</span>
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
       </aside>
     </>
