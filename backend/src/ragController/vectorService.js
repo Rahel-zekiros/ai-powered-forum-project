@@ -26,7 +26,7 @@ export const cosineSimilarity = (vectorA, vectorB) => {
   if (vectorA.length === 0 || vectorB.length === 0) {
     return 0;
   }
-if (vectorA.length !== vectorB.length) {
+  if (vectorA.length !== vectorB.length) {
     return 0;
   }
 
@@ -141,3 +141,10 @@ export const rankChunks = (chunks, queryEmbedding) => {
           relevance: score,
         };
       })
+      // Remove invalid chunks
+      .filter(Boolean)
+
+      // Highest similarity first
+      .sort((a, b) => b.similarity - a.similarity)
+  );
+};
