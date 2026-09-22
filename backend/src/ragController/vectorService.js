@@ -17,7 +17,6 @@ export const vectorMagnitude = (vector) => {
 // ==========================================
 // Cosine Similarity
 // ==========================================
-
 export const cosineSimilarity = (vectorA, vectorB) => {
   if (!Array.isArray(vectorA) || !Array.isArray(vectorB)) {
     return 0;
@@ -45,7 +44,6 @@ export const cosineSimilarity = (vectorA, vectorB) => {
 
   return dotProduct / (magnitudeA * magnitudeB);
 };
-
 // ==========================================
 // Get Document Chunks + Vectors
 // ==========================================
