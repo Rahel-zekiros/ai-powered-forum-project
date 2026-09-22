@@ -7,6 +7,7 @@ import {
 import { documentIdParamValidation } from "../../ragController/rag.validation";
 
 const router = express.Router();
+// *===============get document:Stream RAG Document
 
 // *==== list document:GET /api/rag/documents ======
 router.get("/documents", authenticateUser, listDocumentsController);
