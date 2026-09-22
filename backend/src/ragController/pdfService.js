@@ -88,3 +88,59 @@ export const extractPdfPages = async (pdfBuffer) => {
         const itemY = Number.isFinite(item.y) ? item.y : 0;
 
         const lastLine = lines[lines.length - 1];
+// ========================================
+        // Create New Line
+        // ========================================
+
+        if (!lastLine || Math.abs(lastLine.y - itemY) > 3) {
+          lines.push({
+            y: itemY,
+            text,
+          });
+
+          continue;
+        }
+
+        // ========================================
+        // Same Line
+        // ========================================
+
+        lastLine.text += ` ${text}`;
+      }
+
+      // ==========================================
+      // Convert Lines to Page Text
+      // ==========================================
+
+      const pageText = lines
+        .map((line) => line.text.trim())
+        .filter(Boolean)
+        .join("\n");
+
+      // ==========================================
+      // DEBUG: RAW EXTRACTED TEXT
+      // ==========================================
+
+      console.log(`\n========== PAGE ${pageIndex + 1} RAW TEXT ==========\n`);
+
+      console.log(pageText);
+
+      console.log(`\n========== END PAGE ${pageIndex + 1} ==========\n`);
+
+      // ==========================================
+      // Clean Extracted Text
+      // ==========================================
+
+      const cleanedPageText = cleanPdfText(pageText);
+
+      // ==========================================
+      // Prevent Raw PDF Binary Text
+      // ==========================================
+
+      if (cleanedPageText && !cleanedPageText.startsWith("%PDF")) {
+        pages.push({
+          pageNumber: pageIndex + 1,
+          text: cleanedPageText,
+        });
+      }
+    }
