@@ -281,27 +281,29 @@ export default function QuestionDetail() {
                   <div className={styles.toolbar}>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("**bold**")}
+                      onClick={() => insertMarkdown("**", "**", "bold text")}
                     >
-                      <strong>B</strong>
+                      <Bold size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("*italic*")}
+                      onClick={() => insertMarkdown("*", "*", "italic text")}
                     >
-                      <em>I</em>
+                      <Italic size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("\n```\ncode\n```\n")}
+                      onClick={() =>
+                        insertMarkdown("\n```\n", "\n```\n", "code")
+                      }
                     >
-                      {"</>"}
+                      <Code2 size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("[link](url)")}
+                      onClick={() => insertMarkdown("[", "](url)", "link text")}
                     >
-                      🔗
+                      <Link2 size={14} />
                     </button>
                     <span className={styles.charCount}>
                       {draftAnswer.length} characters
