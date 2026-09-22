@@ -54,6 +54,7 @@ export const listDocumentsController = async (req, res, next) => {
   }
 };
 // * ======= DELETE /api/rag/documents/:documentId ======
+
 export const deleteDocumentController = async (req, res, next) => {
   try {
     const { documentId } = req.params;
