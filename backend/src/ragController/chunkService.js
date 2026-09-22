@@ -44,3 +44,35 @@ export const createChunks = (
       globalChunkIndex++;
       continue;
     }
+ // ==========================================
+    // Large page = multiple chunks
+    // ==========================================
+
+    let start = 0;
+
+    while (start < pageText.length) {
+      let end = Math.min(start + chunkSize, pageText.length);
+
+      if (end < pageText.length) {
+        // Prefer paragraph boundary
+        const paragraphBreak = pageText.lastIndexOf("\n\n", end);
+
+        // Then sentence boundary
+        const sentenceBreak = pageText.lastIndexOf(". ", end);
+
+        // Then normal line boundary
+        const newlineBreak = pageText.lastIndexOf("\n", end);
+
+        // Finally word boundary
+        const spaceBreak = pageText.lastIndexOf(" ", end);
+
+        if (paragraphBreak > start + 200) {
+          end = paragraphBreak + 2;
+        } else if (sentenceBreak > start + 200) {
+          end = sentenceBreak + 2;
+        } else if (newlineBreak > start + 200) {
+          end = newlineBreak + 1;
+        } else if (spaceBreak > start) {
+          end = spaceBreak;
+        }
+      }
