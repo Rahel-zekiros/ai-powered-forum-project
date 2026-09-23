@@ -337,4 +337,12 @@ export default function QuestionDetail() {
                     Relevance only. Not grading correctness. You need at least
                     20 characters.
                   </span>
+                  <button
+                    type="submit"
+                    className={styles.submitButton}
+                    disabled={isSubmitting || draftAnswer.trim().length < 20}
+                  >
+                    {isSubmitting ? "Posting..." : "Post Your Answer"}
+                  </button>
+                </div>
 }
