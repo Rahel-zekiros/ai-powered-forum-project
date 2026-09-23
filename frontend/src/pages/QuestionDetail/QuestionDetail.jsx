@@ -45,4 +45,31 @@ export default function QuestionDetail() {
   const [submitError, setSubmitError] = useState(null);
   const [copied, setCopied] = useState(false);
   const answerRef = useRef(null);
+
+  const fetchQuestion = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getSingleQuestion(questionHash);
+      setQuestion(data.question);
+      setAnswers(data.answers ?? []);
+
+      // Related questions — best effort, don't block the page if it fails.
+      try {
+        const similar = await getSimilarQuestions(questionHash, 5);
+        setRelated(similar.data ?? []);
+      } catch (e) {
+        setRelated([]);
+      }
+    } catch (err) {
+      setError(
+        err.response?.status === 404
+          ? "Failed to load question details."
+          : "Failed to load question details.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [questionHash]);
+
 }
