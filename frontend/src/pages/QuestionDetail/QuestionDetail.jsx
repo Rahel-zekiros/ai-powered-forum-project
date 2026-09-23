@@ -20,3 +20,9 @@ function formatDate(dateInput) {
     year: "numeric",
   });
 }
+
+function initials(firstName, lastName) {
+  const f = firstName?.[0] ?? "";
+  const l = lastName?.[0] ?? "";
+  return (f + l).toUpperCase() || "??";
+}
