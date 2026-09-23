@@ -174,4 +174,8 @@ export default function QuestionDetail() {
         </div>
       );
     }
+
+    const authorName =
+      `${question.author?.firstName ?? ""} ${question.author?.lastName ?? ""}`.trim() ||
+      "Unknown";
 }
