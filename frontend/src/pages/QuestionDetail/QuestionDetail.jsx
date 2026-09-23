@@ -37,4 +37,12 @@ export default function QuestionDetail() {
   const [related, setRelated] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [draftAnswer, setDraftAnswer] = useState("");
+  const [fitResult, setFitResult] = useState(null);
+  const [isCheckingFit, setIsCheckingFit] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const answerRef = useRef(null);
 }
