@@ -248,4 +248,25 @@ export default function QuestionDetail() {
                 const aName =
                   `${a.author?.firstName ?? ""} ${a.author?.lastName ?? ""}`.trim() ||
                   "Unknown";
+                  return (
+                  <li key={a.id} className={styles.answerCard}>
+                    <div className={styles.questionHeader}>
+                      <span className={styles.avatarSmall}>
+                        {initials(a.author?.firstName, a.author?.lastName)}
+                      </span>
+                      <div>
+                        <p className={styles.authorName}>{aName}</p>
+                        <p className={styles.postedDate}>
+                          {formatDate(a.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={styles.answerContent}>
+                      <ReactMarkdown>{a.content}</ReactMarkdown>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 }
