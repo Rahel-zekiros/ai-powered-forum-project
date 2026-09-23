@@ -144,6 +144,9 @@
   font-size: 13px;
   cursor: pointer;
   color: #444;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .answersHeading {
