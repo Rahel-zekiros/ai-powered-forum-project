@@ -277,4 +277,14 @@ export default function QuestionDetail() {
               {submitError && (
                 <div className={styles.errorBanner}>{submitError}</div>
               )}
+
+              <form onSubmit={handleSubmitAnswer}>
+                <div className={styles.editorBox}>
+                  <div className={styles.toolbar}>
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown("**", "**", "bold text")}
+                    >
+                      <Bold size={14} />
+                    </button>
 }
