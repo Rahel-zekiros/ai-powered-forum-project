@@ -362,4 +362,36 @@ export default function QuestionDetail() {
             </p>
           )}
         </div>
+
+        <aside className={styles.sidebar}>
+          <h3 className={styles.sidebarHeading}>Related Questions</h3>
+          {related.length === 0 ? (
+            <p className={styles.sidebarEmpty}>No related questions yet.</p>
+          ) : (
+            <ul className={styles.relatedList}>
+              {related.map((r) => {
+                const rName =
+                  `${r.author?.firstName ?? ""} ${r.author?.lastName ?? ""}`.trim() ||
+                  "Unknown";
+                return (
+                  <li key={r.id} className={styles.relatedItem}>
+                    <button
+                      className={styles.relatedLink}
+                      onClick={() => navigate(`/question/${r.questionHash}`)}
+                    >
+                      {r.title}
+                    </button>
+                    <p className={styles.relatedMeta}>
+                      {rName} <span className={styles.relatedDot}>•</span>{" "}
+                      {formatDate(r.createdAt)}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </aside>
+      </div>
+    </div>
+  );
 }
