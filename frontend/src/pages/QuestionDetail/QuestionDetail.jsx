@@ -178,4 +178,13 @@ export default function QuestionDetail() {
     const authorName =
       `${question.author?.firstName ?? ""} ${question.author?.lastName ?? ""}`.trim() ||
       "Unknown";
+
+  return (
+    <div className={styles.page}>
+      <button
+        className={styles.backLink}
+        onClick={() => navigate("/dashboard")}
+      >
+        ← Back to feed
+      </button>
 }
