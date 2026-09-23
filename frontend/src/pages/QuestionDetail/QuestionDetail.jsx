@@ -324,7 +324,8 @@ export default function QuestionDetail() {
                     onClick={handleCheckFit}
                     disabled={isCheckingFit}
                   >
-                    ✨ {isCheckingFit ? "Checking..." : "Check draft fit"}
+                    <Sparkles size={14} />{" "}
+                    {isCheckingFit ? "Checking..." : "Check draft fit"}
                   </button>
                   <span className={styles.coachHint}>
                     Relevance only. Not grading correctness. You need at least
