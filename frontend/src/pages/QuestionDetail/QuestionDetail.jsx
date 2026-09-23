@@ -26,3 +26,15 @@ function initials(firstName, lastName) {
   const l = lastName?.[0] ?? "";
   return (f + l).toUpperCase() || "??";
 }
+
+export default function QuestionDetail() {
+  const { questionHash } = useParams();
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+
+  const [question, setQuestion] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [related, setRelated] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+}
