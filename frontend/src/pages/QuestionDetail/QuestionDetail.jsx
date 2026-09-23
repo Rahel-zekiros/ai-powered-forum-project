@@ -185,7 +185,7 @@ export default function QuestionDetail() {
         className={styles.backLink}
         onClick={() => navigate("/dashboard")}
       >
-        ← Back to feed
+        <ArrowLeft size={16} /> Back to feed
       </button>
 
       <div className={styles.layout}>
@@ -248,7 +248,7 @@ export default function QuestionDetail() {
                 const aName =
                   `${a.author?.firstName ?? ""} ${a.author?.lastName ?? ""}`.trim() ||
                   "Unknown";
-                  return (
+                return (
                   <li key={a.id} className={styles.answerCard}>
                     <div className={styles.questionHeader}>
                       <span className={styles.avatarSmall}>
