@@ -212,18 +212,11 @@ export default function QuestionDetail() {
             </div>
 
             <div className={styles.questionFooter}>
-              <button
-                className={styles.pillButton}
-                onClick={async () => {
-                  await navigator.clipboard.writeText(window.location.href);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-              >
-                {copied ? "✓ Copied!" : "⇄ Share"}
+              <button className={styles.pillButton} onClick={handleShare}>
+                <Share2 size={14} /> {shareCopied ? "Copied!" : "Share"}
               </button>
               <span className={styles.pillButton}>
-                💬 {answers.length}{" "}
+                <MessageSquare size={14} /> {answers.length}{" "}
                 {answers.length === 1 ? "Answer" : "Answers"}
               </span>
             </div>
