@@ -287,4 +287,10 @@ export default function QuestionDetail() {
                     >
                       <Bold size={14} />
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown("*", "*", "italic text")}
+                    >
+                      <Italic size={14} />
+                    </button>
 }
