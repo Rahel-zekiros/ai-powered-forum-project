@@ -243,4 +243,9 @@ export default function QuestionDetail() {
               </p>
             </div>
           ) : (
+            <ul className={styles.answersList}>
+              {answers.map((a) => {
+                const aName =
+                  `${a.author?.firstName ?? ""} ${a.author?.lastName ?? ""}`.trim() ||
+                  "Unknown";
 }
