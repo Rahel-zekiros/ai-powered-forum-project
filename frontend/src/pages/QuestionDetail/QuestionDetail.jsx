@@ -357,4 +357,9 @@ export default function QuestionDetail() {
               </form>
             </section>
           ) : (
+            <p className={styles.ownQuestionNote}>
+              You can't answer your own question.
+            </p>
+          )}
+        </div>
 }
