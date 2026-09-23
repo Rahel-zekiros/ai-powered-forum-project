@@ -2,25 +2,48 @@ import express from "express";
 import {
   authenticateUser as auth,
   optionalAuth,
-} from "../../middleware/authentication.js";
+} from "../../../middleware/authentication.js";
 
 import {
+  createQuestionValidation,
+  getQuestionsValidation,
   getSingleQuestionValidation,
-  postAnswerValidation,
+  searchQuestionsValidation,
   getSimilarQuestionsValidation,
+  generateQuestionDraftCoachValidation,
   assessAnswerAgainstQuestionValidation,
 } from "../../question/validation.js";
 
 import {
+  createQuestionController,
+  getQuestionsController,
   getSingleQuestionController,
-  postAnswerController,
+  searchQuestionsController,
   getSimilarQuestionsController,
+  generateQuestionDraftCoachController,
   assessAnswerAgainstQuestionController,
-} from "../../question/quetionDetailController.js";
+} from "../../question/questionDetailController.js";
 
 const router = express.Router();
 
-// 1. Get Single Question with Answers
+router.post(
+  "/draft-coach",
+  optionalAuth,
+  generateQuestionDraftCoachValidation,
+  generateQuestionDraftCoachController,
+);
+
+router.post("/", auth, createQuestionValidation, createQuestionController);
+
+router.get("/", optionalAuth, getQuestionsValidation, getQuestionsController);
+
+router.get(
+  "/search",
+  optionalAuth,
+  searchQuestionsValidation,
+  searchQuestionsController,
+);
+
 router.get(
   "/:questionHash",
   optionalAuth,
@@ -28,15 +51,6 @@ router.get(
   getSingleQuestionController,
 );
 
-// 2. Post Answer to Question
-router.post(
-  "/:questionHash/answers",
-  auth,
-  postAnswerValidation,
-  postAnswerController,
-);
-
-// 3. Get Similar Questions
 router.get(
   "/:questionHash/similar",
   optionalAuth,
@@ -44,7 +58,6 @@ router.get(
   getSimilarQuestionsController,
 );
 
-// 4. Assess Answer Fit
 router.post(
   "/:questionHash/answer-fit",
   auth,

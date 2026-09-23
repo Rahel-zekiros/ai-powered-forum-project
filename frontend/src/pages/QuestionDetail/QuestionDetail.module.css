@@ -12,6 +12,9 @@
   cursor: pointer;
   margin-bottom: 16px;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .statusText {
@@ -141,6 +144,9 @@
   font-size: 13px;
   cursor: pointer;
   color: #444;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .answersHeading {

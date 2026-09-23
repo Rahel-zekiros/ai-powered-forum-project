@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import {
@@ -44,6 +44,7 @@ export default function QuestionDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const answerRef = useRef(null);
 
   const fetchQuestion = useCallback(async () => {
     try {
@@ -75,89 +76,108 @@ export default function QuestionDetail() {
     fetchQuestion();
   }, [fetchQuestion]);
 
-  const isOwnQuestion = !!currentUser && !!question && question.author?.id === currentUser.id;
+  const isOwnQuestion =
+    !!currentUser && !!question && question.author?.id === currentUser.id;
 
-  const insertMarkdown = (before) => {
-    setDraftAnswer((prev) => prev + before);
-  };
+    const insertMarkdown = (before, after = "", placeholder = "text") => {
+      const textarea = answerRef.current;
+      if (!textarea) return;
 
-  const handleCheckFit = async () => {
-    if (draftAnswer.trim().length < 20) {
-      setSubmitError("Write at least 20 characters before checking fit.");
-      return;
-    }
-    try {
-      setIsCheckingFit(true);
-      setSubmitError(null);
-      const result = await assessAnswerFit(questionHash, draftAnswer.trim());
-      setFitResult(result.data);
-    } catch (err) {
-      setSubmitError(
-        "Couldn't get AI feedback right now. You can still submit.",
-      );
-    } finally {
-      setIsCheckingFit(false);
-    }
-  };
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const value = textarea.value;
+      const selected = value.slice(start, end) || placeholder;
 
-  const handleSubmitAnswer = async (e) => {
-    e.preventDefault();
-    if (draftAnswer.trim().length < 20) {
-      setSubmitError("Answer must be at least 20 characters.");
-      return;
-    }
-    try {
-      setIsSubmitting(true);
-      setSubmitError(null);
-
-      // 1. Send request to backend with questionHash
-      const res = await createAnswer(questionHash, draftAnswer.trim());
-
-      // 2. Extract answer object (backend returns { success, message, data })
-      const newAnswer = res.data;
-
-      // 3. Append new answer to the state list immediately
-      setAnswers((prevAnswers) => [...prevAnswers, newAnswer]);
-
-      // 4. Clear state
-      setDraftAnswer("");
+      const newValue =
+        value.slice(0, start) + before + selected + after + value.slice(end);
+      setDraftAnswer(newValue);
       setFitResult(null);
-    } catch (err) {
-      setSubmitError(
-        err.response?.data?.message ||
-          "Failed to post answer. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  if (isLoading) {
-    return (
-      <div className={styles.page}>
-        <p className={styles.statusText}>Loading question details...</p>
-      </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.errorState}>
-          <p className={styles.errorText}>{error}</p>
-          <button
-            className={styles.primaryButton}
-            onClick={() => navigate("/dashboard")}
-          >
-            Return to Dashboard
-          </button>
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const selStart = start + before.length;
+        const selEnd = selStart + selected.length;
+        textarea.setSelectionRange(selStart, selEnd);
+      });
+    };
+
+    const handleCheckFit = async () => {
+      if (draftAnswer.trim().length < 20) {
+        setSubmitError("Write at least 20 characters before checking fit.");
+        return;
+      }
+      try {
+        setIsCheckingFit(true);
+        setSubmitError(null);
+        const result = await assessAnswerFit(questionHash, draftAnswer.trim());
+        setFitResult(result.data);
+      } catch (err) {
+        setSubmitError(
+          "Couldn't get AI feedback right now. You can still submit.",
+        );
+      } finally {
+        setIsCheckingFit(false);
+      }
+    };
+
+    const handleSubmitAnswer = async (e) => {
+      e.preventDefault();
+      if (draftAnswer.trim().length < 20) {
+        setSubmitError("Answer must be at least 20 characters.");
+        return;
+      }
+      try {
+        setIsSubmitting(true);
+        setSubmitError(null);
+
+        // 1. Send request to backend with questionHash
+        const res = await createAnswer(questionHash, draftAnswer.trim());
+
+        // 2. Extract answer object (backend returns { success, message, data })
+        const newAnswer = res.data;
+
+        // 3. Append new answer to the state list immediately
+        setAnswers((prevAnswers) => [...prevAnswers, newAnswer]);
+
+        // 4. Clear state
+        setDraftAnswer("");
+        setFitResult(null);
+      } catch (err) {
+        setSubmitError(
+          err.response?.data?.message ||
+            "Failed to post answer. Please try again.",
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+    if (isLoading) {
+      return (
+        <div className={styles.page}>
+          <p className={styles.statusText}>Loading question details...</p>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  const authorName =
-    `${question.author?.firstName ?? ""} ${question.author?.lastName ?? ""}`.trim() ||
-    "Unknown";
+    if (error) {
+      return (
+        <div className={styles.page}>
+          <div className={styles.errorState}>
+            <p className={styles.errorText}>{error}</p>
+            <button
+              className={styles.primaryButton}
+              onClick={() => navigate("/dashboard")}
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const authorName =
+      `${question.author?.firstName ?? ""} ${question.author?.lastName ?? ""}`.trim() ||
+      "Unknown";
 
   return (
     <div className={styles.page}>
@@ -165,7 +185,7 @@ export default function QuestionDetail() {
         className={styles.backLink}
         onClick={() => navigate("/dashboard")}
       >
-        ← Back to feed
+        <ArrowLeft size={16} /> Back to feed
       </button>
 
       <div className={styles.layout}>
@@ -192,18 +212,11 @@ export default function QuestionDetail() {
             </div>
 
             <div className={styles.questionFooter}>
-              <button
-                className={styles.pillButton}
-                onClick={async () => {
-                  await navigator.clipboard.writeText(window.location.href);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-              >
-                {copied ? "✓ Copied!" : "⇄ Share"}
+              <button className={styles.pillButton} onClick={handleShare}>
+                <Share2 size={14} /> {shareCopied ? "Copied!" : "Share"}
               </button>
               <span className={styles.pillButton}>
-                💬 {answers.length}{" "}
+                <MessageSquare size={14} /> {answers.length}{" "}
                 {answers.length === 1 ? "Answer" : "Answers"}
               </span>
             </div>
@@ -263,27 +276,29 @@ export default function QuestionDetail() {
                   <div className={styles.toolbar}>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("**bold**")}
+                      onClick={() => insertMarkdown("**", "**", "bold text")}
                     >
-                      <strong>B</strong>
+                      <Bold size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("*italic*")}
+                      onClick={() => insertMarkdown("*", "*", "italic text")}
                     >
-                      <em>I</em>
+                      <Italic size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("\n```\ncode\n```\n")}
+                      onClick={() =>
+                        insertMarkdown("\n```\n", "\n```\n", "code")
+                      }
                     >
-                      {"</>"}
+                      <Code2 size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("[link](url)")}
+                      onClick={() => insertMarkdown("[", "](url)", "link text")}
                     >
-                      🔗
+                      <Link2 size={14} />
                     </button>
                     <span className={styles.charCount}>
                       {draftAnswer.length} characters
@@ -298,6 +313,7 @@ export default function QuestionDetail() {
                     }}
                     rows={7}
                     placeholder="Type your answer here... You can use Markdown to format your code!"
+                    ref={answerRef}
                   />
                 </div>
 
@@ -308,7 +324,8 @@ export default function QuestionDetail() {
                     onClick={handleCheckFit}
                     disabled={isCheckingFit}
                   >
-                    ✨ {isCheckingFit ? "Checking..." : "Check draft fit"}
+                    <Sparkles size={14} />{" "}
+                    {isCheckingFit ? "Checking..." : "Check draft fit"}
                   </button>
                   <span className={styles.coachHint}>
                     Relevance only. Not grading correctness. You need at least
