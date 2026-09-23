@@ -307,4 +307,8 @@ export default function QuestionDetail() {
                     >
                       <Link2 size={14} />
                     </button>
+                    <span className={styles.charCount}>
+                      {draftAnswer.length} characters
+                    </span>
+                  </div>
 }
