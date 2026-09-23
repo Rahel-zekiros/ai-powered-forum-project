@@ -75,4 +75,7 @@ export default function QuestionDetail() {
   useEffect(() => {
     fetchQuestion();
   }, [fetchQuestion]);
+
+  const isOwnQuestion =
+    !!currentUser && !!question && question.author?.id === currentUser.id;
 }
