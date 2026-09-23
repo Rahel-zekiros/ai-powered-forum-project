@@ -78,4 +78,26 @@ export default function QuestionDetail() {
 
   const isOwnQuestion =
     !!currentUser && !!question && question.author?.id === currentUser.id;
+
+    const insertMarkdown = (before, after = "", placeholder = "text") => {
+      const textarea = answerRef.current;
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const value = textarea.value;
+      const selected = value.slice(start, end) || placeholder;
+
+      const newValue =
+        value.slice(0, start) + before + selected + after + value.slice(end);
+      setDraftAnswer(newValue);
+      setFitResult(null);
+
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const selStart = start + before.length;
+        const selEnd = selStart + selected.length;
+        textarea.setSelectionRange(selStart, selEnd);
+      });
+    };
 }
