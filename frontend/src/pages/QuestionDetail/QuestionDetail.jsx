@@ -72,4 +72,7 @@ export default function QuestionDetail() {
     }
   }, [questionHash]);
 
+  useEffect(() => {
+    fetchQuestion();
+  }, [fetchQuestion]);
 }
