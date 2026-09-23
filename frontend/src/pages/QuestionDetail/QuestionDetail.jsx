@@ -151,4 +151,11 @@ export default function QuestionDetail() {
         setIsSubmitting(false);
       }
     };
+    if (isLoading) {
+      return (
+        <div className={styles.page}>
+          <p className={styles.statusText}>Loading question details...</p>
+        </div>
+      );
+    }
 }
