@@ -269,4 +269,12 @@ export default function QuestionDetail() {
               })}
             </ul>
           )}
+
+          {!isOwnQuestion ? (
+            <section className={styles.answerFormCard}>
+              <h3 className={styles.answerFormHeading}>Contribute an answer</h3>
+
+              {submitError && (
+                <div className={styles.errorBanner}>{submitError}</div>
+              )}
 }
