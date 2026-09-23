@@ -311,4 +311,16 @@ export default function QuestionDetail() {
                       {draftAnswer.length} characters
                     </span>
                   </div>
+                  <textarea
+                    className={styles.answerTextarea}
+                    value={draftAnswer}
+                    onChange={(e) => {
+                      setDraftAnswer(e.target.value);
+                      setFitResult(null);
+                    }}
+                    rows={7}
+                    placeholder="Type your answer here... You can use Markdown to format your code!"
+                    ref={answerRef}
+                  />
+                </div>
 }
