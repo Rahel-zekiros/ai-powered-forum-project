@@ -228,4 +228,19 @@ export default function QuestionDetail() {
               </span>
             </div>
           </section>
+
+          <h2 className={styles.answersHeading}>
+            Community Answers ({answers.length})
+          </h2>
+
+          {answers.length === 0 ? (
+            <div className={styles.emptyAnswers}>
+              <div className={styles.emptyIcon}>💬</div>
+              <p className={styles.emptyTitle}>Be the first to help!</p>
+              <p className={styles.emptyText}>
+                This question is waiting for an expert like you. Share your
+                knowledge and earn reputation points.
+              </p>
+            </div>
+          ) : (
 }
