@@ -345,4 +345,16 @@ export default function QuestionDetail() {
                     {isSubmitting ? "Posting..." : "Post Your Answer"}
                   </button>
                 </div>
+
+                {fitResult && (
+                  <div
+                    className={`${styles.fitBox} ${styles[`fit_${fitResult.level}`] || ""}`}
+                  >
+                    <strong>Fit: {fitResult.level}</strong>
+                    <p>{fitResult.note}</p>
+                  </div>
+                )}
+              </form>
+            </section>
+          ) : (
 }
