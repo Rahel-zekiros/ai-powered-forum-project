@@ -158,4 +158,20 @@ export default function QuestionDetail() {
         </div>
       );
     }
+
+    if (error) {
+      return (
+        <div className={styles.page}>
+          <div className={styles.errorState}>
+            <p className={styles.errorText}>{error}</p>
+            <button
+              className={styles.primaryButton}
+              onClick={() => navigate("/dashboard")}
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      );
+    }
 }
