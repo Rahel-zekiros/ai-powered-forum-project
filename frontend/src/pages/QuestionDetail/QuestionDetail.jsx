@@ -301,4 +301,10 @@ export default function QuestionDetail() {
                     >
                       <Code2 size={14} />
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => insertMarkdown("[", "](url)", "link text")}
+                    >
+                      <Link2 size={14} />
+                    </button>
 }
