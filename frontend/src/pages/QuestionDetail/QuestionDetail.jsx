@@ -187,4 +187,15 @@ export default function QuestionDetail() {
       >
         ← Back to feed
       </button>
+
+      <div className={styles.layout}>
+        <div className={styles.mainColumn}>
+          <section className={styles.questionCard}>
+            <div className={styles.questionHeader}>
+              <span className={styles.avatar}>
+                {initials(
+                  question.author?.firstName,
+                  question.author?.lastName,
+                )}
+              </span>
 }
