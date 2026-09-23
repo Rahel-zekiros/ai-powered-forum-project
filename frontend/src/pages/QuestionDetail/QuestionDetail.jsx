@@ -323,4 +323,18 @@ export default function QuestionDetail() {
                     ref={answerRef}
                   />
                 </div>
+
+                <div className={styles.answerFormFooter}>
+                  <button
+                    type="button"
+                    className={styles.checkFitButton}
+                    onClick={handleCheckFit}
+                    disabled={isCheckingFit}
+                  >
+                    ✨ {isCheckingFit ? "Checking..." : "Check draft fit"}
+                  </button>
+                  <span className={styles.coachHint}>
+                    Relevance only. Not grading correctness. You need at least
+                    20 characters.
+                  </span>
 }
