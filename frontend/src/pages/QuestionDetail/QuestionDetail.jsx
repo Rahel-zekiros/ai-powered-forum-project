@@ -9,3 +9,14 @@ import {
 } from "../../services/questionDetail.service.js";
 import styles from "./QuestionDetail.module.css";
 import ReactMarkdown from "react-markdown";
+
+function formatDate(dateInput) {
+  if (!dateInput) return "";
+  const date = new Date(dateInput);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+  });
+}
