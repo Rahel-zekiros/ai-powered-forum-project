@@ -100,4 +100,23 @@ export default function QuestionDetail() {
         textarea.setSelectionRange(selStart, selEnd);
       });
     };
+
+    const handleCheckFit = async () => {
+      if (draftAnswer.trim().length < 20) {
+        setSubmitError("Write at least 20 characters before checking fit.");
+        return;
+      }
+      try {
+        setIsCheckingFit(true);
+        setSubmitError(null);
+        const result = await assessAnswerFit(questionHash, draftAnswer.trim());
+        setFitResult(result.data);
+      } catch (err) {
+        setSubmitError(
+          "Couldn't get AI feedback right now. You can still submit.",
+        );
+      } finally {
+        setIsCheckingFit(false);
+      }
+    };
 }
