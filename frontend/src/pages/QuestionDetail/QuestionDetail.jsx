@@ -198,4 +198,11 @@ export default function QuestionDetail() {
                   question.author?.lastName,
                 )}
               </span>
+              <div>
+                <p className={styles.authorName}>{authorName}</p>
+                <p className={styles.postedDate}>
+                  Posted {formatDate(question.createdAt)}
+                </p>
+              </div>
+            </div>
 }
