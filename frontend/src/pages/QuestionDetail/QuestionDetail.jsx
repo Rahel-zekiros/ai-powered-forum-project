@@ -293,4 +293,12 @@ export default function QuestionDetail() {
                     >
                       <Italic size={14} />
                     </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        insertMarkdown("\n```\n", "\n```\n", "code")
+                      }
+                    >
+                      <Code2 size={14} />
+                    </button>
 }
