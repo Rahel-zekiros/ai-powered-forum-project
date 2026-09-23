@@ -205,4 +205,9 @@ export default function QuestionDetail() {
                 </p>
               </div>
             </div>
+
+            <h1 className={styles.questionTitle}>{question.title}</h1>
+            <div className={styles.questionContent}>
+              <ReactMarkdown>{question.content}</ReactMarkdown>
+            </div>
 }
