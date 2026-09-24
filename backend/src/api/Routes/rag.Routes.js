@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-
+import { getDocumentChunksController } from '../../ragController/rag.Controller.js';
 // ==========================================
 // Controllers & Validations (Imports)
 // ==========================================
@@ -153,11 +153,11 @@ router.delete(
   documentIdParamValidation,
   deleteDocumentController,
 );
-
-// ==========================================
-// Notes Routes
-// ==========================================
-router.post('/notes', authMiddleware, saveChunkNote);
-router.get('/notes', authMiddleware, getUserNotes);
+// GET /api/rag/documents/:documentId/chunks
+router.get(
+  '/documents/:documentId/chunks',
+  authMiddleware,
+  getDocumentChunksController
+);
 
 export default router;
