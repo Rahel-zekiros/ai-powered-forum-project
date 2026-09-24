@@ -3,7 +3,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
+import toast, { Toaster } from "react-hot-toast";
 import { apiClient } from "../../services/core/api.client.js";
+
 import {
   CloudUpload,
   FilePlus2,
@@ -21,21 +23,35 @@ import {
   DatabaseZap,
   ChartNoAxesCombined,
   TriangleAlert,
-  ArrowRight,
-  CheckCircle2,
-  XCircle,
-  X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+
 import styles from "./knowledgeBase.module.css";
 
 export default function KnowledgeBase() {
+  // ==========================================
+  // DOCUMENT STATES
+  // ==========================================
+
   const [documents, setDocuments] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  // ==========================================
+  // TXT READER STATES
+  // ==========================================
+
+  const [textContent, setTextContent] = useState("");
+  const [isLoadingText, setIsLoadingText] = useState(false);
+
+  // ==========================================
+  // SEARCH STATES
+  // ==========================================
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -45,17 +61,54 @@ export default function KnowledgeBase() {
 
   const [selectedResult, setSelectedResult] = useState(null);
 
+  // ==========================================
+  // COLLAPSIBLE CHUNKS
+  // ==========================================
+
+  const [expandedChunks, setExpandedChunks] = useState({});
+
+  const toggleChunkExpand = (chunkKey, e) => {
+    e?.stopPropagation();
+
+    setExpandedChunks((prev) => ({
+      ...prev,
+      [chunkKey]: !prev[chunkKey],
+    }));
+  };
+
+  // ==========================================
+  // AI CHAT STATES
+  // ==========================================
+
   const [chatMessages, setChatMessages] = useState([]);
   const [aiQuestion, setAiQuestion] = useState("");
   const [isAskingAI, setIsAskingAI] = useState(false);
   const [aiError, setAiError] = useState("");
+
   const [copiedIndex, setCopiedIndex] = useState(null);
+
+  // ==========================================
+  // HIGHLIGHTED CHUNK
+  // ==========================================
+
   const [highlightedChunk, setHighlightedChunk] = useState(null);
+
+  // ==========================================
+  // NOTES
+  // ==========================================
 
   const [userNotes, setUserNotes] = useState({});
   const [activeNoteText, setActiveNoteText] = useState("");
 
+  // ==========================================
+  // CHAT SCROLL REF
+  // ==========================================
+
   const chatEndRef = useRef(null);
+
+  // ==========================================
+  // MARKDOWN RENDERER
+  // ==========================================
 
   const renderMarkdown = (content) => {
     return (
@@ -70,9 +123,20 @@ export default function KnowledgeBase() {
     );
   };
 
+  // ==========================================
+  // AUTO SCROLL CHAT
+  // ==========================================
+
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    chatEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   }, [chatMessages, isAskingAI]);
+
+  // ==========================================
+  // FETCH DOCUMENTS
+  // ==========================================
+
   async function fetchDocuments() {
     try {
       setIsLoading(true);
@@ -83,39 +147,83 @@ export default function KnowledgeBase() {
       setDocuments(res.data || []);
     } catch (err) {
       console.error("Error loading documents:", err);
+
       setErrorMessage("Could not load documents.");
+
+      toast.error("Could not load documents.", {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsLoading(false);
     }
   }
-useEffect(() => {
-  fetchDocuments();
-}, []);
+
+  // ==========================================
+  // LOAD DOCUMENTS ON COMPONENT MOUNT
+  // ==========================================
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  // ==========================================
+  // FILE CHANGE
+  // ==========================================
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
       const fileName = file.name.toLowerCase();
+
       const isPdf =
         file.type === "application/pdf" || fileName.endsWith(".pdf");
+
       const isTxt = file.type === "text/plain" || fileName.endsWith(".txt");
 
       if (!isPdf && !isTxt) {
-        alert("Please select a valid PDF or TXT file.");
+        toast.error("Please select a valid PDF or TXT file.", {
+          className: styles.errorToast,
+          iconTheme: {
+            primary: "#dc2626",
+            secondary: "#fee2e2",
+          },
+        });
+
         return;
       }
+
       setSelectedFile(file);
+
+      toast.success(`File selected: ${file.name}`, {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
     }
   };
 
+  // ==========================================
+  // UPLOAD DOCUMENT
+  // ==========================================
+
   const handleUpload = async () => {
     if (!selectedFile) return;
+
     const formData = new FormData();
 
     formData.append("file", selectedFile);
+
     try {
       setIsUploading(true);
       setErrorMessage("");
+
       await apiClient.post("/api/rag/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -123,77 +231,235 @@ useEffect(() => {
       });
 
       setSelectedFile(null);
+
+      toast.success("Document uploaded successfully!", {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
+
       await fetchDocuments();
     } catch (err) {
       console.error("Upload Error:", err);
 
       const message = err.response?.data?.msg || "Failed to upload document.";
-      alert(message);
+
+      toast.error(message, {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleDelete = async (docId, e) => {
+  // ==========================================
+  // DELETE DOCUMENT
+  // ==========================================
+
+  const handleDelete = (docId, e) => {
     e.stopPropagation();
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this document?",
+
+    toast(
+      (t) => (
+        <div className={styles.confirmToastContainer}>
+          <span className={styles.confirmToastText}>
+            Are you sure you want to delete this document?
+          </span>
+
+          <div className={styles.confirmToastActions}>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className={styles.confirmCancelBtn}
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+
+                try {
+                  await apiClient.delete(`/api/rag/documents/${docId}`);
+
+                  if (selectedDoc?.document_id === docId) {
+                    setSelectedDoc(null);
+                    setSelectedResult(null);
+
+                    setTextContent("");
+                    setIsLoadingText(false);
+
+                    setSearchQuery("");
+                    setSearchResults([]);
+                    setSearchError("");
+                    setSearchMessage("");
+
+                    setChatMessages([]);
+                    setAiQuestion("");
+                    setAiError("");
+
+                    setHighlightedChunk(null);
+                    setExpandedChunks({});
+                  }
+
+                  setDocuments((prev) =>
+                    prev.filter((doc) => doc.document_id !== docId),
+                  );
+
+                  toast.success("Document deleted successfully.", {
+                    className: styles.successToast,
+                    iconTheme: {
+                      primary: "#16a34a",
+                      secondary: "#dcfce7",
+                    },
+                  });
+                } catch (err) {
+                  console.error("Delete Error:", err);
+
+                  const message =
+                    err.response?.data?.msg || "Failed to delete document.";
+
+                  toast.error(message, {
+                    className: styles.errorToast,
+                    iconTheme: {
+                      primary: "#dc2626",
+                      secondary: "#fee2e2",
+                    },
+                  });
+                }
+              }}
+              className={styles.confirmDeleteBtn}
+            >
+              Yes, Delete
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity,
+        position: "top-center",
+        className: styles.customToastStyle,
+      },
     );
-    if (!confirmed) return;
-
-    try {
-      await apiClient.delete(`/api/rag/documents/${docId}`);
-
-      if (selectedDoc?.document_id === docId) {
-        setSelectedDoc(null);
-        setSelectedResult(null);
-        setSearchQuery("");
-        setSearchResults([]);
-        setSearchError("");
-        setSearchMessage("");
-        setChatMessages([]);
-        setAiQuestion("");
-        setAiError("");
-        setHighlightedChunk(null);
-      }
-
-      setDocuments((prev) => prev.filter((doc) => doc.document_id !== docId));
-    } catch (err) {
-      console.error("Delete Error:", err);
-      const message = err.response?.data?.msg || "Failed to delete document.";
-      alert(message);
-    }
   };
+
+  // ==========================================
+  // SELECT DOCUMENT
+  // ==========================================
 
   const handleSelectDoc = (doc) => {
     setSelectedDoc(doc);
+
+    // Clear TXT Reader
+    setTextContent("");
+    setIsLoadingText(false);
+
+    // Clear previous search
     setSearchQuery("");
     setSearchResults([]);
     setSelectedResult(null);
+
     setSearchError("");
     setSearchMessage("");
 
+    setExpandedChunks({});
+
+    // Clear previous chat
     setChatMessages([]);
     setAiQuestion("");
     setAiError("");
 
+    // Clear highlighted chunk
     setHighlightedChunk(null);
-
-    if (doc) {
-      setIsPreviewLoading(true);
-
-      setTimeout(() => {
-        setIsPreviewLoading(false);
-      }, 600);
-    }
   };
+
+  // ==========================================
+  // LOAD TXT CONTENT FOR READER
+  // ==========================================
+
+  useEffect(() => {
+    const loadTxtContent = async () => {
+      if (!selectedDoc) {
+        setTextContent("");
+        return;
+      }
+
+      const isTxt = selectedDoc.filename?.toLowerCase().endsWith(".txt");
+
+      // If selected document is PDF,
+      // do not load TXT content.
+      if (!isTxt) {
+        setTextContent("");
+        return;
+      }
+
+      try {
+        setIsLoadingText(true);
+
+        const fileUrl = `http://localhost:5000/${selectedDoc.file_path}`;
+
+        console.log("Loading TXT Reader:", fileUrl);
+
+        const response = await fetch(fileUrl);
+
+        if (!response.ok) {
+          throw new Error(`Failed to load TXT file: ${response.status}`);
+        }
+
+        const text = await response.text();
+
+        console.log("TXT content loaded:", text);
+
+        setTextContent(text);
+      } catch (error) {
+        console.error("TXT Reader Error:", error);
+
+        setTextContent("");
+
+        toast.error("Could not load TXT file.", {
+          className: styles.errorToast,
+          iconTheme: {
+            primary: "#dc2626",
+            secondary: "#fee2e2",
+          },
+        });
+      } finally {
+        setIsLoadingText(false);
+      }
+    };
+
+    loadTxtContent();
+  }, [selectedDoc]);
+
+  // ==========================================
+  // SELECT SEARCH RESULT
+  // ==========================================
 
   const handleSelectResult = (result) => {
     const chunkIdx = result.chunkIndex ?? null;
 
+    const chunkKey = `${
+      result.documentId || selectedDoc?.document_id || "doc"
+    }-${chunkIdx}`;
+
     setSelectedResult(result);
+
     setHighlightedChunk(chunkIdx);
+
+    setExpandedChunks((prev) => ({
+      ...prev,
+      [chunkKey]: true,
+    }));
   };
+
+  // ==========================================
+  // SEMANTIC SEARCH
+  // ==========================================
 
   const handleSemanticSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -205,53 +471,86 @@ useEffect(() => {
       setSearchResults([]);
       setSelectedResult(null);
       setSearchMessage("");
+      setExpandedChunks({});
 
       const payload = {
-        query: searchQuery.trim(),
+        question: searchQuery.trim(),
       };
 
       if (selectedDoc) {
         payload.documentId = selectedDoc.document_id;
       }
+      
 
-      const res = await apiClient.post("/api/rag/search", payload);
+      const res = await apiClient.post("/api/rag/ask", payload);
 
       if (res.data?.message) {
         setSearchMessage(res.data.message);
-
         setSearchResults([]);
       } else {
-        const results = res.data?.results || [];
-
+        const results = res.data?.sources || [];
         setSearchResults(results);
         setSearchMessage("");
 
         if (results.length > 0) {
           setSelectedResult(results[0]);
 
+          const firstChunkKey = `${
+            results[0].documentId || selectedDoc?.document_id || "doc"
+          }-${results[0].chunkIndex ?? 0}`;
+
+          setExpandedChunks({
+            [firstChunkKey]: true,
+          });
+
           setHighlightedChunk(results[0].chunkIndex ?? 0);
+
+          toast.success(`Found ${results.length} matching results.`, {
+            className: styles.successToast,
+            iconTheme: {
+              primary: "#16a34a",
+              secondary: "#dcfce7",
+            },
+          });
+        } else {
+          toast("No matching results found.");
         }
       }
     } catch (err) {
-      console.error("Semantic Search Error:", err);
+      
+      const errorMsg =
+        err.response?.data?.msg || "Failed to perform semantic search.";
 
-      setSearchError(
-        err.response?.data?.msg || "Failed to perform semantic search.",
-      );
+      setSearchError(errorMsg);
+
+      toast.error(errorMsg, {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsSearching(false);
     }
   };
 
-  // Ask AI
+  // ==========================================
+  // ASK AI
+  // ==========================================
+
   const handleAskAI = async (e) => {
     e?.preventDefault();
+
     if (!aiQuestion.trim() || isAskingAI) {
       return;
     }
+
     const userQuestion = aiQuestion.trim();
+
     setAiQuestion("");
     setAiError("");
+
     const newHistory = [
       ...chatMessages,
       {
@@ -259,8 +558,10 @@ useEffect(() => {
         content: userQuestion,
       },
     ];
+
     setChatMessages(newHistory);
     setIsAskingAI(true);
+
     try {
       const payload = {
         question: userQuestion,
@@ -270,10 +571,21 @@ useEffect(() => {
       if (selectedDoc) {
         payload.documentId = selectedDoc.document_id;
       }
+
       const res = await apiClient.post("/api/rag/ask", payload);
 
       const fullAnswer = res.data?.answer || "No answer generated.";
+
       const sources = res.data?.sources || [];
+
+      toast.success("AI answer generated successfully!", {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
+
       setChatMessages([
         ...newHistory,
         {
@@ -284,9 +596,12 @@ useEffect(() => {
       ]);
 
       let currentText = "";
+
       const words = fullAnswer.split(" ");
+
       for (let i = 0; i < words.length; i++) {
         currentText += (i === 0 ? "" : " ") + words[i];
+
         setChatMessages([
           ...newHistory,
           {
@@ -301,30 +616,65 @@ useEffect(() => {
     } catch (err) {
       console.error("Ask Document AI Error:", err);
 
-      setAiError(err.response?.data?.msg || "Failed to generate AI answer.");
+      const errorMsg =
+        err.response?.data?.msg || "Failed to generate AI answer.";
+
+      setAiError(errorMsg);
+
+      toast.error(errorMsg, {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsAskingAI(false);
     }
   };
 
-  // Copy Answer
+  // ==========================================
+  // COPY ANSWER
+  // ==========================================
+
   const handleCopyAnswer = (textToCopy, index) => {
     navigator.clipboard.writeText(textToCopy);
+
     setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
+
+    toast.success("Copied to clipboard!", {
+      className: styles.successToast,
+      iconTheme: {
+        primary: "#16a34a",
+        secondary: "#dcfce7",
+      },
+    });
+
+    setTimeout(() => {
+      setCopiedIndex(null);
+    }, 2000);
   };
 
-  // Reset Chat
+  // ==========================================
+  // RESET CHAT
+  // ==========================================
+
   const handleResetChat = () => {
     setChatMessages([]);
     setAiError("");
+
+    toast("Chat cleared.");
   };
 
-  // Export Chat
+  // ==========================================
+  // EXPORT CHAT
+  // ==========================================
+
   const handleExportChat = () => {
     if (chatMessages.length === 0) return;
 
     let markdownContent = `# Knowledge Base AI Chat Export\n\n`;
+
     chatMessages.forEach((msg) => {
       markdownContent += `### ${
         msg.role === "user" ? "You" : "AI Assistant"
@@ -336,35 +686,75 @@ useEffect(() => {
     });
 
     const url = URL.createObjectURL(blob);
+
     const link = document.createElement("a");
+
     link.href = url;
+
     link.setAttribute("download", `chat-export-${Date.now()}.md`);
+
     document.body.appendChild(link);
+
     link.click();
+
     document.body.removeChild(link);
+
     URL.revokeObjectURL(url);
+
+    toast.success("Chat exported successfully!", {
+      className: styles.successToast,
+      iconTheme: {
+        primary: "#16a34a",
+        secondary: "#dcfce7",
+      },
+    });
   };
 
-  // Save Note
+  // ==========================================
+  // SAVE NOTE
+  // ==========================================
+
   const handleSaveNote = (chunkKey) => {
     if (!activeNoteText.trim()) return;
+
     setUserNotes((prev) => ({
       ...prev,
       [chunkKey]: activeNoteText.trim(),
     }));
+
     setActiveNoteText("");
-    alert("Note saved successfully for this chunk!");
+
+    toast.success("Note saved successfully for this chunk!", {
+      className: styles.successToast,
+      iconTheme: {
+        primary: "#16a34a",
+        secondary: "#dcfce7",
+      },
+    });
   };
 
-  // Result Score
+  // ==========================================
+  // RESULT SCORE
+  // ==========================================
+
   const getResultScore = (result) => {
     if (!result) return null;
+
     return result.relevance ?? result.similarity ?? null;
   };
 
+  // ==========================================
+  // JSX
+  // ==========================================
+
   return (
     <div className={styles.contentArea}>
-      {/* TOP BANNER */}
+      <Toaster position="top-right" reverseOrder={false} />
+
+      {/* ========================================
+          TOP BANNER
+      ======================================== */}
+
       <div className={styles.bannerCard}>
         <span className={styles.bannerTag}>KNOWLEDGE BASE & AI RAG</span>
 
@@ -377,10 +767,15 @@ useEffect(() => {
         </p>
       </div>
 
+      {/* ERROR */}
+
       {errorMessage && <div className={styles.errorBanner}>{errorMessage}</div>}
 
       <div className={styles.splitGrid}>
-        {/* LEFT COLUMN */}
+        {/* ========================================
+            LEFT COLUMN
+        ======================================== */}
+
         <div className={styles.leftColumn}>
           <div className={styles.libraryCard}>
             <h3 className={styles.cardTitle}>Library</h3>
@@ -389,7 +784,9 @@ useEffect(() => {
               Add and manage your reference files.
             </p>
 
-            {/* ALL DOCUMENTS */}
+            {/* ======================================
+                ALL DOCUMENTS
+            ====================================== */}
 
             <button
               type="button"
@@ -412,6 +809,7 @@ useEffect(() => {
 
                 <span>All Documents(Cross-Search & Chat)</span>
               </div>
+
               <span
                 className={
                   selectedDoc === null
@@ -423,7 +821,9 @@ useEffect(() => {
               </span>
             </button>
 
-            {/* UPLOAD */}
+            {/* ======================================
+                UPLOAD
+            ====================================== */}
 
             <div className={styles.uploadDashedBox}>
               <p className={styles.uploadInstruction}>
@@ -441,20 +841,27 @@ useEffect(() => {
                     className={styles.hiddenFileInput}
                   />
                 </label>
+
                 <button
                   className={styles.uploadBtn}
                   onClick={handleUpload}
                   disabled={!selectedFile || isUploading}
                 >
                   <CloudUpload size={15} />
+
                   {isUploading ? "Uploading..." : "Upload"}
                 </button>
               </div>
+
               <span className={styles.fileNameDisplay}>
                 {selectedFile ? selectedFile.name : "No file selected."}
               </span>
             </div>
-            {/* DOCUMENTS */}
+
+            {/* ======================================
+                DOCUMENTS
+            ====================================== */}
+
             {isLoading ? (
               <p className={styles.statusText}>Loading your library...</p>
             ) : documents.length === 0 ? (
@@ -478,6 +885,7 @@ useEffect(() => {
 
                       <span className={styles.readyBadge}>READY</span>
                     </div>
+
                     <button
                       className={styles.deleteBtn}
                       onClick={(e) => handleDelete(doc.document_id, e)}
@@ -491,9 +899,16 @@ useEffect(() => {
             )}
           </div>
         </div>
-        {/* RIGHT COLUMN */}
+
+        {/* ========================================
+            RIGHT COLUMN
+        ======================================== */}
+
         <div className={styles.rightColumn}>
-          {/* READER */}
+          {/* ======================================
+              READER
+          ====================================== */}
+
           {selectedDoc ? (
             <div className={styles.activeReaderContainer}>
               <div className={styles.readerSection}>
@@ -502,8 +917,10 @@ useEffect(() => {
                     <h3 className={styles.sectionTitle}>
                       Reader ({selectedDoc.filename})
                     </h3>
+
                     <p className={styles.sectionSubtitle}>Interactive Viewer</p>
                   </div>
+
                   {highlightedChunk !== null && (
                     <button
                       onClick={() => setHighlightedChunk(null)}
@@ -513,39 +930,61 @@ useEffect(() => {
                     </button>
                   )}
                 </div>
-                {isPreviewLoading ? (
-                  <div className={styles.readerBoxPlaceholder}>
-                    Loading document preview...
-                  </div>
-                ) : (
-                  <div className={styles.pdfViewerContainer}>
+
+                {/* ==================================
+                    PDF / TXT READER
+                ================================== */}
+
+                <div className={styles.pdfViewerContainer}>
+                  {selectedDoc.filename?.toLowerCase().endsWith(".txt") ? (
+                    isLoadingText ? (
+                      <div className={styles.txtLoading}>
+                        Loading document...
+                      </div>
+                    ) : textContent ? (
+                      <pre className={styles.txtReader}>{textContent}</pre>
+                    ) : (
+                      <div className={styles.txtLoading}>
+                        No text content found.
+                      </div>
+                    )
+                  ) : (
                     <iframe
                       src={`http://localhost:5000/${selectedDoc.file_path}`}
-                      title="Document Preview"
+                      title={selectedDoc.filename}
                       className={styles.pdfIframe}
                     />
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
+
               <div className={styles.sectionDivider} />
             </div>
           ) : (
             <div className={styles.allDocumentsModeBanner}>
               <WandSparkles size={16} className={styles.allDocumentsModeIcon} />
+
               <span>
                 <strong>All Documents Mode Active:</strong> You are currently
                 searching and chatting across your entire library collection.
               </span>
             </div>
           )}
-          {/* SEMANTIC SEARCH */}
+
+          {/* ======================================
+              SEMANTIC SEARCH
+          ====================================== */}
+
           <div className={styles.featureSection}>
             <h3 className={styles.sectionTitle}>Semantic search</h3>
+
             <p className={styles.sectionSubtitle}>
               Find passages by contextual meaning.
             </p>
+
             <div className={styles.inputGroup}>
               <label className={styles.inputLabel}>Search query</label>
+
               <input
                 type="text"
                 className={styles.textInput}
@@ -559,6 +998,7 @@ useEffect(() => {
                 }}
               />
             </div>
+
             <button
               className={styles.actionOrangeBtn}
               onClick={handleSemanticSearch}
@@ -568,19 +1008,29 @@ useEffect(() => {
 
               {isSearching ? "Searching..." : "Search"}
             </button>
+
+            {/* SEARCH ERROR */}
+
             {searchError && (
               <div className={styles.searchErrorBanner}>{searchError}</div>
             )}
 
+            {/* SEARCH MESSAGE */}
+
             {searchMessage && (
               <div className={styles.searchMessageBanner}>
                 <span>
-                  <TriangleAlert className="w-5 h-5 text-yellow-500" />
+                  <TriangleAlert size={18} />
                 </span>
+
                 <span>{searchMessage}</span>
               </div>
             )}
-            {/* SEARCH RESULTS */}
+
+            {/* ====================================
+                SEARCH RESULTS
+            ==================================== */}
+
             {searchResults.length > 0 && (
               <div className={styles.searchResultsContainer}>
                 <div className={styles.searchResultsHeader}>
@@ -589,31 +1039,50 @@ useEffect(() => {
                       size={16}
                       className={styles.blueIcon}
                     />
+
                     <strong>Search Results</strong>
                   </div>
+
                   <span className={styles.resultCount}>
                     {searchResults.length} result
                     {searchResults.length !== 1 ? "s" : ""}
                   </span>
                 </div>
+
                 {searchResults.map((result, index) => {
                   const score = getResultScore(result);
+
                   const chunkIdx = result.chunkIndex ?? index;
-                  const chunkKey = `${result.documentId || selectedDoc?.document_id || "doc"}-${chunkIdx}`;
+
+                  const chunkKey = `${
+                    result.documentId || selectedDoc?.document_id || "doc"
+                  }-${chunkIdx}`;
+
                   const isSelected =
                     selectedResult?.chunkId === result.chunkId ||
                     selectedResult === result;
+
+                  const isExpanded = expandedChunks[chunkKey] || false;
+
                   return (
                     <div
                       key={result.chunkId ?? chunkKey}
-                      onClick={() => handleSelectResult(result)}
                       className={
                         isSelected
                           ? styles.searchResultCardSelected
                           : styles.searchResultCard
                       }
                     >
-                      <div className={styles.resultHeader}>
+                      {/* ACCORDION HEADER */}
+
+                      <div
+                        className={styles.resultHeader}
+                        onClick={(e) => {
+                          handleSelectResult(result);
+
+                          toggleChunkExpand(chunkKey, e);
+                        }}
+                      >
                         <span className={styles.resultChunkTitle}>
                           Chunk {chunkIdx}
                           {score !== undefined &&
@@ -621,57 +1090,79 @@ useEffect(() => {
                             ` • relevance ${score}`}
                         </span>
 
-                        <span
-                          className={
-                            isSelected
-                              ? styles.resultSelectedText
-                              : styles.resultInspectText
-                          }
-                        >
-                          {isSelected ? "Selected" : "Click to inspect"}
-                        </span>
+                        <div className={styles.chatHeaderButtons}>
+                          <span
+                            className={
+                              isSelected
+                                ? styles.resultSelectedText
+                                : styles.resultInspectText
+                            }
+                          >
+                            {isSelected ? "Selected" : "Click to inspect"}
+                          </span>
+
+                          {isExpanded ? (
+                            <ChevronUp size={16} />
+                          ) : (
+                            <ChevronDown size={16} />
+                          )}
+                        </div>
                       </div>
 
-                      <div className={styles.searchResultContent}>
-                        {renderMarkdown(result.content)}
-                      </div>
+                      {/* ACCORDION CONTENT */}
 
-                      {userNotes[chunkKey] && (
-                        <div className={styles.noteDisplay}>
-                          <strong>My Note: </strong>
+                      {isExpanded && (
+                        <div>
+                          <div className={styles.searchResultContent}>
+                            {renderMarkdown(result.content)}
+                          </div>
 
-                          {userNotes[chunkKey]}
+                          {/* NOTE */}
+
+                          {userNotes[chunkKey] && (
+                            <div className={styles.noteDisplay}>
+                              <strong>My Note: </strong>
+
+                              {userNotes[chunkKey]}
+                            </div>
+                          )}
+
+                          {/* NOTE INPUT */}
+
+                          <div
+                            className={styles.noteInputRow}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="text"
+                              placeholder="Add private note for this chunk..."
+                              value={activeNoteText}
+                              onChange={(e) =>
+                                setActiveNoteText(e.target.value)
+                              }
+                              className={styles.noteInput}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => handleSaveNote(chunkKey)}
+                              className={styles.saveNoteBtn}
+                            >
+                              <NotebookPen size={12} />
+                              Save Note
+                            </button>
+                          </div>
                         </div>
                       )}
-
-                      <div
-                        className={styles.noteInputRow}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <input
-                          type="text"
-                          placeholder="Add private note for this chunk..."
-                          value={activeNoteText}
-                          onChange={(e) => setActiveNoteText(e.target.value)}
-                          className={styles.noteInput}
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => handleSaveNote(chunkKey)}
-                          className={styles.saveNoteBtn}
-                        >
-                          <NotebookPen size={12} />
-                          Save Note
-                        </button>
-                      </div>
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* SELECTED RESULT */}
+            {/* ====================================
+                SELECTED RESULT
+            ==================================== */}
 
             {selectedResult && (
               <div className={styles.selectedResultPanel}>
@@ -747,63 +1238,13 @@ useEffect(() => {
                     {renderMarkdown(selectedResult.content)}
                   </div>
                 </div>
-
-                {/* SIMILARITY */}
-
-                <div className={styles.similarityPanel}>
-                  <div className={styles.similarityHeader}>
-                    <ChartNoAxesCombined
-                      size={16}
-                      className={styles.blueIcon}
-                    />
-
-                    <h4 className={styles.similarityTitle}>
-                      Semantic Similarity
-                    </h4>
-                  </div>
-
-                  <div className={styles.similarityContent}>
-                    <div className="flex items-center gap-2">
-                      Query embedding
-                      <ArrowRight className="w-4 h-4 text-gray-500" />
-                      Chunk embedding
-                    </div>
-                    <div className="flex items-center gap-2">
-                      Cosine similarity
-                      <ArrowRight className="w-4 h-4 text-gray-500" />
-                      <strong>{getResultScore(selectedResult)}</strong>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      Similarity threshold
-                      <ArrowRight className="w-4 h-4 text-gray-500" />
-                      <strong>0.600</strong>
-                    </div>
-
-                    <div className={styles.similarityDecision}>
-                      {getResultScore(selectedResult) >= 0.6 ? (
-                        <strong
-                          className={`${styles.acceptedResult} flex items-center gap-2`}
-                        >
-                          <CheckCircle2 className="w-2 h-2 text-green-500" />
-                          Relevant result accepted
-                        </strong>
-                      ) : (
-                        <strong
-                          className={`${styles.rejectedResult} flex items-center gap-2`}
-                        >
-                          <XCircle className="w-4 h-4 text-red-500" />
-                          Result below threshold
-                        </strong>
-                      )}
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
           </div>
 
-          {/* AI CHAT */}
+          {/* ======================================
+              AI CHAT
+          ====================================== */}
 
           <div className={styles.sectionDivider} />
 
@@ -879,11 +1320,13 @@ useEffect(() => {
                           {copiedIndex === index ? (
                             <>
                               <BadgeCheck size={13} />
+
                               <span>Copied!</span>
                             </>
                           ) : (
                             <>
                               <CopyCheck size={13} />
+
                               <span>Copy</span>
                             </>
                           )}
@@ -916,6 +1359,17 @@ useEffect(() => {
 
                                 if (matchingResult) {
                                   setSelectedResult(matchingResult);
+
+                                  const matchKey = `${
+                                    matchingResult.documentId ||
+                                    selectedDoc?.document_id ||
+                                    "doc"
+                                  }-${sChunkIdx}`;
+
+                                  setExpandedChunks((prev) => ({
+                                    ...prev,
+                                    [matchKey]: true,
+                                  }));
                                 }
                               }}
                               className={styles.sourceLink}
