@@ -1,22 +1,19 @@
-import { readPdfFile, extractPdfPages, deletePdfFile } from "./pdfService.js";
-
+import fs from "fs/promises";
+import path from "path";
+import { readPdfFile, extractPdfPages, extractTextFile, deletePdfFile } from "./pdfService.js";
 import { createChunks } from "./chunkService.js";
-
 import { createEmbedding } from "./embeddingService.js";
-
 import { safeExecute } from "../../db/config.js";
-
 import { generateGroundedAnswer } from "./aiService.js";
 
 // ==========================================
-// abduselam
+// Process Document (Supports PDF & TXT)
 // ==========================================
 
 export const processDocument = async ({ userId, file }) => {
   let documentId = null;
   try {
     const filename = file.originalname;
-
     const filePath = file.path.replace(/\\/g, "/");
 
     console.log(`Starting RAG processing for: ${filename}`);
@@ -31,51 +28,79 @@ export const processDocument = async ({ userId, file }) => {
     );
     documentId = docResult.insertId;
 
-    // Read PDF
+    // ==========================================
+    // Check File Type (PDF vs TXT)
+    // ==========================================
+    const isTxt =
+      file.mimetype === "text/plain" ||
+      filename.toLowerCase().endsWith(".txt");
 
-    console.log("Reading PDF file...");
+    let pages = [];
 
-    const pdfBuffer = await readPdfFile(file.path);
+    if (isTxt) {
+      console.log("Reading Text file...");
+      const textContent = await extractTextFile(file.path);
+      
+      pages = [
+        {
+          pageNumber: 1,
+          text: textContent,
+        },
+      ];
+      console.log("Text file read successfully.");
+    } else {
+      console.log("Reading PDF file...");
+      const pdfBuffer = await readPdfFile(file.path);
 
-    //Extract Pages
-
-    console.log("Extracting PDF pages...");
-
-    const pages = await extractPdfPages(pdfBuffer);
-
-    if (!pages || pages.length === 0) {
-      throw new Error("No readable text was found in the PDF.");
+      console.log("Extracting PDF pages...");
+      pages = await extractPdfPages(pdfBuffer);
     }
 
-    console.log(`Extracted ${pages.length} pages.`);
+    if (!pages || pages.length === 0) {
+      throw new Error("No readable text was found in the document.");
+    }
 
-    // create chunks
+    console.log(`Extracted ${pages.length} pages/sections.`);
 
-    const chunks = createChunks(pages);
+    // ==========================================
+    // Create chunks with Fallback Protection
+    // ==========================================
+    let chunks = createChunks(pages);
 
     if (!chunks || chunks.length === 0) {
-      throw new Error("No text chunks could be created from the PDF.");
+      const rawText = pages[0]?.text?.trim();
+      if (rawText) {
+        chunks = [
+          {
+            content: rawText,
+            chunkIndex: 0,
+            pageStart: 1,
+            pageEnd: 1,
+          },
+        ];
+      }
+    }
+
+    if (!chunks || chunks.length === 0) {
+      throw new Error("No text chunks could be created from the document.");
     }
 
     console.log(`Created ${chunks.length} text chunks.`);
 
     // create embeddings
-
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-
       const chunkContent = chunk.content;
 
       console.log(`Creating embedding ${i + 1}/${chunks.length}...`);
 
-      if (!chunkContent || chunkContent.includes("%PDF")) {
-        throw new Error("Invalid text content extracted from PDF.");
+      if (!chunkContent || (!isTxt && chunkContent.includes("%PDF"))) {
+        throw new Error("Invalid text content extracted.");
       }
 
       // ----------------------------------
       // Save chunk
       // ----------------------------------
-
       const chunkResult = await safeExecute(
         `
           INSERT INTO document_chunks
@@ -102,15 +127,12 @@ export const processDocument = async ({ userId, file }) => {
       // ----------------------------------
       // Create embedding
       // ----------------------------------
-
       const embedding = await createEmbedding(chunkContent);
-
       const embeddingVectorJson = JSON.stringify(embedding);
 
       // ----------------------------------
       // Save embedding
       // ----------------------------------
-
       await safeExecute(
         `
         INSERT INTO document_chunk_vectors
@@ -126,7 +148,6 @@ export const processDocument = async ({ userId, file }) => {
     }
 
     //mark document ready
-
     await safeExecute(
       `
       UPDATE documents
@@ -137,14 +158,10 @@ export const processDocument = async ({ userId, file }) => {
     );
 
     return {
-      msg: "PDF uploaded and processed successfully.",
-
+      msg: "Document uploaded and processed successfully.",
       documentId,
-
       filename,
-
       chunksCreated: chunks.length,
-
       status: "ready",
     };
   } catch (err) {
@@ -226,9 +243,7 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
   }
 
   const document = rows[0];
-
   const uploadDir = path.resolve(process.cwd(), "upload", "rag");
-
   const absoluteFilePath = path.resolve(uploadDir, document.storage_path);
 
   try {
@@ -238,6 +253,7 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
       throw error;
     }
   }
+
   await safeExecute(
     `
     DELETE FROM documents
@@ -246,15 +262,11 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
     `,
     [documentId, userId],
   );
+
   return {
     id: documentId,
   };
 };
-
-
-// ==========================================
-// my task
-// ==========================================
 
 // ==========================================
 // Settings
@@ -269,11 +281,9 @@ const SIMILARITY_THRESHOLD = 0.65;
 
 export const vectorMagnitude = (vector) => {
   let sum = 0;
-
   for (const value of vector) {
     sum += value * value;
   }
-
   return Math.sqrt(sum);
 };
 
@@ -293,7 +303,6 @@ export const cosineSimilarity = (vectorA, vectorB) => {
   }
 
   let dotProduct = 0;
-
   for (let i = 0; i < vectorA.length; i++) {
     dotProduct += vectorA[i] * vectorB[i];
   }
@@ -360,35 +369,24 @@ export const rankChunks = (chunks, queryEmbedding) => {
             : chunk.embedding_vector;
       } catch (err) {
         console.error(`Invalid embedding for chunk ${chunk.chunk_id}`, err);
-
         return null;
       }
 
       const rawSimilarity = cosineSimilarity(queryEmbedding, storedVector);
-
       const score = Number(rawSimilarity.toFixed(3));
 
       return {
         chunkId: chunk.chunk_id,
-
         documentId: chunk.document_id,
-
         chunkIndex: chunk.chunk_index,
-
         pageStart: chunk.page_start,
-
         pageEnd: chunk.page_end,
-
         content: chunk.content,
-
         similarity: score,
-
         relevance: score,
       };
     })
-
     .filter(Boolean)
-
     .sort((a, b) => b.similarity - a.similarity);
 };
 
@@ -432,9 +430,7 @@ export const removeDocument = async ({ docId, userId }) => {
 
   if (existingDocs.length === 0) {
     const error = new Error("Document not found or unauthorized.");
-
     error.statusCode = 404;
-
     throw error;
   }
 
@@ -498,9 +494,7 @@ const getReadyDocument = async ({ documentId, userId }) => {
 
   if (documents.length === 0) {
     const error = new Error("Document not found or unauthorized.");
-
     error.statusCode = 404;
-
     throw error;
   }
 
@@ -508,9 +502,7 @@ const getReadyDocument = async ({ documentId, userId }) => {
 
   if (document.status !== "ready") {
     const error = new Error("This document is not ready for RAG search yet.");
-
     error.statusCode = 400;
-
     throw error;
   }
 
@@ -530,7 +522,6 @@ export const searchDocument = async ({ userId, documentId, query }) => {
       documentId,
       userId,
     });
-
     chunks = await getDocumentChunks(documentId);
   } else {
     chunks = await safeExecute(
@@ -555,39 +546,21 @@ export const searchDocument = async ({ userId, documentId, query }) => {
     );
   }
 
-  // --------------------------------------
-  // Create query embedding
-  // --------------------------------------
-
   console.log("Creating query embedding...");
-
   const queryEmbedding = await createEmbedding(query);
 
   if (!chunks || chunks.length === 0) {
     return {
       documentId: documentId || null,
-
       filename: document ? document.filename : "All Documents",
-
       query,
-
       totalChunks: 0,
-
       results: [],
-
       message: "No documents found.",
     };
   }
 
-  // --------------------------------------
-  // Rank chunks
-  // --------------------------------------
-
   const rankedChunks = rankChunks(chunks, queryEmbedding);
-
-  // --------------------------------------
-  // Filter
-  // --------------------------------------
 
   const relevantChunks = rankedChunks
     .filter((chunk) => chunk.similarity >= SIMILARITY_THRESHOLD)
@@ -596,30 +569,20 @@ export const searchDocument = async ({ userId, documentId, query }) => {
   if (relevantChunks.length === 0) {
     return {
       documentId: documentId || null,
-
       filename: document ? document.filename : "All Documents",
-
       query,
-
       totalChunks: chunks.length,
-
       results: [],
-
       message: "No relevant matches found.",
     };
   }
 
   return {
     documentId: documentId || null,
-
     filename: document ? document.filename : "All Documents",
-
     query,
-
     totalChunks: chunks.length,
-
     results: relevantChunks,
-
     message: null,
   };
 };
@@ -637,7 +600,6 @@ export const askDocument = async ({ userId, documentId, question }) => {
       documentId,
       userId,
     });
-
     chunks = await getDocumentChunks(documentId);
   } else {
     chunks = await safeExecute(
@@ -663,14 +625,11 @@ export const askDocument = async ({ userId, documentId, question }) => {
   }
 
   console.log("Creating question embedding...");
-
   const questionEmbedding = await createEmbedding(question);
 
   if (!chunks || chunks.length === 0) {
     return {
-      answer:
-        "Your library is currently empty. Please upload a reference PDF first.",
-
+      answer: "Your library is currently empty. Please upload a reference file first.",
       sources: [],
     };
   }
@@ -688,10 +647,6 @@ export const askDocument = async ({ userId, documentId, question }) => {
     };
   }
 
-  // --------------------------------------
-  // Build RAG context
-  // --------------------------------------
-
   const context = selectedChunks
     .map(
       (chunk) =>
@@ -699,36 +654,31 @@ export const askDocument = async ({ userId, documentId, question }) => {
     )
     .join("\n\n");
 
-  // --------------------------------------
-  // Generate grounded Gemini answer
-  // --------------------------------------
-
   const answer = await generateGroundedAnswer({
     documentName: document ? document.filename : "All Library Documents",
-
     context,
-
     question,
   });
+  console.log("========== ANSWER FROM GEMINI ==========");
+console.log(answer);
+console.log("========================================");
+console.log("========== RETURNING TO FRONTEND ==========");
+console.log({
+  answer,
+  sourcesCount: selectedChunks.length,
+});
+console.log("===========================================");
 
   return {
     answer,
-
     sources: selectedChunks.map((chunk) => ({
       chunkId: chunk.chunkId,
-
       documentId: chunk.documentId,
-
       chunkIndex: chunk.chunkIndex,
-
       pageStart: chunk.pageStart,
-
       pageEnd: chunk.pageEnd,
-
       similarity: chunk.similarity,
-
       relevance: chunk.relevance,
-
       content: chunk.content,
     })),
   };
@@ -754,7 +704,6 @@ export const saveChunkNote = async ({ userId, chunkId, noteText }) => {
 
   return {
     msg: "Note saved successfully!",
-
     noteId: result.insertId,
   };
 };
