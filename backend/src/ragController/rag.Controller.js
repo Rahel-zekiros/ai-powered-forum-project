@@ -6,11 +6,9 @@ import {
   askDocument,
   listDocumentsForUserService,
   deleteDocumentService,
+  getDocumentChunks, // 
 } from "./rag.Service.js";
 
-// ==========================================
-// GROUP MEMBER CODE (DO NOT TOUCH / UNTOUCHED)
-// ==========================================
 
 // Upload and Process Documents  Abduselam
 
@@ -20,7 +18,7 @@ export const uploadAndProcessDocument = async (req, res) => {
 
   if (!file) {
     return res.status(400).json({
-      msg: "Please select a valid PDF file.",
+      msg: "Please select a valid PDF or TXT file.",
     });
   }
   try {
@@ -30,7 +28,7 @@ export const uploadAndProcessDocument = async (req, res) => {
     });
 
     return res.status(201).json(result);
-  } catch (error) {
+  } catch (err) {
     console.error("RAG Pipeline Error:", err);
 
     return res.status(500).json({
@@ -80,10 +78,6 @@ export const deleteDocumentController = async (req, res, next) => {
   }
 };
 
-
-// ==========================================
-// YOUR CODE (APPENDED BELOW)
-// ==========================================
 
 // ==========================================
 // Get Library Documents
@@ -260,6 +254,29 @@ export const getUserNotes = async (req, res) => {
     console.error("Get Notes Error:", err);
     return res.status(500).json({
       msg: "Server error occurred while fetching notes.",
+    });
+  }
+};
+
+// ==========================================
+// Get Document Chunks (For Interactive Viewer)
+// ==========================================
+
+export const getDocumentChunksController = async (req, res, next) => {
+  try {
+    const { documentId } = req.params;
+    const chunks = await getDocumentChunks(documentId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Document chunks fetched successfully.",
+      chunks: chunks,
+    });
+  } catch (error) {
+    console.error("Get Document Chunks Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error occurred while fetching chunks.",
     });
   }
 };
