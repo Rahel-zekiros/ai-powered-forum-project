@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { Link as LinkIcon } from "lucide-react";
 import { CheckCircle2 } from "lucide-react";
-// Import the two API-calling functions from the service layer
-// createQuestion -> sends POST /api/questions
-// generateQuestionDraftCoach -> sends POST /api/questions/draft-coach
+
 import {
   createQuestion,
   generateQuestionDraftCoach,
@@ -12,36 +16,73 @@ import {
 
 import styles from "./PostQuestion.module.css";
 
-// Main page component for the "Post Question" screen
 export default function PostQuestion() {
-  // Function used to redirect the user to another route (e.g. after submit)
   const navigate = useNavigate();
 
-  // Holds both form fields together in one state object
+  // FORM STATE
   const [formData, setFormData] = useState({
     title: "",
     content: "",
   });
 
-  // True while the "Post Question" request is in progress
+  const [characterCount, setCharacterCount] = useState(0);
+
+  // SUBMIT / AI STATE
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // True while the AI draft-coach request is in progress
   const [isCoaching, setIsCoaching] = useState(false);
-
-  // Holds the AI's feedback response once it arrives; null = nothing to show yet
   const [coachFeedback, setCoachFeedback] = useState(null);
+
+  // PUBLISHED STATE
   const [isPublished, setIsPublished] = useState(false);
   const [createdQuestionHash, setCreatedQuestionHash] = useState(null);
 
-  // Holds the current error message to display (empty string = no error)
+  // ERROR / SUCCESS STATE
   const [error, setError] = useState("");
-  // Holds the current success message to display (empty string = no message)
   const [success, setSuccess] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Runs on every keystroke in the title input or content textarea
-  // Update formData  copy old values, overwrite only the changed field
+  // LINK POPUP STATE
+  const [showLinkPopup, setShowLinkPopup] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+
+  // IMAGE POPUP STATE
+  const [showImagePopup, setShowImagePopup] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+
+  const imageInputRef = useRef(null);
+
+  // TIPTAP EDITOR
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: false,
+      }),
+      Image,
+    ],
+    content: "",
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      const text = editor.getText();
+
+      setFormData((previousData) => ({
+        ...previousData,
+        content: html,
+      }));
+
+      setCharacterCount(text.length);
+      setError("");
+      setSuccess("");
+
+      setFieldErrors((previous) => ({
+        ...previous,
+        content: "",
+      }));
+    },
+  });
+
+  // HANDLE NORMAL INPUT CHANGES
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -52,15 +93,17 @@ export default function PostQuestion() {
 
     setError("");
     setSuccess("");
-    setFieldErrors((previous) => ({ ...previous, [name]: "" }));
+
+    setFieldErrors((previous) => ({
+      ...previous,
+      [name]: "",
+    }));
   };
 
-  // Full validation used right before actually submitting the question
-  // Trim whitespace so blank/space-only input doesn't pass length checks
-  // Reject if title is missing or too short
+  // FORM VALIDATION
   const validateForm = () => {
     const title = formData.title.trim();
-    const content = formData.content.trim();
+    const contentText = editor ? editor.getText().trim() : "";
     const nextFieldErrors = {};
 
     if (title.length < 5) {
@@ -69,7 +112,7 @@ export default function PostQuestion() {
       nextFieldErrors.title = "Title cannot be longer than 255 characters.";
     }
 
-    if (content.length < 10) {
+    if (contentText.length < 10) {
       nextFieldErrors.content =
         "Question content must be at least 10 characters long.";
     }
@@ -79,15 +122,14 @@ export default function PostQuestion() {
     return Object.keys(nextFieldErrors).length === 0;
   };
 
-  // Runs when the "AI suggestions" button is clicked
-  // Reset messages and clear any previous AI feedback before a new request
+  // GET AI FEEDBACK
   const handleGetFeedback = async () => {
     setError("");
     setSuccess("");
     setCoachFeedback(null);
 
     const title = formData.title.trim();
-    const content = formData.content.trim();
+    const contentText = editor ? editor.getText().trim() : "";
 
     if (title.length > 0 && title.length < 5) {
       setError("Title must be at least 5 characters long.");
@@ -99,17 +141,17 @@ export default function PostQuestion() {
       return;
     }
 
-    if (content.length < 10) {
+    if (contentText.length < 10) {
       setError("Question content must be at least 10 characters long.");
       return;
     }
-    // Turn on loading state -> disables button, shows "Getting suggestions..."
+
     try {
       setIsCoaching(true);
 
       const response = await generateQuestionDraftCoach({
         title,
-        content,
+        content: formData.content,
       });
 
       setCoachFeedback(response.data || response);
@@ -124,19 +166,141 @@ export default function PostQuestion() {
     }
   };
 
+  // APPLY AI SUGGESTIONS
   const handleApplySuggestions = () => {
     if (!coachFeedback) {
       return;
     }
 
+    const nextContent = coachFeedback.improvedContent || formData.content;
+
     setFormData((previousData) => ({
       title: coachFeedback.improvedTitle || previousData.title,
-      content: coachFeedback.improvedContent || previousData.content,
+      content: nextContent,
     }));
+
+    if (editor) {
+      editor.commands.setContent(nextContent);
+    }
 
     setSuccess("AI suggestions applied to your draft.");
   };
 
+  // LINK FUNCTIONALITY
+  const handleAddLink = () => {
+    if (!editor || !linkUrl.trim()) {
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange("link")
+      .setLink({
+        href: linkUrl.trim(),
+      })
+      .run();
+
+    setShowLinkPopup(false);
+    setLinkUrl("");
+  };
+
+  const handleCancelLink = () => {
+    setShowLinkPopup(false);
+    setLinkUrl("");
+  };
+
+  // IMAGE VALIDATION
+  const handleImageFile = (file) => {
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError("Only JPEG, PNG, and GIF images are supported.");
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Image size must be 2 MiB or smaller.");
+      return;
+    }
+
+    setError("");
+    setImageFile(file);
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+  };
+
+  // SELECT IMAGE
+  const handleImageSelect = (event) => {
+    const file = event.target.files?.[0];
+
+    handleImageFile(file);
+
+    event.target.value = "";
+  };
+
+  // DRAG AND DROP IMAGE
+  const handleImageDrop = (event) => {
+    event.preventDefault();
+
+    const file = event.dataTransfer.files?.[0];
+
+    handleImageFile(file);
+  };
+
+  // PASTE IMAGE
+  const handleImagePaste = (event) => {
+    const items = event.clipboardData?.items;
+
+    if (!items) {
+      return;
+    }
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+
+        handleImageFile(file);
+
+        event.preventDefault();
+
+        return;
+      }
+    }
+  };
+
+  // INSERT IMAGE INTO TIPTAP
+  const handleInsertImage = () => {
+    if (!editor || !imageFile || !imagePreview) {
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .setImage({
+        src: imagePreview,
+      })
+      .run();
+
+    setShowImagePopup(false);
+    setImageFile(null);
+    setImagePreview("");
+  };
+
+  // CLOSE IMAGE POPUP
+  const handleCloseImagePopup = () => {
+    setShowImagePopup(false);
+    setImageFile(null);
+    setImagePreview("");
+  };
+
+  // SUBMIT QUESTION
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -152,7 +316,7 @@ export default function PostQuestion() {
 
       const response = await createQuestion({
         title: formData.title.trim(),
-        content: formData.content.trim(),
+        content: formData.content,
       });
 
       console.log("CREATE QUESTION RESPONSE:", response);
@@ -161,8 +325,8 @@ export default function PostQuestion() {
         response?.data?.questionHash ??
         response?.questionHash ??
         response?.data?.hash;
-      setCreatedQuestionHash(hash);
 
+      setCreatedQuestionHash(hash);
       setIsPublished(true);
     } catch (err) {
       const message =
@@ -175,16 +339,19 @@ export default function PostQuestion() {
     }
   };
 
+  // CANCEL POSTING
   const handleCancel = () => {
     navigate("/dashboard");
   };
 
+  // AI SUGGESTIONS ARRAY
   const suggestions = Array.isArray(coachFeedback?.tips)
     ? coachFeedback.tips
     : Array.isArray(coachFeedback?.suggestions)
       ? coachFeedback.suggestions
       : [];
-  // Render the "Thread published" confirmation screen if the question was successfully posted
+
+  // PUBLISHED SCREEN
   if (isPublished) {
     return (
       <main className={styles.page}>
@@ -235,9 +402,15 @@ export default function PostQuestion() {
                     content: "",
                   });
 
+                  if (editor) {
+                    editor.commands.clearContent();
+                  }
+
+                  setCharacterCount(0);
                   setCoachFeedback(null);
                   setError("");
                   setSuccess("");
+                  setFieldErrors({});
                 }}
               >
                 Ask Another
@@ -249,10 +422,10 @@ export default function PostQuestion() {
     );
   }
 
+  // MAIN PAGE
   return (
     <main className={styles.page}>
       <div className={styles.container}>
-        {/* PAGE HEADER */}
         <header className={styles.header}>
           <p className={styles.eyebrow}>ASK THE COHORT</p>
 
@@ -264,7 +437,6 @@ export default function PostQuestion() {
           </p>
         </header>
 
-        {/* QUESTION GUIDELINES */}
         <section className={styles.guidelines}>
           <h2>Write questions people can answer in one pass</h2>
 
@@ -279,22 +451,21 @@ export default function PostQuestion() {
           <ul>
             <li>
               <strong>Title as a headline</strong> that states the symptom and
-              tech stack (e.g., “React 19: state resets after navigation”).
+              tech stack.
             </li>
 
             <li>
-              <strong>Repro steps</strong> numbered, with environment (OS,
-              browser, Node version) when it matters.
+              <strong>Repro steps</strong> numbered, with environment when it
+              matters.
             </li>
 
             <li>
-              <strong>Minimal code</strong> in fenced markdown blocks; trim
-              unrelated lines so readers can scan faster.
+              <strong>Minimal code</strong> — use the code button to format
+              snippets.
             </li>
 
             <li>
-              <strong>Exact errors</strong> copied verbatim, including stack
-              trace snippets when debugging backend routes.
+              <strong>Exact errors</strong> copied verbatim.
             </li>
           </ul>
 
@@ -308,34 +479,30 @@ export default function PostQuestion() {
 
             <li>
               <strong>Body length:</strong> Must contain a minimum of 10
-              characters detailing your problem.
+              characters.
             </li>
 
             <li>
               <strong>Single topic:</strong> Split unrelated bugs into separate
-              threads so search and embeddings stay precise.
+              threads.
             </li>
           </ul>
         </section>
 
-        {/* QUESTION FORM */}
         <section className={styles.formCard}>
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
-            {/* ERROR MESSAGE */}
             {error && (
               <div className={styles.error} role="alert">
                 {error}
               </div>
             )}
 
-            {/* SUCCESS MESSAGE */}
             {success && (
               <div className={styles.success} role="status">
                 {success}
               </div>
             )}
 
-            {/* TITLE */}
             <div className={styles.formGroup}>
               <label htmlFor="title">Title</label>
 
@@ -359,12 +526,12 @@ export default function PostQuestion() {
                 }
                 placeholder="e.g. How do I handle state management using Context API in React?"
               />
+
               {fieldErrors.title && (
                 <p className={styles.fieldError}>{fieldErrors.title}</p>
               )}
             </div>
 
-            {/* QUESTION CONTENT */}
             <div className={styles.formGroup}>
               <label htmlFor="content">
                 What are the details of your problem?
@@ -382,47 +549,252 @@ export default function PostQuestion() {
                     : styles.editor
                 }
               >
-                {/* TOOLBAR */}
                 <div className={styles.editorHeader}>
                   <div className={styles.toolbar}>
-                    <button type="button" aria-label="Bold" title="Bold">
+                    {/* Bold */}
+                    <button
+                      type="button"
+                      aria-label="Bold"
+                      title="Bold"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => editor?.chain().focus().toggleBold().run()}
+                    >
                       <strong>B</strong>
                     </button>
 
-                    <button type="button" aria-label="Italic" title="Italic">
+                    {/* Italic */}
+                    <button
+                      type="button"
+                      aria-label="Italic"
+                      title="Italic"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() =>
+                        editor?.chain().focus().toggleItalic().run()
+                      }
+                    >
                       <em>I</em>
                     </button>
 
-                    <button type="button" aria-label="Code" title="Code">
+                    {/* Inline Code */}
+                    <button
+                      type="button"
+                      aria-label="Code"
+                      title="Inline Code"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => editor?.chain().focus().toggleCode().run()}
+                    >
                       <span>&lt;/&gt;</span>
                     </button>
 
-                    <button type="button" aria-label="Link" title="Link">
+                    {/* Link */}
+                    <button
+                      type="button"
+                      aria-label="Link"
+                      title="Link"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        if (!editor) {
+                          return;
+                        }
+
+                        setLinkUrl("");
+                        setShowLinkPopup(true);
+                      }}
+                    >
                       <LinkIcon size={15} strokeWidth={2} />
+                    </button>
+
+                    {/* Numbered List */}
+                    <button
+                      type="button"
+                      aria-label="Numbered List"
+                      title="Numbered List"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() =>
+                        editor?.chain().focus().toggleOrderedList().run()
+                      }
+                    >
+                      <span className={styles.numberListIcon}>
+                        <span>
+                          <b>1.</b>
+                          <i></i>
+                        </span>
+
+                        <span>
+                          <b>2.</b>
+                          <i></i>
+                        </span>
+
+                        <span>
+                          <b>3.</b>
+                          <i></i>
+                        </span>
+                      </span>
+                    </button>
+
+                    {/* Image */}
+                    <button
+                      type="button"
+                      aria-label="Insert Image"
+                      title="Insert Image"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => setShowImagePopup(true)}
+                    >
+                      <span>🖼️</span>
                     </button>
                   </div>
 
                   <span className={styles.characterCount}>
-                    {formData.content.length} characters
+                    {characterCount} characters
                   </span>
                 </div>
 
-                {/* CONTENT */}
-                <textarea
-                  id="content"
-                  name="content"
-                  value={formData.content}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className={styles.textarea}
-                  placeholder="Include all the information someone would need to answer your question... You can use Markdown to format your code!"
-                />
+                <EditorContent editor={editor} className={styles.textarea} />
+
+                {/* Link Popup */}
+                {showLinkPopup && (
+                  <div className={styles.linkPopup}>
+                    <h3>Add Link</h3>
+
+                    <input
+                      type="url"
+                      value={linkUrl}
+                      onChange={(event) => setLinkUrl(event.target.value)}
+                      placeholder="https://example.com"
+                      autoFocus
+                    />
+
+                    <div className={styles.linkPopupActions}>
+                      <button
+                        type="button"
+                        className={styles.linkPopupCancel}
+                        onClick={handleCancelLink}
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.linkPopupConfirm}
+                        onClick={handleAddLink}
+                      >
+                        Add Link
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Image Popup */}
+                {showImagePopup && (
+                  <div className={styles.imagePopup}>
+                    <div className={styles.imagePopupHeader}>
+                      <h3>Add image</h3>
+
+                      <button
+                        type="button"
+                        className={styles.imagePopupClose}
+                        onClick={handleCloseImagePopup}
+                        aria-label="Close image popup"
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    <p className={styles.imagePopupDescription}>
+                      Images are useful in a post, but make sure the post is
+                      still clear without them. If you post images of code or
+                      error messages, copy and paste or type the actual code or
+                      message into the post directly.
+                    </p>
+
+                    <div
+                      className={styles.imageDropZone}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={handleImageDrop}
+                      onPaste={handleImagePaste}
+                      tabIndex={0}
+                    >
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif"
+                        onChange={handleImageSelect}
+                        hidden
+                      />
+
+                      {!imagePreview ? (
+                        <>
+                          <div className={styles.imageUploadIcon}>↑</div>
+
+                          <p className={styles.imageDropText}>
+                            Browse, drag & drop, or paste an image.
+                          </p>
+
+                          <button
+                            type="button"
+                            className={styles.browseImageButton}
+                            onClick={() => imageInputRef.current?.click()}
+                          >
+                            Browse
+                          </button>
+
+                          <p className={styles.imageSupportedText}>
+                            Supported file types: jpeg, png, gif (Max size 2
+                            MiB)
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <img
+                            src={imagePreview}
+                            alt="Selected preview"
+                            className={styles.imagePreview}
+                          />
+
+                          <p className={styles.selectedImageName}>
+                            {imageFile?.name}
+                          </p>
+
+                          <button
+                            type="button"
+                            className={styles.removeImageButton}
+                            onClick={() => {
+                              setImageFile(null);
+                              setImagePreview("");
+                            }}
+                          >
+                            Remove image
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    <div className={styles.imagePopupActions}>
+                      <button
+                        type="button"
+                        className={styles.imageCancelButton}
+                        onClick={handleCloseImagePopup}
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.imageInsertButton}
+                        onClick={handleInsertImage}
+                        disabled={!imageFile}
+                      >
+                        Insert image
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+
               {fieldErrors.content && (
                 <p className={styles.fieldError}>{fieldErrors.content}</p>
               )}
 
-              {/* AI COACH BUTTON */}
               <div className={styles.aiArea}>
                 <button
                   type="button"
@@ -441,7 +813,6 @@ export default function PostQuestion() {
               </div>
             </div>
 
-            {/* AI COACH PANEL */}
             {coachFeedback && (
               <div className={styles.coachPanel}>
                 <div className={styles.coachHeader}>
@@ -463,7 +834,6 @@ export default function PostQuestion() {
                 {coachFeedback.feedback && (
                   <div className={styles.feedback}>
                     <h3>Feedback</h3>
-
                     <p>{coachFeedback.feedback}</p>
                   </div>
                 )}
@@ -483,7 +853,6 @@ export default function PostQuestion() {
                 {coachFeedback.improvedTitle && (
                   <div className={styles.improvedSection}>
                     <h3>Suggested title</h3>
-
                     <p>{coachFeedback.improvedTitle}</p>
                   </div>
                 )}
@@ -491,14 +860,12 @@ export default function PostQuestion() {
                 {coachFeedback.improvedContent && (
                   <div className={styles.improvedSection}>
                     <h3>Suggested content</h3>
-
                     <p>{coachFeedback.improvedContent}</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* FORM ACTIONS */}
             <div className={styles.actions}>
               <button
                 type="button"
@@ -514,7 +881,7 @@ export default function PostQuestion() {
                 className={styles.submitButton}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Posting..." : <>Post Question</>}
+                {isSubmitting ? "Posting..." : "Post Question"}
               </button>
             </div>
           </form>
