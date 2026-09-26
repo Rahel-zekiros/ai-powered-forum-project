@@ -12,7 +12,7 @@
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
-  padding: 42px 24px 70px;
+  padding: 42px 1px 70px;
   box-sizing: border-box;
 }
 
@@ -115,7 +115,7 @@
 
 .formCard {
   width: 100%;
-  padding: 34px;
+  padding: 34px 34px 48px;
   background: #ffffff;
   border: 1px solid #dfe6ee;
   border-radius: 12px;
@@ -192,6 +192,7 @@
 .editor {
   width: 100%;
   overflow: hidden;
+  position: relative;
   background: #ffffff;
   border: 1px solid #d9e1ea;
   border-radius: 6px;
@@ -295,6 +296,46 @@
 }
 
 /* ==================================================
+   NUMBERED LIST ICON
+================================================== */
+
+.numberListIcon {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 19px;
+}
+
+.numberListIcon span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 5px;
+}
+
+.numberListIcon b {
+  width: 7px;
+  color: #334155;
+  font-size: 6px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.numberListIcon i {
+  display: block;
+  width: 10px;
+  height: 2px;
+  background: #334155;
+  border-radius: 1px;
+}
+
+.toolbar button:hover .numberListIcon b,
+.toolbar button:hover .numberListIcon i {
+  color: #f97316;
+  background: #f97316;
+}
+
+/* ==================================================
    CHARACTER COUNT
 ================================================== */
 
@@ -307,7 +348,7 @@
 }
 
 /* ==================================================
-   TEXTAREA
+   TEXTAREA / TIPTAP
 ================================================== */
 
 .textarea {
@@ -318,7 +359,6 @@
   background: #ffffff;
   border: 0;
   outline: none;
-  resize: vertical;
   color: #172033;
   font-family: inherit;
   font-size: 14px;
@@ -326,14 +366,61 @@
   box-sizing: border-box;
 }
 
-.textarea::placeholder {
-  color: #9aa6b6;
+.textarea :global(.ProseMirror) {
+  min-height: 220px;
+  padding: 2px;
+  outline: none;
+  border: none;
 }
 
-.textarea:disabled {
-  background: #f8fafc;
-  cursor: not-allowed;
+.textarea :global(.ProseMirror p) {
+  margin: 0 0 10px;
 }
+
+.textarea :global(.ProseMirror strong) {
+  font-weight: 700;
+}
+
+.textarea :global(.ProseMirror em) {
+  font-style: italic;
+}
+
+.textarea :global(.ProseMirror code) {
+  padding: 2px 4px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  color: #334155;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.textarea :global(.ProseMirror ol) {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.textarea :global(.ProseMirror ul) {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.textarea :global(.ProseMirror li) {
+  margin-bottom: 4px;
+}
+
+.textarea :global(.ProseMirror a) {
+  color: #0074cc;
+  text-decoration: underline;
+}
+
+.textarea :global(.ProseMirror img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
 .inputError {
   border-color: #dc2626;
 }
@@ -346,6 +433,285 @@
   margin: 6px 0 0;
   font-size: 13px;
   color: #dc2626;
+}
+
+/* ==================================================
+   LINK POPUP
+================================================== */
+
+.linkPopup {
+  position: absolute;
+  top: 48px;
+  left: 10px;
+  z-index: 20;
+  width: min(320px, calc(100% - 20px));
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #d6d9dc;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+  box-sizing: border-box;
+}
+
+.linkPopup h3 {
+  margin: 0 0 10px;
+  color: #232629;
+  font-size: 15px;
+}
+
+.linkPopup input {
+  width: 100%;
+  height: 36px;
+  padding: 0 9px;
+  border: 1px solid #b7c0c8;
+  border-radius: 5px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.linkPopup input:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.08);
+}
+
+.linkPopupActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.linkPopupCancel,
+.linkPopupConfirm {
+  padding: 7px 10px;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.linkPopupCancel {
+  background: #ffffff;
+  border: 1px solid #b7c0c8;
+  color: #3b4045;
+}
+
+.linkPopupCancel:hover {
+  background: #e3e6e8;
+}
+
+.linkPopupConfirm {
+  background: #f97316;
+  border: 1px solid #f97316;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.linkPopupConfirm:hover {
+  background: #ea580c;
+  border-color: #ea580c;
+}
+
+/* ==================================================
+   IMAGE POPUP
+================================================== */
+
+.imagePopup {
+  position: fixed;
+  top: 60%;
+  left: 60%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  width: min(400px, calc(100vw - 32px));
+  padding: 15px;
+  background: #ffffff;
+  border: 1px solid #d6d9dc;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.16);
+  box-sizing: border-box;
+}
+
+.imagePopupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.imagePopupHeader h3 {
+  margin: 0;
+  color: #232629;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.imagePopupClose {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #6a737c;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.imagePopupClose:hover {
+  color: #232629;
+}
+
+.imagePopupDescription {
+  margin: 0 0 10px;
+  color: #3b4045;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.imageDropZone {
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: 2px dashed #b7c0c8;
+  border-radius: 6px;
+  background: #f8f9f9;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.imageDropZone:focus {
+  outline: none;
+  border-color: #f97316;
+}
+
+.imageUploadIcon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  border: 1px solid #b7c0c8;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #6a737c;
+  font-size: 17px;
+}
+
+.imageDropText {
+  margin: 0 0 7px;
+  color: #3b4045;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.browseImageButton {
+  padding: 6px 10px;
+  border: 1px solid #b7c0c8;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #3b4045;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.browseImageButton:hover {
+  background: #e3e6e8;
+}
+
+.imageSupportedText {
+  margin: 7px 0 0;
+  color: #6a737c;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.imagePreview {
+  display: block;
+  max-width: 100%;
+  max-height: 180px;
+  margin-bottom: 8px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.selectedImageName {
+  max-width: 100%;
+  margin: 0 0 8px;
+  overflow: hidden;
+  color: #3b4045;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removeImageButton {
+  padding: 5px 9px;
+  border: 1px solid #d6d9dc;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #b52b27;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.removeImageButton:hover {
+  background: #f8f9f9;
+}
+
+.imagePopupActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.imageCancelButton {
+  padding: 7px 11px;
+  border: 1px solid #b7c0c8;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #3b4045;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.imageCancelButton:hover {
+  background: #e3e6e8;
+}
+
+.imageInsertButton {
+  padding: 7px 11px;
+  border: 1px solid #f97316;
+  border-radius: 6px;
+  background: #f97316;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.imageInsertButton:hover {
+  background: #ea580c;
+  border-color: #ea580c;
+}
+
+.imageInsertButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ==================================================
@@ -718,11 +1084,11 @@
 @media (max-width: 900px) {
   .container {
     max-width: 100%;
-    padding: 36px 22px 60px;
+    padding: 36px 1px 60px;
   }
 
   .formCard {
-    padding: 30px 28px 26px;
+    padding: 30px 28px 40px;
   }
 }
 
@@ -732,7 +1098,7 @@
 
 @media (max-width: 768px) {
   .container {
-    padding: 30px 18px 50px;
+    padding: 30px 1px 50px;
   }
 
   .header {
@@ -775,7 +1141,7 @@
 
 @media (max-width: 600px) {
   .container {
-    padding: 26px 14px 45px;
+    padding: 26px 1px 45px;
   }
 
   .header {
@@ -823,7 +1189,6 @@
     font-size: 14px;
   }
 
-  /* Editor */
   .editorHeader {
     min-height: 40px;
     padding: 4px 7px;
@@ -846,7 +1211,6 @@
     min-height: 175px;
   }
 
-  /* AI */
   .aiArea {
     align-items: flex-start;
     flex-direction: column;
@@ -866,12 +1230,10 @@
     width: 100%;
   }
 
-  /* Form actions */
   .actions {
     gap: 14px;
   }
 
-  /* Published screen */
   .publishedCard {
     padding: 40px 18px;
     border-radius: 12px;
@@ -903,6 +1265,18 @@
     width: 100%;
     box-sizing: border-box;
   }
+
+  .imagePopup {
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    padding: 15px;
+  }
+
+  .imageDropZone {
+    min-height: 125px;
+    padding: 11px;
+  }
 }
 
 /* ==================================================
@@ -911,7 +1285,7 @@
 
 @media (max-width: 420px) {
   .container {
-    padding: 22px 10px 38px;
+    padding: 22px 1px 38px;
   }
 
   .header h1 {
@@ -954,7 +1328,6 @@
     font-size: 13px;
   }
 
-  /* Editor toolbar */
   .editorHeader {
     min-height: 36px;
     padding: 4px 5px;
@@ -975,7 +1348,6 @@
     font-size: 13px;
   }
 
-  /* AI */
   .aiButton {
     width: 100%;
     font-size: 14px;
@@ -985,7 +1357,6 @@
     font-size: 13px;
   }
 
-  /* Form actions */
   .actions {
     flex-direction: column-reverse;
     align-items: stretch;
@@ -997,7 +1368,6 @@
     width: 100%;
   }
 
-  /* Published screen */
   .publishedCard {
     padding: 32px 14px;
     border-radius: 10px;
@@ -1027,6 +1397,32 @@
     padding: 11px 16px;
     font-size: 13px;
   }
+
+  .imagePopup {
+    width: calc(100vw - 20px);
+    padding: 14px;
+  }
+
+  .imagePopupHeader h3 {
+    font-size: 16px;
+  }
+
+  .imagePopupDescription {
+    font-size: 10px;
+  }
+
+  .imageDropZone {
+    min-height: 120px;
+    padding: 10px;
+  }
+
+  .imageDropText {
+    font-size: 11px;
+  }
+
+  .imageSupportedText {
+    font-size: 9px;
+  }
 }
 
 /* ==================================================
@@ -1035,8 +1431,8 @@
 
 @media (max-width: 360px) {
   .container {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 1px;
+    padding-right: 1px;
   }
 
   .formCard {
