@@ -2,7 +2,7 @@ import express from "express";
 import {
   authenticateUser as auth,
   optionalAuth,
-} from "../../../middleware/authentication.js";
+} from "../../middleware/authentication.js";
 
 import {
   createQuestionValidation,
