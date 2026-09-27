@@ -82,32 +82,35 @@ export const createQuestionWithVectorService = async ({
   // Get the ID of the newly created question
   const questionId = result.insertId;
 
-  try {
-    // Generate Gemini embedding for the question title
-    const embedding = await getEmbedding(title, "RETRIEVAL_DOCUMENT");
-
-    // Store the embedding with ready status (using embedding_vector column)
-    await safeExecute(
-      `
-        INSERT INTO question_vectors
-          (question_id, embedding_vector, status)
-        VALUES (?, ?, ?)
-      `,
-      [questionId, JSON.stringify(embedding), "ready"],
-    );
-  } catch (error) {
-    // If embedding fails, store failed status
-    console.error("Question embedding failed:", error);
-
-    await safeExecute(
-      `
-        INSERT INTO question_vectors
-          (question_id, embedding_vector, status)
-        VALUES (?, ?, ?)
-      `,
-      [questionId, JSON.stringify([]), "failed"],
-    );
-  }
+ try {
+     // Generate Gemini embedding for the question title
+     const embedding = await getEmbedding(
+       `${title}\n${content}`,
+       "RETRIEVAL_DOCUMENT",
+     );
+     // Store the embedding with ready status (using embedding_vector column)
+     await safeExecute(
+       `
+     INSERT INTO question_vectors
+       (question_id, source_text, embedding, status)
+     VALUES (?, ?, ?, ?)
+   `,
+       [questionId, `${title}\n${content}`, JSON.stringify(embedding), "ready"],
+     );
+   } catch (error) {
+     // If embedding fails, store failed status
+     console.error("Question embedding failed:", error);
+ 
+     await safeExecute(
+       `
+       INSERT INTO question_vectors
+         (question_id, source_text, embedding, status)
+       VALUES (?, ?, ?, ?)
+     `,
+       [questionId, `${title}\n${content}`, JSON.stringify([]), "failed"],
+     );
+   }
+ 
 
   // Return the newly created question
   return {
