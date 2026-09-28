@@ -1,0 +1,325 @@
+.chatRoot {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 30;
+  font-size: var(--text-sm);
+}
+
+.panel {
+  width: min(380px, calc(100vw - 32px));
+  height: min(590px, calc(100vh - 112px));
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-bottom: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  animation: panelIn 180ms ease-out;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px 16px;
+  color: var(--text-inverse);
+  background: linear-gradient(135deg, #c2410c, #f97316);
+}
+
+.headerIdentity,
+.headerActions,
+.messageRow,
+.composer {
+  display: flex;
+  align-items: center;
+}
+
+.headerIdentity {
+  gap: 11px;
+}
+
+.headerIcon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: #fff7ed;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-md);
+}
+
+.panelHeader h2 {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+}
+
+.panelHeader p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: #ffedd5;
+  font-size: var(--text-xs);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  background: #bbf7d0;
+  border-radius: 50%;
+}
+
+.headerActions {
+  gap: 4px;
+}
+
+.iconButton {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: #fff7ed;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.iconButton:hover,
+.iconButton:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  outline: none;
+}
+
+.messageArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px 12px;
+  background: #fffaf5;
+}
+
+.messageRow {
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.userRow {
+  flex-direction: row-reverse;
+}
+
+.messageAvatar {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 27px;
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  border-radius: 50%;
+}
+
+.userRow .messageAvatar {
+  color: var(--text-secondary);
+  background: var(--surface-container-high);
+}
+
+.messageBubble {
+  max-width: 82%;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 13px 13px 13px 4px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.userBubble {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+  border-radius: 13px 13px 4px 13px;
+}
+
+.typingBubble {
+  display: flex;
+  gap: 4px;
+  padding: 13px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 13px 13px 13px 4px;
+}
+
+.typingBubble span {
+  width: 5px;
+  height: 5px;
+  background: var(--text-placeholder);
+  border-radius: 50%;
+  animation: typing 900ms infinite ease-in-out;
+}
+
+.typingBubble span:nth-child(2) { animation-delay: 120ms; }
+.typingBubble span:nth-child(3) { animation-delay: 240ms; }
+
+.quickPrompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 12px;
+  background: #fffaf5;
+}
+
+.quickPrompts button {
+  padding: 7px 9px;
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  border: 1px solid #fed7aa;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  text-align: left;
+}
+
+.quickPrompts button:hover {
+  background: #fed7aa;
+}
+
+.errorMessage {
+  margin: 0 16px 8px;
+  color: var(--error);
+  font-size: var(--text-xs);
+}
+
+.composer {
+  gap: 8px;
+  padding: 12px 14px 6px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.composer textarea {
+  min-height: 38px;
+  max-height: 90px;
+  flex: 1;
+  resize: none;
+  padding: 9px 10px;
+  color: var(--text-primary);
+  background: var(--surface-container-low);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  outline: none;
+}
+
+.composer textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.sendButton {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  color: white;
+  background: var(--primary);
+  border: 0;
+  border-radius: var(--radius-md);
+}
+
+.sendButton:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.sendButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.composerHint {
+  padding: 0 14px 12px;
+  color: var(--text-tertiary);
+  background: var(--surface);
+  font-size: 10px;
+  text-align: right;
+}
+
+.launcher {
+  position: relative;
+  min-width: 58px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 17px;
+  color: white;
+  background: var(--primary);
+  border: 0;
+  border-radius: 28px;
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.launcher:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.launcherOpen {
+  min-width: 56px;
+  padding: 0;
+}
+
+.launcherCheck {
+  position: absolute;
+  top: -2px;
+  right: -1px;
+  width: 15px;
+  height: 15px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: var(--success);
+  border: 2px solid var(--background);
+  border-radius: 50%;
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+
+@media (max-width: 520px) {
+  .chatRoot {
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .panel {
+    width: calc(100vw - 32px);
+    height: min(620px, calc(100vh - 96px));
+  }
+
+  .launcher span:not(.launcherCheck) {
+    display: none;
+  }
+
+  .launcher {
+    width: 54px;
+    min-width: 54px;
+    padding: 0;
+  }
+}

@@ -5,6 +5,7 @@ import postQuestionRoutes from "./Routes/questionRoutes.js";
 import questionDetailRoutes from "./Routes/questionDetailAIroutes.js";
 import userRoutes from "./Routes/userRoutes.js";
 import ragRoutes from "./Routes/rag.Routes.js";
+import supportRoutes from '../api/support/support.routes.js';
 export const mainRouter = express.Router();
 
 // Authentication routes
@@ -24,3 +25,6 @@ mainRouter.use("/users", userRoutes);
 
 //* 5. RAG
 mainRouter.use("/rag", ragRoutes);
+
+// Authenticated customer-support assistant
+mainRouter.use('/support', supportRoutes);
