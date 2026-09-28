@@ -102,7 +102,7 @@ export const getQuestionsController = async (req, res, next) => {
  */
 export const searchQuestionsSemanticController = async (req, res, next) => {
   try {
-    const { query, k, threshold } = req.query;
+    const { query, k, threshold, mine } = req.query;
 
     if (!query) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -111,7 +111,13 @@ export const searchQuestionsSemanticController = async (req, res, next) => {
       });
     }
 
-    const data = await searchQuestionsSemanticService({ query, k, threshold });
+    const data = await searchQuestionsSemanticService({
+      query,
+      k,
+      threshold,
+      mine,
+      userId: req.user.id,
+    });
 
     res.status(StatusCodes.OK).json({
       success: true,

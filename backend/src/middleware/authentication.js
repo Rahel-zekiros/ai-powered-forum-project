@@ -13,6 +13,7 @@ if (!JWT_SECRET) {
  * Middleware: Validates JWT Access Token from HTTP Authorization Header
  */
 export const verifyAuthToken = (req, res, next) => {
+  // console.log("Verifying JWT token for request:", req.method, req.originalUrl,req.headers);
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
