@@ -222,13 +222,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #f5f7fa;
+  background: var(--surface-container-low);
   padding: 6px 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
 }
 
 .toolbar button {
-  background: none;
+  color: var(--text-primary);
+  background: transparent;
   border: none;
   cursor: pointer;
   padding: 4px 8px;
@@ -237,7 +238,7 @@
 }
 
 .toolbar button:hover {
-  background: #e8ecf1;
+  background: var(--surface-hover);
 }
 
 .charCount {

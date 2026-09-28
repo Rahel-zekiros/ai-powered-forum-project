@@ -54,13 +54,13 @@
 .brandTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .brandSubtitle {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-tertiary);
   margin: 0.15rem 0 0;
   line-height: 1.2;
 }
@@ -180,7 +180,7 @@
 .profileName {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .profileRole {
