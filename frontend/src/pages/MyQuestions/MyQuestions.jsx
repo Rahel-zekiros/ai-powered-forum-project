@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { MessageSquare, Plus } from "lucide-react";
-import { getQuestions } from "../../services/question.service";
+import {
+  getQuestions,
+  searchQuestionsSemantic,
+} from "../../services/question.service";
 import { useAuth } from "../../contexts/AuthContext";
 import styles from "./MyQuestions.module.css";
 
 // this component displays the questions created by the current user. It fetches the user's questions from the backend and displays them in a list. If there are no questions, it shows a message encouraging the user to ask their first question. The user can also navigate to the "Ask Question" page to create a new question.
 export default function MyQuestions() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useAuth();
 
   const [myQuestions, setMyQuestions] = useState([]);
@@ -20,10 +24,14 @@ export default function MyQuestions() {
       setIsLoading(true);
       setError(null);
 
-      // Fetch questions created by the current user
       try {
-        const result = await getQuestions({ mine: true });
-        setMyQuestions(result.data);
+        const params = new URLSearchParams(location.search);
+        const semantic = params.get("semantic");
+        const search = params.get("q");
+        const result = semantic
+          ? await searchQuestionsSemantic({ query: semantic, mine: true })
+          : await getQuestions({ mine: true, ...(search ? { search } : {}) });
+        setMyQuestions(result.data || []);
       } catch (err) {
         setError(
           err.response?.data?.message || "Failed to load your questions.",
@@ -34,7 +42,7 @@ export default function MyQuestions() {
     };
 
     fetchMyQuestions();
-  }, []);
+  }, [location.search]);
 
   const getInitials = () => {
     const firstName = currentUser?.firstName || "";

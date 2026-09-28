@@ -5,6 +5,7 @@ export const getQuestions = async (params = {}) => {
   const response = await apiClient.get(
     `/api/questions${query ? `?${query}` : ""}`,
   );
+  // console.log("getQuestions response:", response);
   return response.data;
 };
 
