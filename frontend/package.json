@@ -13,6 +13,11 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@tiptap/extension-image": "^3.31.3",
+    "@tiptap/extension-link": "^3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
     "axios": "^1.15.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
