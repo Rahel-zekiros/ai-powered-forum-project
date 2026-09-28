@@ -115,7 +115,7 @@
   --transition-slow: 300ms ease-in-out;
 
   /* App shell: sidebar width and shared horizontal rhythm. */
-  --app-sidebar-width: 17rem;
+  --app-sidebar-width: 16rem;
   /* Primary content column (Layout main + footer + marketing sections aligned to app). */
   --app-content-max: 80rem;
   /* Marketing / explainer columns (auth info panel, success messages). */
