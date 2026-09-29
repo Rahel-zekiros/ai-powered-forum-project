@@ -26,7 +26,7 @@ import {getSingleQuestionController,
   postAnswerController,
   getSimilarQuestionsController,
   assessAnswerAgainstQuestionController} 
-  from "../../question/quetionDetailController.js";
+  from "../../question/questionDetailController.js";
 const router = express.Router();
 
 router.post(
