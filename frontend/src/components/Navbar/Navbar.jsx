@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Menu, LogOut, Search, X, Sparkles } from "lucide-react";
+import ThemeToggle from "../ThemeToggle/ThemeToggle";
 import styles from "./Navbar.module.css";
 
 export default function Navbar({
@@ -14,25 +14,15 @@ export default function Navbar({
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const queryParam = searchParams.get("q") || searchParams.get("semantic") || "";
-  const [searchQuery, setSearchQuery] = useState(queryParam);
-
-  useEffect(() => {
-    const currentQ = searchParams.get("q") || searchParams.get("semantic") || "";
-    setSearchQuery(currentQ);
-  }, [searchParams]);
+  const searchQuery = searchParams.get("q") || searchParams.get("semantic") || "";
 
   const handleInputChange = (e) => {
     const value = e.target.value;
-    setSearchQuery(value);
-
-    if (location.pathname === "/dashboard") {
-      if (value.trim()) {
-        setSearchParams({ q: value });
-      } else {
-        setSearchParams({}); 
-      }
+    const params = value.trim() ? { q: value } : {};
+    if (location.pathname === "/my-questions" && value.trim()) {
+      params.mine = "true";
     }
+    setSearchParams(params);
   };
 
   const handleKeyDown = (e) => {
@@ -44,7 +34,11 @@ export default function Navbar({
   const executeAISearch = () => {
     if (!searchQuery.trim()) return;
 
-    if (location.pathname !== "/dashboard") {
+    if (location.pathname === "/my-questions") {
+      navigate(
+        `/my-questions?semantic=${encodeURIComponent(searchQuery)}&mine=true`,
+      );
+    } else if (location.pathname !== "/dashboard") {
       navigate(`/dashboard?semantic=${encodeURIComponent(searchQuery)}`);
     } else {
       setSearchParams({ semantic: searchQuery });
@@ -52,10 +46,7 @@ export default function Navbar({
   };
 
   const handleClear = () => {
-    setSearchQuery("");
-    if (location.pathname === "/dashboard") {
-      setSearchParams({});
-    }
+    setSearchParams({});
   };
 
   return (
@@ -111,6 +102,7 @@ export default function Navbar({
 
       {/* User Profile */}
       <div className={styles.userArea}>
+        <ThemeToggle />
         <span className={styles.userName}>
           {user ? `${user.firstName} ${user.lastName}` : "Guest"}
         </span>
