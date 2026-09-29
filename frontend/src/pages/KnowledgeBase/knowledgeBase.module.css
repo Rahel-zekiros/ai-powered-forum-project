@@ -11,15 +11,17 @@
   margin: 0 auto;
   padding: 24px;
   box-sizing: border-box;
+  color: var(--text-primary);
 }
+
 
 /* ==========================================
    TOP BANNER (Clean & Professional)
    ========================================== */
 
 .bannerCard {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container-low) 100%);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px 32px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -30,8 +32,8 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: #2563eb;
-  background: #dbeafe;
+  color: var(--primary-dark);
+  background: var(--primary-light);
   padding: 4px 8px;
   border-radius: 4px;
   margin-bottom: 8px;
@@ -40,13 +42,13 @@
 .bannerTitle {
   font-size: 24px;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-primary);
   margin: 0 0 8px;
 }
 
 .bannerDesc {
   font-size: 14px;
-  color: #4b5563;
+  color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
   max-width: 900px;
@@ -57,9 +59,9 @@
    ========================================== */
 
 .errorBanner {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
+  background-color: var(--error-surface);
+  border: 1px solid var(--error-border);
+  color: var(--error);
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -92,8 +94,8 @@
    ========================================== */
 
 .libraryCard {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -102,13 +104,13 @@
 .cardTitle {
   font-size: 18px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
   margin: 0 0 4px;
 }
 
 .cardSubtitle {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-tertiary);
   margin: 0 0 16px;
 }
 
@@ -133,22 +135,22 @@
 }
 
 .allDocumentsButton {
-  background: #ffffff;
-  border: 2px solid #cbd5e1;
-  color: #334155;
+  background: var(--surface);
+  border: 2px solid var(--border-hover);
+  color: var(--text-secondary);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .allDocumentsActive {
-  background: #eff6ff;
-  border: 2px solid #3b82f6;
-  color: #1d4ed8;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.15);
+  background: var(--primary-light);
+  border: 2px solid var(--primary);
+  color: var(--primary-dark);
+  box-shadow: var(--shadow-md);
 }
 
 .allDocumentsButton:hover {
-  border-color: #3b82f6;
-  background: #f8fbff;
+  border-color: var(--border-focus);
+  background: var(--surface-hover);
 }
 
 .allDocumentsLeft {
@@ -158,11 +160,11 @@
 }
 
 .allDocumentsIcon {
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .allDocumentsIconActive {
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .activeDocumentBadge,
@@ -173,13 +175,13 @@
 }
 
 .activeDocumentBadge {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--primary-light);
+  color: var(--primary-dark);
 }
 
 .selectDocumentBadge {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--surface-container-low);
+  color: var(--text-tertiary);
 }
 
 /* ==========================================
@@ -187,17 +189,17 @@
    ========================================== */
 
 .uploadDashedBox {
-  border: 2px dashed #d1d5db;
+  border: 2px dashed var(--border-hover);
   border-radius: 8px;
   padding: 16px;
   text-align: center;
-  background: #f9fafb;
+  background: var(--surface-container-low);
   margin-bottom: 16px;
 }
 
 .uploadInstruction {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-tertiary);
   margin: 0 0 12px;
   line-height: 1.4;
 }
@@ -224,25 +226,25 @@
 }
 
 .chooseFileBtn {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  color: #374151;
+  background: var(--surface);
+  border: 1px solid var(--border-hover);
+  color: var(--text-secondary);
 }
 
 .chooseFileBtn:hover {
-  background: #f3f4f6;
+  background: var(--surface-hover);
 }
 
 .uploadBtn {
-  background: #0f172a;
+  background: var(--primary);
   border: none;
-  color: #ffffff;
+  color: var(--text-inverse);
   padding-left: 16px;
   padding-right: 16px;
 }
 
 .uploadBtn:hover:not(:disabled) {
-  background: #1e293b;
+  background: var(--primary-hover);
 }
 
 .uploadBtn:disabled {
@@ -257,7 +259,7 @@
 .fileNameDisplay {
   display: block;
   font-size: 12px;
-  color: #4b5563;
+  color: var(--text-secondary);
   word-break: break-all;
   margin-top: 4px;
 }
@@ -269,7 +271,7 @@
 .statusText,
 .emptyListText {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 16px 0;
   margin: 0;
@@ -288,21 +290,21 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .documentItem:hover {
-  border-color: #3b82f6;
-  background: #f8fafc;
+  border-color: var(--border-focus);
+  background: var(--surface-hover);
 }
 
 .selectedItem {
-  border-color: #3b82f6 !important;
-  background: #eff6ff !important;
+  border-color: var(--primary) !important;
+  background: var(--primary-light) !important;
 }
 
 .docInfo {
@@ -316,7 +318,7 @@
 .docName {
   font-size: 13px;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -325,8 +327,8 @@
 .readyBadge {
   font-size: 10px;
   font-weight: 700;
-  color: #10b981;
-  background: #ecfdf5;
+  color: var(--success);
+  background: var(--success-surface);
   padding: 2px 6px;
   border-radius: 4px;
   width: fit-content;
@@ -335,7 +337,7 @@
 .deleteBtn {
   background: transparent;
   border: none;
-  color: #9ca3af;
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: 6px;
   border-radius: 4px;
@@ -348,8 +350,8 @@
 }
 
 .deleteBtn:hover {
-  color: #ef4444;
-  background: #fee2e2;
+  color: var(--error);
+  background: var(--error-surface);
 }
 
 /* ==========================================
@@ -357,8 +359,8 @@
    ========================================== */
 
 .activeReaderContainer {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -382,20 +384,21 @@
 .sectionTitle {
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .sectionSubtitle {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-tertiary);
   margin: 0 0 12px;
 }
 
 .clearHighlightBtn {
   font-size: 11px;
   padding: 3px 8px;
-  background: #e2e8f0;
+  background: var(--surface-container-high);
+  color: var(--text-primary);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -403,23 +406,23 @@
 
 .readerBoxPlaceholder {
   height: 300px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-tertiary);
 }
 
 .pdfViewerContainer {
   width: 100%;
   height: 450px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  background: #f9fafb;
+  background: var(--surface-container-low);
 }
 
 .pdfIframe {
@@ -430,7 +433,7 @@
 
 .sectionDivider {
   height: 1px;
-  background: #e5e7eb;
+  background: var(--border);
   margin: 4px 0;
 }
 
@@ -443,16 +446,16 @@
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: #f8fafc;
+  background: var(--surface-container-low);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   margin-bottom: 20px;
   font-size: 13px;
-  color: #475569;
+  color: var(--text-secondary);
 }
 
 .allDocumentsModeIcon {
-  color: #2563eb;
+  color: var(--primary);
 }
 
 /* ==========================================
@@ -474,17 +477,18 @@
 .inputLabel {
   font-size: 13px;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-secondary);
 }
 
 .textInput,
 .textareaInput {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
-  color: #1f2937;
+  color: var(--text-primary);
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.2s;
@@ -493,8 +497,8 @@
 
 .textInput:focus,
 .textareaInput:focus {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+  border-color: var(--border-focus) !important;
+  box-shadow: var(--shadow-focus) !important;
   outline: none !important;
 }
 
@@ -507,9 +511,9 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: #2563eb;
+  background: var(--primary);
   border: none;
-  color: #ffffff;
+  color: var(--text-inverse);
   padding: 10px 16px;
   font-size: 13px;
   font-weight: 500;
@@ -520,7 +524,7 @@
 }
 
 .actionOrangeBtn:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--primary-hover);
 }
 
 .actionOrangeBtn:disabled {
@@ -534,9 +538,9 @@
 
 .searchErrorBanner {
   margin-top: 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
+  background: var(--error-surface);
+  border: 1px solid var(--error-border);
+  color: var(--error);
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -545,10 +549,10 @@
 .searchMessageBanner {
   margin-top: 16px;
   padding: 14px 18px;
-  background: #fff7ed;
-  border: 1px solid #ffedd5;
+  background: var(--primary-light);
+  border: 1px solid var(--border-hover);
   border-radius: 8px;
-  color: #c2410c;
+  color: var(--primary-dark);
   font-size: 13px;
   font-weight: 500;
   display: flex;
@@ -568,7 +572,7 @@
   justify-content: space-between;
   align-items: center;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .searchResultsTitle {
@@ -576,16 +580,16 @@
   align-items: center;
   gap: 7px;
   font-size: 13px;
-  color: #334155;
+  color: var(--text-secondary);
 }
 
 .blueIcon {
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .resultCount {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 /* ==========================================
@@ -601,15 +605,15 @@
 }
 
 .searchResultCard {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .searchResultCardSelected {
-  background: #eff6ff;
-  border: 1px solid #3b82f6;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.12);
+  background: var(--primary-light);
+  border: 1px solid var(--primary);
+  box-shadow: var(--shadow-md);
 }
 
 .resultHeader {
@@ -617,24 +621,24 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  border-bottom: 1px solid #edf2f7;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 6px;
 }
 
 .resultChunkTitle {
   font-size: 13px;
   font-weight: 600;
-  color: #495057;
+  color: var(--text-secondary);
 }
 
 .resultSelectedText {
   font-size: 11px;
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .resultInspectText {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 /* ==========================================
@@ -643,7 +647,7 @@
 
 .markdownContent {
   width: 100%;
-  color: #1e293b;
+  color: var(--text-primary);
   font-size: 13px;
   line-height: 1.7;
   word-break: break-word;
@@ -656,7 +660,7 @@
 .markdownContent h5,
 .markdownContent h6 {
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   line-height: 1.3;
   margin-top: 18px;
   margin-bottom: 10px;
@@ -669,7 +673,7 @@
 
 .markdownContent strong {
   font-weight: 800;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .markdownContent ul,
@@ -686,15 +690,15 @@
 .markdownContent blockquote {
   margin: 14px 0;
   padding: 10px 14px;
-  border-left: 4px solid #3b82f6;
-  background: #eff6ff;
-  color: #334155;
+  border-left: 4px solid var(--primary);
+  background: var(--primary-light);
+  color: var(--text-primary);
   border-radius: 0 8px 8px 0;
 }
 
 .markdownContent code {
-  background: #f1f5f9;
-  color: #be123c;
+  background: var(--surface-container-high);
+  color: var(--text-primary);
   padding: 2px 6px;
   border-radius: 5px;
   font-family: "Courier New", Consolas, monospace;
@@ -722,7 +726,7 @@
 }
 
 .markdownContent a {
-  color: #2563eb;
+  color: var(--primary);
   text-decoration: underline;
 }
 
@@ -735,21 +739,21 @@
 
 .markdownContent th,
 .markdownContent td {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   padding: 8px 10px;
   text-align: left;
 }
 
 .markdownContent th {
-  background: #f1f5f9;
+  background: var(--surface-container-low);
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .searchResultContent {
   margin: 0;
   font-size: 13px;
-  color: #343a40;
+  color: var(--text-secondary);
   line-height: 1.7;
   word-break: break-word;
 }
@@ -761,10 +765,10 @@
 .noteDisplay {
   margin-top: 10px;
   padding: 8px 12px;
-  background: #fef3c7;
+  background: var(--surface-container-high);
   border-radius: 6px;
   font-size: 12px;
-  color: #92400e;
+  color: var(--text-primary);
 }
 
 .noteInputRow {
@@ -778,13 +782,15 @@
   font-size: 12px;
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1px solid #cbd5e1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
   flex: 1;
   outline: none;
 }
 
 .noteInput:focus {
-  border-color: #2563eb;
+  border-color: var(--border-focus);
 }
 
 .saveNoteBtn {
@@ -794,8 +800,8 @@
   font-size: 11px;
   font-weight: 500;
   padding: 6px 10px;
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -803,7 +809,7 @@
 }
 
 .saveNoteBtn:hover {
-  background: #1d4ed8;
+  background: var(--primary-hover);
 }
 
 /* ==========================================
@@ -813,8 +819,8 @@
 .selectedResultPanel {
   margin-top: 24px;
   padding: 20px;
-  background: #ffffff;
-  border: 2px solid #3b82f6;
+  background: var(--surface);
+  border: 2px solid var(--primary);
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 }
@@ -835,21 +841,22 @@
 .selectedResultTitle {
   margin: 0;
   font-size: 16px;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .selectedResultSubtitle {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .closeButton {
   display: flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+  border: 1px solid var(--border);
+  background: var(--surface-hover);
+  color: var(--text-secondary);
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
@@ -865,14 +872,14 @@
 
 .metadataCard {
   padding: 12px;
-  background: #f8fafc;
+  background: var(--surface-container-low);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
 }
 
 .metadataLabel {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-tertiary);
   margin-bottom: 5px;
 }
 
@@ -880,38 +887,38 @@
 .metadataRelevance,
 .metadataChunkId {
   font-size: 14px;
-  color: #1e293b;
+  color: var(--text-primary);
   word-break: break-word;
 }
 
 .metadataRelevance {
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .documentInformation {
   margin-bottom: 18px;
   padding: 12px 14px;
-  background: #f8fafc;
+  background: var(--surface-container-low);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   font-size: 12px;
-  color: #475569;
+  color: var(--text-secondary);
 }
 
 .contentTitle {
   margin: 0 0 8px;
   font-size: 14px;
-  color: #334155;
+  color: var(--text-primary);
 }
 
 .retrievedContent {
   padding: 16px;
-  background: #f8fafc;
+  background: var(--surface-container-low);
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   line-height: 1.7;
   font-size: 13px;
-  color: #334155;
+  color: var(--text-secondary);
   word-break: break-word;
 }
 
@@ -944,23 +951,23 @@
 }
 
 .exportButton {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #16a34a;
+  background: var(--success-surface);
+  border: 1px solid var(--success-border);
+  color: var(--success);
 }
 
 .exportButton:hover {
-  background: #dcfce7;
+  background: var(--success-light);
 }
 
 .clearButton {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #475569;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
 }
 
 .clearButton:hover {
-  background: #e2e8f0;
+  background: var(--surface-container-high);
 }
 
 .chatHistory {
@@ -980,14 +987,14 @@
 }
 
 .userChatMessage {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--primary-light);
+  border: 1px solid var(--border-hover);
 }
 
 .assistantChatMessage {
-  background: #ffffff;
-  border: 2px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .chatMessageHeader {
@@ -995,7 +1002,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 8px;
 }
 
@@ -1007,11 +1014,11 @@
 }
 
 .userMessageLabel {
-  color: #15803d;
+  color: var(--primary-dark);
 }
 
 .assistantMessageLabel {
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .copyButton,
@@ -1028,38 +1035,38 @@
 }
 
 .copyButton {
-  background: #f8fafc;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .copyButton:hover {
-  background: #f1f5f9;
+  background: var(--surface-container-low);
 }
 
 .copyButtonCopied {
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
+  background: var(--success-surface);
+  color: var(--success);
+  border: 1px solid var(--success-border);
 }
 
 .chatMarkdownContent {
   word-break: break-word;
   font-size: 14px;
   line-height: 1.7;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .sourcesContainer {
   margin-top: 12px;
   padding-top: 8px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border);
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .sourceLink {
-  color: #2563eb;
+  color: var(--primary);
   cursor: pointer;
   text-decoration: underline;
   margin-right: 6px;
@@ -1111,15 +1118,15 @@
 }
 /* --- Toast Custom Styles --- */
 .successToast {
-  background-color: #dcfce7 !important;
-  color: #166534 !important;
-  border: 1px solid #4ade80 !important;
+  background-color: var(--success-surface) !important;
+  color: var(--success) !important;
+  border: 1px solid var(--success-border) !important;
 }
 
 .errorToast {
-  background-color: #fee2e2 !important;
-  color: #991b1b !important;
-  border: 1px solid #f87171 !important;
+  background-color: var(--error-surface) !important;
+  color: var(--error) !important;
+  border: 1px solid var(--error-border) !important;
 }
 
 /* --- DELETE CONFIRMATION TOAST STYLES --- */
@@ -1133,7 +1140,7 @@
 .confirmToastText {
   font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .confirmToastActions {
@@ -1146,24 +1153,24 @@
 .confirmCancelBtn {
   padding: 6px 12px;
   font-size: 12px;
-  background-color: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  borderradius: 6px;
+  background-color: var(--surface-container-low);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: background-color 0.2s;
 }
 
 .confirmCancelBtn:hover {
-  background-color: #e5e7eb;
+  background-color: var(--surface-container-high);
 }
 
 .confirmDeleteBtn {
   padding: 6px 12px;
   font-size: 12px;
-  background-color: #dc2626;
-  color: #ffffff;
+  background-color: var(--error);
+  color: var(--text-inverse);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -1172,17 +1179,17 @@
 }
 
 .confirmDeleteBtn:hover {
-  background-color: #b91c1c;
+  background-color: var(--primary-dark);
 }
 .customToastStyle {
-  background: #ffffff !important;
-  color: #1f2937 !important;
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
   padding: 16px !important;
   border-radius: 12px !important;
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid var(--border) !important;
   min-width: 300px !important;
 }
 
@@ -1196,8 +1203,8 @@
 
   box-sizing: border-box;
 
-  background: #ffffff;
-  color: #1f2937;
+  background: var(--surface);
+  color: var(--text-primary);
 
   border: none;
   border-radius: 8px;
@@ -1220,6 +1227,6 @@
   align-items: center;
   justify-content: center;
 
-  color: #6b7280;
+  color: var(--text-tertiary);
   font-size: 14px;
 }
