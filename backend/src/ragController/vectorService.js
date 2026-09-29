@@ -58,7 +58,7 @@ export const getDocumentChunks = async (documentId) => {
       dc.chunk_index,
       dc.page_start,
       dc.page_end,
-      dcv.embedding_vector
+      dcv.embedding AS embedding_vector
     FROM document_chunks AS dc
     INNER JOIN document_chunk_vectors AS dcv
       ON dc.chunk_id = dcv.chunk_id

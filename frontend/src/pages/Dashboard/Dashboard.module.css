@@ -6,8 +6,8 @@
 }
 
 .topCard {
-  background-color: white;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 32px;
   margin-bottom: 40px;
@@ -16,7 +16,7 @@
 .sectionLabel {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #ea580c;
+  color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
@@ -25,13 +25,13 @@
 .welcomeTitle {
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-primary);
   margin: 0 0 12px 0;
 }
 
 .subtitle {
   font-size: 0.95rem;
-  color: #4b5563;
+  color: var(--text-secondary);
   margin-bottom: 32px;
   max-width: 600px;
   line-height: 1.5;
@@ -45,8 +45,8 @@
 }
 
 .actionCard {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface-container-low);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 20px;
   display: flex;
@@ -75,19 +75,19 @@
   margin: 0 0 4px 0;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-primary);
 }
 
 .actionCardContent p {
   margin: 0;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-tertiary);
   line-height: 1.4;
 }
 
 .statsDisclaimer {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-tertiary);
   margin-bottom: 12px;
 }
 
@@ -99,8 +99,8 @@
 }
 
 .statBox {
-  background-color: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface-container-low);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 20px;
 }
@@ -108,7 +108,7 @@
 .statBox p {
   margin: 0 0 8px 0;
   font-size: 0.85rem;
-  color: #475569;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -116,12 +116,12 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .feedCard {
-  background-color: white;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   margin-bottom: 40px;
   overflow: hidden;
@@ -132,20 +132,20 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 32px 32px 24px 32px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .feedHeader h3 {
   margin: 0 0 4px 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .feedHeader p {
   margin: 0;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .newestBadge {
@@ -171,17 +171,17 @@
 }
 
 .loadingState {
-  color: #475569;
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
 .emptyState {
-  background-color: #f8fafc;
-  border: 1px dashed #cbd5e1;
+  background-color: var(--surface-container-low);
+  border: 1px dashed var(--border-hover);
   border-radius: 12px;
   padding: 40px;
   text-align: center;
-  color: #475569;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   width: 100%;
   max-width: 400px;
@@ -205,7 +205,7 @@
 }
 
 .questionCard {
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
   padding: 24px 32px;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -220,7 +220,7 @@
 }
 
 .questionCard:hover {
-  background-color: #f8fafc;
+  background-color: var(--surface-hover);
 }
 
 .myQuestion {
@@ -249,13 +249,13 @@
 .questionTitle {
   font-size: 1.05rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
   margin-bottom: 4px;
 }
 
 .questionExcerpt {
   font-size: 0.9rem;
-  color: #475569;
+  color: var(--text-secondary);
   margin-bottom: 12px;
   white-space: nowrap;
   overflow: hidden;
@@ -267,7 +267,7 @@
   align-items: center;
   gap: 12px;
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .questionMeta span {

@@ -70,8 +70,7 @@ export const authenticateUserAccount = async ({ email, password }) => {
   const formattedEmail = cleanEmailInput(email);
   const findUserQuery =
     "SELECT user_id, first_name, last_name, email, password_hash FROM users WHERE email = ? LIMIT 1";
-  const matchingUsers = await safeExecute(findUserQuery, [formattedEmail]);
-
+  const matchingUsers = await safeExecute(findUserQuery, [formattedEmail]);// Debugging line
   if (matchingUsers.length === 0) {
     throw new UnauthenticatedError("Invalid credentials provided.");
   }

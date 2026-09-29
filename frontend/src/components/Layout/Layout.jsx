@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import Navbar from "../Navbar/Navbar.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
+import SupportChat from "../SupportChat/SupportChat.jsx";
 import styles from "./Layout.module.css";
 
 const PAGE_COPY = {
@@ -39,7 +40,7 @@ function resolvePageCopy(pathname) {
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
   const { currentUser, logoutUser } = useAuth();
   const { title, subtitle } = resolvePageCopy(location.pathname);
@@ -55,7 +56,7 @@ export default function Layout() {
           user={currentUser}
           onLogout={logoutUser}
           onToggleSidebar={() => setIsSidebarOpen((open) => !open)}
-          searchQuery={searchQuery} 
+          searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
 
@@ -92,6 +93,8 @@ export default function Layout() {
             </nav>
           </div>
         </footer>
+
+        <SupportChat />
       </div>
     </div>
   );

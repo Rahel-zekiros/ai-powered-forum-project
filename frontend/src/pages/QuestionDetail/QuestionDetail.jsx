@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
+import { ArrowLeft, Share2, MessageSquare, Bold, Italic, Code2, Link2, Sparkles } from "lucide-react";
 import {
   getSingleQuestion,
   getSimilarQuestions,
@@ -43,7 +44,7 @@ export default function QuestionDetail() {
   const [isCheckingFit, setIsCheckingFit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const answerRef = useRef(null);
 
   const fetchQuestion = useCallback(async () => {
@@ -79,105 +80,127 @@ export default function QuestionDetail() {
   const isOwnQuestion =
     !!currentUser && !!question && question.author?.id === currentUser.id;
 
-    const insertMarkdown = (before, after = "", placeholder = "text") => {
-      const textarea = answerRef.current;
-      if (!textarea) return;
+  const handleShare = async () => {
+    const shareData = {
+      title: question?.title || "Evangadi Forum question",
+      text: "Check out this question on Evangadi Forum.",
+      url: window.location.href,
+    };
 
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const value = textarea.value;
-      const selected = value.slice(start, end) || placeholder;
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+      }
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2000);
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        setSubmitError("Could not share this question.");
+      }
+    }
+  };
 
-      const newValue =
-        value.slice(0, start) + before + selected + after + value.slice(end);
-      setDraftAnswer(newValue);
+  const insertMarkdown = (before, after = "", placeholder = "text") => {
+    const textarea = answerRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+    const selected = value.slice(start, end) || placeholder;
+
+    const newValue =
+      value.slice(0, start) + before + selected + after + value.slice(end);
+    setDraftAnswer(newValue);
+    setFitResult(null);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const selStart = start + before.length;
+      const selEnd = selStart + selected.length;
+      textarea.setSelectionRange(selStart, selEnd);
+    });
+  };
+
+  const handleCheckFit = async () => {
+    if (draftAnswer.trim().length < 20) {
+      setSubmitError("Write at least 20 characters before checking fit.");
+      return;
+    }
+    try {
+      setIsCheckingFit(true);
+      setSubmitError(null);
+      const result = await assessAnswerFit(questionHash, draftAnswer.trim());
+      setFitResult(result.data);
+    } catch (err) {
+      setSubmitError(
+        "Couldn't get AI feedback right now. You can still submit.",
+      );
+    } finally {
+      setIsCheckingFit(false);
+    }
+  };
+
+  const handleSubmitAnswer = async (e) => {
+    e.preventDefault();
+    if (draftAnswer.trim().length < 20) {
+      setSubmitError("Answer must be at least 20 characters.");
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      setSubmitError(null);
+
+      // 1. Send request to backend with questionHash
+      const res = await createAnswer(questionHash, draftAnswer.trim());
+
+      // 2. Extract answer object (backend returns { success, message, data })
+      const newAnswer = res.data;
+
+      // 3. Append new answer to the state list immediately
+      setAnswers((prevAnswers) => [...prevAnswers, newAnswer]);
+
+      // 4. Clear state
+      setDraftAnswer("");
       setFitResult(null);
-
-      requestAnimationFrame(() => {
-        textarea.focus();
-        const selStart = start + before.length;
-        const selEnd = selStart + selected.length;
-        textarea.setSelectionRange(selStart, selEnd);
-      });
-    };
-
-    const handleCheckFit = async () => {
-      if (draftAnswer.trim().length < 20) {
-        setSubmitError("Write at least 20 characters before checking fit.");
-        return;
-      }
-      try {
-        setIsCheckingFit(true);
-        setSubmitError(null);
-        const result = await assessAnswerFit(questionHash, draftAnswer.trim());
-        setFitResult(result.data);
-      } catch (err) {
-        setSubmitError(
-          "Couldn't get AI feedback right now. You can still submit.",
-        );
-      } finally {
-        setIsCheckingFit(false);
-      }
-    };
-
-    const handleSubmitAnswer = async (e) => {
-      e.preventDefault();
-      if (draftAnswer.trim().length < 20) {
-        setSubmitError("Answer must be at least 20 characters.");
-        return;
-      }
-      try {
-        setIsSubmitting(true);
-        setSubmitError(null);
-
-        // 1. Send request to backend with questionHash
-        const res = await createAnswer(questionHash, draftAnswer.trim());
-
-        // 2. Extract answer object (backend returns { success, message, data })
-        const newAnswer = res.data;
-
-        // 3. Append new answer to the state list immediately
-        setAnswers((prevAnswers) => [...prevAnswers, newAnswer]);
-
-        // 4. Clear state
-        setDraftAnswer("");
-        setFitResult(null);
-      } catch (err) {
-        setSubmitError(
-          err.response?.data?.message ||
-            "Failed to post answer. Please try again.",
-        );
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-    if (isLoading) {
-      return (
-        <div className={styles.page}>
-          <p className={styles.statusText}>Loading question details...</p>
-        </div>
+    } catch (err) {
+      setSubmitError(
+        err.response?.data?.message ||
+        "Failed to post answer. Please try again.",
       );
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+  if (isLoading) {
+    return (
+      <div className={styles.page}>
+        <p className={styles.statusText}>Loading question details...</p>
+      </div>
+    );
+  }
 
-    if (error) {
-      return (
-        <div className={styles.page}>
-          <div className={styles.errorState}>
-            <p className={styles.errorText}>{error}</p>
-            <button
-              className={styles.primaryButton}
-              onClick={() => navigate("/dashboard")}
-            >
-              Return to Dashboard
-            </button>
-          </div>
+  if (error) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.errorState}>
+          <p className={styles.errorText}>{error}</p>
+          <button
+            className={styles.primaryButton}
+            onClick={() => navigate("/dashboard")}
+          >
+            Return to Dashboard
+          </button>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    const authorName =
-      `${question.author?.firstName ?? ""} ${question.author?.lastName ?? ""}`.trim() ||
-      "Unknown";
+  const authorName =
+    `${question.author?.firstName ?? ""} ${question.author?.lastName ?? ""}`.trim() ||
+    "Unknown";
 
   return (
     <div className={styles.page}>

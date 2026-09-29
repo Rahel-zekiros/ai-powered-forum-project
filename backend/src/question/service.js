@@ -9,8 +9,15 @@ import { getEmbedding } from "../embeddingServices/embeddingService.js";
 export const getQuestionsService = async ({ search, mine, userId }) => {
   let query = `
     SELECT 
-      q.question_id AS id, q.question_hash AS questionHash, q.title, q.content, q.created_at AS createdAt, q.updated_at AS updatedAt,
-      u.user_id AS authorId, u.first_name AS authorFirstName, u.last_name AS authorLastName,
+      q.question_id AS id, 
+      q.question_hash AS questionHash, 
+      q.title, 
+      q.content, 
+      q.created_at AS createdAt, 
+      q.updated_at AS updatedAt,
+      u.user_id AS authorId, 
+      u.first_name AS authorFirstName, 
+      u.last_name AS authorLastName,
       COUNT(a.answer_id) AS answerCount
     FROM questions q
     JOIN users u ON q.user_id = u.user_id
@@ -82,35 +89,31 @@ export const createQuestionWithVectorService = async ({
   // Get the ID of the newly created question
   const questionId = result.insertId;
 
- try {
-     // Generate Gemini embedding for the question title
-     const embedding = await getEmbedding(
-       `${title}\n${content}`,
-       "RETRIEVAL_DOCUMENT",
-     );
-     // Store the embedding with ready status (using embedding_vector column)
-     await safeExecute(
-       `
-     INSERT INTO question_vectors
-       (question_id, source_text, embedding, status)
-     VALUES (?, ?, ?, ?)
-   `,
-       [questionId, `${title}\n${content}`, JSON.stringify(embedding), "ready"],
-     );
-   } catch (error) {
-     // If embedding fails, store failed status
-     console.error("Question embedding failed:", error);
- 
-     await safeExecute(
-       `
-       INSERT INTO question_vectors
-         (question_id, source_text, embedding, status)
-       VALUES (?, ?, ?, ?)
-     `,
-       [questionId, `${title}\n${content}`, JSON.stringify([]), "failed"],
-     );
-   }
- 
+  try {
+    const sourceText = `${title}\n${content}`;
+    const embedding = await getEmbedding(sourceText, "RETRIEVAL_DOCUMENT");
+
+    await safeExecute(
+      `
+        INSERT INTO question_vectors
+          (question_id, source_text, embedding, status)
+        VALUES (?, ?, ?, ?)
+      `,
+      [questionId, sourceText, JSON.stringify(embedding), "ready"],
+    );
+  } catch (error) {
+    // If embedding fails, store failed status
+    console.error("Question embedding failed:", error);
+
+    await safeExecute(
+      `
+        INSERT INTO question_vectors
+          (question_id, source_text, embedding, status)
+        VALUES (?, ?, ?, ?)
+      `,
+      [questionId, `${title}\n${content}`, JSON.stringify([]), "failed"],
+    );
+  }
 
   // Return the newly created question
   return {
@@ -146,6 +149,8 @@ export const searchQuestionsSemanticService = async ({
   query,
   k = 5,
   threshold,
+  mine,
+  userId,
 }) => {
   const envThreshold = parseFloat(process.env.RECOMMEND_THRESHOLD || 0.6);
   const minThreshold =
@@ -155,18 +160,26 @@ export const searchQuestionsSemanticService = async ({
   // 1. Embed query (using Gemini text-embedding-004)
   const queryEmbedding = await getEmbedding(query, "RETRIEVAL_QUERY");
 
-  // 2. Fetch vectors (using embedding_vector column)
-  const vectorRows = await safeExecute(
-    `SELECT question_id, embedding_vector FROM question_vectors WHERE status = 'ready'`,
-    [],
-  );
+  // 2. Fetch vectors that were generated successfully.
+  let vectorSql = `
+    SELECT qv.question_id, qv.embedding
+    FROM question_vectors qv
+    JOIN questions q ON q.question_id = qv.question_id
+    WHERE qv.status = 'ready'
+  `;
+  const vectorParams = [];
+  if (mine === "true" || mine === true) {
+    vectorSql += ` AND q.user_id = ?`;
+    vectorParams.push(userId);
+  }
+  const  s = await safeExecute(vectorSql, vectorParams);
 
   // 3. Compute similarity
   const scored = vectorRows.map((row) => {
     const dbVector =
-      typeof row.embedding_vector === "string"
-        ? JSON.parse(row.embedding_vector)
-        : row.embedding_vector;
+      typeof row.embedding === "string"
+        ? JSON.parse(row.embedding)
+        : row.embedding;
     return {
       questionId: row.question_id,
       score: cosineSimilarity(queryEmbedding, dbVector),
