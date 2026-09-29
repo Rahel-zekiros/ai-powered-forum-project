@@ -172,7 +172,7 @@ export const searchQuestionsSemanticService = async ({
     vectorSql += ` AND q.user_id = ?`;
     vectorParams.push(userId);
   }
-  const  s = await safeExecute(vectorSql, vectorParams);
+  const vectorRows = await safeExecute(vectorSql, vectorParams);
 
   // 3. Compute similarity
   const scored = vectorRows.map((row) => {
