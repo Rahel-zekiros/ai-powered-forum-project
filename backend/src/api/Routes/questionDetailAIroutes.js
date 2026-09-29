@@ -8,6 +8,7 @@ import {
   createQuestionValidation,
   getQuestionsValidation,
   getSingleQuestionValidation,
+  postAnswerValidation,
   searchQuestionsValidation,
   getSimilarQuestionsValidation,
   generateQuestionDraftCoachValidation,
@@ -16,14 +17,16 @@ import {
 
 import {
   createQuestionController,
-  getQuestionsController,
-  getSingleQuestionController,
-  searchQuestionsController,
-  getSimilarQuestionsController,
+  getQuestionsController,    
   generateQuestionDraftCoachController,
-  assessAnswerAgainstQuestionController,
-} from "../../question/questionDetailController.js";
+  searchQuestionsSemanticController,
+} from "../../question/controller.js";
 
+import {getSingleQuestionController,
+  postAnswerController,
+  getSimilarQuestionsController,
+  assessAnswerAgainstQuestionController} 
+  from "../../question/quetionDetailController.js";
 const router = express.Router();
 
 router.post(
@@ -41,7 +44,7 @@ router.get(
   "/search",
   optionalAuth,
   searchQuestionsValidation,
-  searchQuestionsController,
+  searchQuestionsSemanticController,
 );
 
 router.get(
@@ -49,6 +52,14 @@ router.get(
   optionalAuth,
   getSingleQuestionValidation,
   getSingleQuestionController,
+);
+
+// Post Answer to Question
+router.post(
+  "/:questionHash/answers",
+  auth,
+  postAnswerValidation,
+  postAnswerController,
 );
 
 router.get(
