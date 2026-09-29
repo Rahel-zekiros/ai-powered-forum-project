@@ -51,10 +51,14 @@
   /* Status colors */
   --success: #10b981;
   --success-light: #d1fae5;
+  --success-surface: #f0fdf4;
+  --success-border: #bbf7d0;
   --warning: #f59e0b;
   --warning-light: #fef3c7;
   --error: #ef4444;
   --error-light: #fee2e2;
+  --error-surface: #fef0f0;
+  --error-border: #fecaca;
   --info: #3b82f6;
   --info-light: #dbeafe;
 
@@ -144,6 +148,10 @@ html.dark {
   --text-tertiary: #a8b4c4;
   --text-placeholder: #94a3b8;
   --text-inverse: #0f172a;
+  --success-surface: rgba(20, 83, 45, 0.28);
+  --success-border: rgba(74, 222, 128, 0.3);
+  --error-surface: rgba(127, 29, 29, 0.28);
+  --error-border: rgba(248, 113, 113, 0.35);
   --border: #344050;
   --border-hover: #526174;
   --background: #10151c;
