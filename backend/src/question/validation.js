@@ -37,6 +37,16 @@ export const getSingleQuestionValidation = [
     .withMessage("Question hash must be a 16-character lowercase hex string"),
 ];
 
+// Answer Post Validation
+export const postAnswerValidation = [
+  param("questionHash")
+    .notEmpty()
+    .withMessage("Question hash is required")
+    .isHexadecimal()
+    .withMessage("Invalid question hash format"),
+  body("content").trim().notEmpty().withMessage("Answer content is required"),
+];
+
 export const searchQuestionsValidation = [
   query("query")
     .notEmpty()
