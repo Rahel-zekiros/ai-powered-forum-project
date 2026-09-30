@@ -1,8 +1,3 @@
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
-
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -52,35 +47,160 @@ export default function PostQuestion() {
 
   const imageInputRef = useRef(null);
 
-  // TIPTAP EDITOR
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Link.configure({
-        openOnClick: false,
-      }),
-      Image,
-    ],
-    content: "",
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      const text = editor.getText();
+  // MARKDOWN EDITOR
+  const textareaRef = useRef(null);
 
-      setFormData((previousData) => ({
-        ...previousData,
-        content: html,
-      }));
+  const updateMarkdownContent = (content) => {
+    setFormData((previousData) => ({
+      ...previousData,
+      content,
+    }));
 
-      setCharacterCount(text.length);
-      setError("");
-      setSuccess("");
+    setCharacterCount(content.length);
+    setError("");
+    setSuccess("");
 
-      setFieldErrors((previous) => ({
-        ...previous,
-        content: "",
-      }));
-    },
-  });
+    setFieldErrors((previous) => ({
+      ...previous,
+      content: "",
+    }));
+  };
+
+  // INSERT MARKDOWN
+  const insertMarkdown = (before, after = "") => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const selectedText = formData.content.slice(start, end);
+
+    const newText =
+      formData.content.slice(0, start) +
+      before +
+      selectedText +
+      after +
+      formData.content.slice(end);
+
+    updateMarkdownContent(newText);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+
+      const newCursorPosition =
+        selectedText.length > 0
+          ? start + before.length + selectedText.length + after.length
+          : start + before.length;
+
+      textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+    });
+  };
+
+  // MARKDOWN LINK
+  const handleMarkdownLink = () => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const selectedText = formData.content.slice(start, end);
+
+    setLinkUrl("");
+    setShowLinkPopup(true);
+
+    textarea.dataset.selectionStart = start;
+    textarea.dataset.selectionEnd = end;
+    textarea.dataset.selectedText = selectedText;
+  };
+
+  // ADD MARKDOWN LINK
+  const handleAddMarkdownLink = () => {
+    const textarea = textareaRef.current;
+
+    if (!textarea || !linkUrl.trim()) {
+      return;
+    }
+
+    const start = Number(textarea.dataset.selectionStart || 0);
+
+    const end = Number(textarea.dataset.selectionEnd || 0);
+
+    const selectedText =
+      textarea.dataset.selectedText ||
+      formData.content.slice(start, end) ||
+      "link";
+
+    const markdownLink = `[${selectedText}](${linkUrl.trim()})`;
+
+    const newContent =
+      formData.content.slice(0, start) +
+      markdownLink +
+      formData.content.slice(end);
+
+    updateMarkdownContent(newContent);
+
+    setShowLinkPopup(false);
+    setLinkUrl("");
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+
+      const cursorPosition = start + markdownLink.length;
+
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
+    });
+  };
+
+  const handleCancelLink = () => {
+    setShowLinkPopup(false);
+    setLinkUrl("");
+  };
+
+  // NUMBERED LIST
+  const handleMarkdownNumberedList = () => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const selectedText = formData.content.slice(start, end);
+
+    if (!selectedText) {
+      insertMarkdown("1. ");
+      return;
+    }
+
+    const lines = selectedText.split("\n");
+
+    const numberedLines = lines.map((line, index) => `${index + 1}. ${line}`);
+
+    const replacement = numberedLines.join("\n");
+
+    const newContent =
+      formData.content.slice(0, start) +
+      replacement +
+      formData.content.slice(end);
+
+    updateMarkdownContent(newContent);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+
+      textarea.setSelectionRange(start, start + replacement.length);
+    });
+  };
 
   // HANDLE NORMAL INPUT CHANGES
   const handleChange = (event) => {
@@ -103,7 +223,7 @@ export default function PostQuestion() {
   // FORM VALIDATION
   const validateForm = () => {
     const title = formData.title.trim();
-    const contentText = editor ? editor.getText().trim() : "";
+    const contentText = formData.content.trim();
     const nextFieldErrors = {};
 
     if (title.length < 5) {
@@ -129,7 +249,7 @@ export default function PostQuestion() {
     setCoachFeedback(null);
 
     const title = formData.title.trim();
-    const contentText = editor ? editor.getText().trim() : "";
+    const contentText = formData.content.trim();
 
     if (title.length > 0 && title.length < 5) {
       setError("Title must be at least 5 characters long.");
@@ -179,35 +299,9 @@ export default function PostQuestion() {
       content: nextContent,
     }));
 
-    if (editor) {
-      editor.commands.setContent(nextContent);
-    }
+    setCharacterCount(nextContent.length);
 
     setSuccess("AI suggestions applied to your draft.");
-  };
-
-  // LINK FUNCTIONALITY
-  const handleAddLink = () => {
-    if (!editor || !linkUrl.trim()) {
-      return;
-    }
-
-    editor
-      .chain()
-      .focus()
-      .extendMarkRange("link")
-      .setLink({
-        href: linkUrl.trim(),
-      })
-      .run();
-
-    setShowLinkPopup(false);
-    setLinkUrl("");
-  };
-
-  const handleCancelLink = () => {
-    setShowLinkPopup(false);
-    setLinkUrl("");
   };
 
   // IMAGE VALIDATION
@@ -232,6 +326,7 @@ export default function PostQuestion() {
     setImageFile(file);
 
     const previewUrl = URL.createObjectURL(file);
+
     setImagePreview(previewUrl);
   };
 
@@ -274,23 +369,41 @@ export default function PostQuestion() {
     }
   };
 
-  // INSERT IMAGE INTO TIPTAP
+  // INSERT IMAGE INTO MARKDOWN
   const handleInsertImage = () => {
-    if (!editor || !imageFile || !imagePreview) {
+    if (!imageFile || !imagePreview) {
       return;
     }
 
-    editor
-      .chain()
-      .focus()
-      .setImage({
-        src: imagePreview,
-      })
-      .run();
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    const imageMarkdown = `![${imageFile.name}](${imagePreview})`;
+
+    const newContent =
+      formData.content.slice(0, start) +
+      imageMarkdown +
+      formData.content.slice(end);
+
+    updateMarkdownContent(newContent);
 
     setShowImagePopup(false);
     setImageFile(null);
     setImagePreview("");
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+
+      const cursorPosition = start + imageMarkdown.length;
+
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
+    });
   };
 
   // CLOSE IMAGE POPUP
@@ -401,10 +514,6 @@ export default function PostQuestion() {
                     title: "",
                     content: "",
                   });
-
-                  if (editor) {
-                    editor.commands.clearContent();
-                  }
 
                   setCharacterCount(0);
                   setCoachFeedback(null);
@@ -556,8 +665,7 @@ export default function PostQuestion() {
                       type="button"
                       aria-label="Bold"
                       title="Bold"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => editor?.chain().focus().toggleBold().run()}
+                      onClick={() => insertMarkdown("**", "**")}
                     >
                       <strong>B</strong>
                     </button>
@@ -567,10 +675,7 @@ export default function PostQuestion() {
                       type="button"
                       aria-label="Italic"
                       title="Italic"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() =>
-                        editor?.chain().focus().toggleItalic().run()
-                      }
+                      onClick={() => insertMarkdown("*", "*")}
                     >
                       <em>I</em>
                     </button>
@@ -580,8 +685,7 @@ export default function PostQuestion() {
                       type="button"
                       aria-label="Code"
                       title="Inline Code"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => editor?.chain().focus().toggleCode().run()}
+                      onClick={() => insertMarkdown("<", ">")}
                     >
                       <span>&lt;/&gt;</span>
                     </button>
@@ -591,15 +695,7 @@ export default function PostQuestion() {
                       type="button"
                       aria-label="Link"
                       title="Link"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => {
-                        if (!editor) {
-                          return;
-                        }
-
-                        setLinkUrl("");
-                        setShowLinkPopup(true);
-                      }}
+                      onClick={handleMarkdownLink}
                     >
                       <LinkIcon size={15} strokeWidth={2} />
                     </button>
@@ -609,10 +705,7 @@ export default function PostQuestion() {
                       type="button"
                       aria-label="Numbered List"
                       title="Numbered List"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() =>
-                        editor?.chain().focus().toggleOrderedList().run()
-                      }
+                      onClick={handleMarkdownNumberedList}
                     >
                       <span className={styles.numberListIcon}>
                         <span>
@@ -637,7 +730,6 @@ export default function PostQuestion() {
                       type="button"
                       aria-label="Insert Image"
                       title="Insert Image"
-                      onMouseDown={(event) => event.preventDefault()}
                       onClick={() => setShowImagePopup(true)}
                     >
                       <span>🖼️</span>
@@ -649,7 +741,19 @@ export default function PostQuestion() {
                   </span>
                 </div>
 
-                <EditorContent editor={editor} className={styles.textarea} />
+                {/* MARKDOWN TEXTAREA */}
+                <textarea
+                  ref={textareaRef}
+                  id="content"
+                  name="content"
+                  value={formData.content}
+                  onChange={(event) =>
+                    updateMarkdownContent(event.target.value)
+                  }
+                  className={styles.textarea}
+                  placeholder="Introduce the problem and expand on what you put in the title. Minimum 10 characters."
+                  disabled={isSubmitting}
+                />
 
                 {/* Link Popup */}
                 {showLinkPopup && (
@@ -676,7 +780,7 @@ export default function PostQuestion() {
                       <button
                         type="button"
                         className={styles.linkPopupConfirm}
-                        onClick={handleAddLink}
+                        onClick={handleAddMarkdownLink}
                       >
                         Add Link
                       </button>
@@ -834,6 +938,7 @@ export default function PostQuestion() {
                 {coachFeedback.feedback && (
                   <div className={styles.feedback}>
                     <h3>Feedback</h3>
+
                     <p>{coachFeedback.feedback}</p>
                   </div>
                 )}
@@ -853,6 +958,7 @@ export default function PostQuestion() {
                 {coachFeedback.improvedTitle && (
                   <div className={styles.improvedSection}>
                     <h3>Suggested title</h3>
+
                     <p>{coachFeedback.improvedTitle}</p>
                   </div>
                 )}
@@ -860,6 +966,7 @@ export default function PostQuestion() {
                 {coachFeedback.improvedContent && (
                   <div className={styles.improvedSection}>
                     <h3>Suggested content</h3>
+
                     <p>{coachFeedback.improvedContent}</p>
                   </div>
                 )}
