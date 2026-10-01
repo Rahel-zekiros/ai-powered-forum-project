@@ -9,7 +9,8 @@ export const createEmbedding = async (text) => {
     }
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent`;
-const response = await axios.post(
+
+    const response = await axios.post(
       url,
       {
         model: "models/gemini-embedding-001",

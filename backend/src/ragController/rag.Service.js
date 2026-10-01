@@ -251,7 +251,6 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
   };
 };
 
-
 // ==========================================
 // my task
 // ==========================================
@@ -600,7 +599,7 @@ export const searchDocument = async ({ userId, documentId, query }) => {
       filename: document ? document.filename : "All Documents",
 
       query,
-
+      //I searched 20 chunks, but none were similar enough to your query.
       totalChunks: chunks.length,
 
       results: [],
@@ -683,7 +682,8 @@ export const askDocument = async ({ userId, documentId, question }) => {
 
   if (selectedChunks.length === 0) {
     return {
-      answer: "For this question, I do not have a corresponding resource in the uploaded document.",
+      answer:
+        "For this question, I do not have a corresponding resource in the uploaded document.",
       sources: [],
     };
   }

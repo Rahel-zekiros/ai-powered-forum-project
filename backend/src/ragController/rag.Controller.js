@@ -80,7 +80,6 @@ export const deleteDocumentController = async (req, res, next) => {
   }
 };
 
-
 // ==========================================
 // YOUR CODE (APPENDED BELOW)
 // ==========================================
@@ -153,7 +152,7 @@ export const semanticSearch = async (req, res) => {
   try {
     const result = await searchDocument({
       userId,
-      documentId: documentId || null, 
+      documentId: documentId || null,
       query: query.trim(),
     });
 
@@ -191,7 +190,7 @@ export const askDocumentAI = async (req, res) => {
   try {
     const result = await askDocument({
       userId,
-      documentId: documentId || null, 
+      documentId: documentId || null,
       question: question.trim(),
       history: history || [],
     });

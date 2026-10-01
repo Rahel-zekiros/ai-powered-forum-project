@@ -1,6 +1,5 @@
 import { safeExecute } from "../../db/config.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
 const mapQuestionRow = (row) => ({
   id: row.question_id,
   questionHash: row.question_hash,
@@ -44,7 +43,12 @@ export const getSingleQuestionService = async ({ questionHash }) => {
 
   const questionRows = Array.isArray(result?.[0]) ? result[0] : result;
 
-  if (!questionRows || !Array.isArray(questionRows) || questionRows.length === 0 || !questionRows[0]) {
+  if (
+    !questionRows ||
+    !Array.isArray(questionRows) ||
+    questionRows.length === 0 ||
+    !questionRows[0]
+  ) {
     const error = new Error("Question not found");
     error.statusCode = 404;
     throw error;
@@ -62,7 +66,9 @@ export const getSingleQuestionService = async ({ questionHash }) => {
     [questionRows[0].question_id],
   );
 
-  const answerRows = Array.isArray(answerResult?.[0]) ? answerResult[0] : answerResult;
+  const answerRows = Array.isArray(answerResult?.[0])
+    ? answerResult[0]
+    : answerResult;
 
   const answers = (answerRows || []).map((row) => ({
     id: row.answer_id,
@@ -93,7 +99,12 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
 
   const questionRows = Array.isArray(result?.[0]) ? result[0] : result;
 
-  if (!questionRows || !Array.isArray(questionRows) || questionRows.length === 0 || !questionRows[0]) {
+  if (
+    !questionRows ||
+    !Array.isArray(questionRows) ||
+    questionRows.length === 0 ||
+    !questionRows[0]
+  ) {
     const error = new Error("Question not found");
     error.statusCode = 404;
     throw error;
@@ -126,7 +137,9 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
     [newAnswerId],
   );
 
-  const newAnswerRows = Array.isArray(newAnswerResult?.[0]) ? newAnswerResult[0] : newAnswerResult;
+  const newAnswerRows = Array.isArray(newAnswerResult?.[0])
+    ? newAnswerResult[0]
+    : newAnswerResult;
 
   if (!newAnswerRows || !newAnswerRows[0]) {
     const error = new Error("Failed to retrieve created answer");
@@ -149,8 +162,6 @@ export const postAnswerService = async ({ questionHash, content, userId }) => {
     },
   };
 };
- 
-
 
 /**
  * Service to retrieve similar questions based on cosine similarity (Task 13) mulugeta bezabh
@@ -169,12 +180,25 @@ export const getSimilarQuestionsService = async ({
     [questionHash],
   );
 
-  const sourceRows = Array.isArray(sourceResult?.[0]) ? sourceResult[0] : sourceResult;
+  const sourceRows = Array.isArray(sourceResult?.[0])
+    ? sourceResult[0]
+    : sourceResult;
 
-  if (!sourceRows || !Array.isArray(sourceRows) || sourceRows.length === 0 || !sourceRows[0]) {
+  if (
+    !sourceRows ||
+    !Array.isArray(sourceRows) ||
+    sourceRows.length === 0 ||
+    !sourceRows[0]
+  ) {
     return {
       data: [],
-      meta: { total: 0, k: parseInt(k, 10), threshold: parseFloat(threshold), query: null, questionHash },
+      meta: {
+        total: 0,
+        k: parseInt(k, 10),
+        threshold: parseFloat(threshold),
+        query: null,
+        questionHash,
+      },
     };
   }
 
@@ -191,7 +215,9 @@ export const getSimilarQuestionsService = async ({
     [sourceQuestionId],
   );
 
-  const targetRows = Array.isArray(targetResult?.[0]) ? targetResult[0] : targetResult;
+  const targetRows = Array.isArray(targetResult?.[0])
+    ? targetResult[0]
+    : targetResult;
 
   const scoredQuestions = (targetRows || []).map((row) => {
     const targetEmbedding =
@@ -223,14 +249,20 @@ export const getSimilarQuestionsService = async ({
       questionIds,
     );
 
-    const questionDetails = Array.isArray(detailsResult?.[0]) ? detailsResult[0] : detailsResult;
+    const questionDetails = Array.isArray(detailsResult?.[0])
+      ? detailsResult[0]
+      : detailsResult;
 
-    data = filtered.map((similar) => {
-      const details = (questionDetails || []).find(
-        (q) => q.question_id === similar.question_id,
-      );
-      return details ? { ...mapQuestionRow(details), score: similar.score } : null;
-    }).filter(Boolean);
+    data = filtered
+      .map((similar) => {
+        const details = (questionDetails || []).find(
+          (q) => q.question_id === similar.question_id,
+        );
+        return details
+          ? { ...mapQuestionRow(details), score: similar.score }
+          : null;
+      })
+      .filter(Boolean);
   }
 
   return {
@@ -259,7 +291,12 @@ export const assessAnswerAgainstQuestionService = async ({
 
   const questionRows = Array.isArray(result?.[0]) ? result[0] : result;
 
-  if (!questionRows || !Array.isArray(questionRows) || questionRows.length === 0 || !questionRows[0]) {
+  if (
+    !questionRows ||
+    !Array.isArray(questionRows) ||
+    questionRows.length === 0 ||
+    !questionRows[0]
+  ) {
     const error = new Error("Question not found");
     error.statusCode = 404;
     throw error;
