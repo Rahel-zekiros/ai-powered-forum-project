@@ -173,7 +173,7 @@ export const getSimilarQuestionsService = async ({
   threshold = 0.75,
 }) => {
   const sourceResult = await safeExecute(
-    `SELECT qv.question_id, qv.embedding_vector AS embedding
+    `SELECT qv.question_id, qv.embedding
      FROM question_vectors qv
      JOIN questions q ON qv.question_id = q.question_id
      WHERE q.question_hash = ?`,
@@ -209,7 +209,7 @@ export const getSimilarQuestionsService = async ({
       : sourceRows[0].embedding;
 
   const targetResult = await safeExecute(
-    `SELECT qv.question_id, qv.embedding_vector AS embedding
+    `SELECT qv.question_id, qv.embedding
      FROM question_vectors qv
      WHERE qv.question_id != ? AND qv.status = 'ready'`,
     [sourceQuestionId],

@@ -2,21 +2,26 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 16px 60px;
+  color: var(--text-primary);
+  transition: color var(--transition-base);
 }
 
 .backLink {
   background: none;
   border: none;
-  color: #444;
+  color: var(--text-secondary);
   font-size: 14px;
   cursor: pointer;
   margin-bottom: 16px;
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .statusText {
   text-align: center;
-  color: #888;
+  color: var(--text-tertiary);
   padding: 60px 0;
 }
 
@@ -26,19 +31,20 @@
 }
 
 .errorText {
-  color: #c0392b;
+  color: var(--error);
   font-weight: 600;
   margin-bottom: 16px;
 }
 
 .primaryButton {
-  background: #f2711f;
-  color: #fff;
+  background: var(--primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   padding: 10px 20px;
   cursor: pointer;
   font-weight: 600;
+  transition: background-color var(--transition-base), color var(--transition-base);
 }
 
 .layout {
@@ -63,10 +69,12 @@
 .questionCard,
 .answerCard,
 .answerFormCard {
-  background: #fff;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
 }
 
 .questionHeader {
@@ -111,7 +119,7 @@
 .postedDate {
   margin: 0;
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .questionTitle {
@@ -120,7 +128,7 @@
 }
 
 .questionContent {
-  color: #444;
+  color: var(--text-secondary);
   line-height: 1.6;
   white-space: pre-wrap;
   margin: 0 0 16px;
@@ -129,18 +137,22 @@
 .questionFooter {
   display: flex;
   gap: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
   padding-top: 14px;
 }
 
 .pillButton {
-  background: #f5f7fa;
-  border: none;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 13px;
   cursor: pointer;
-  color: #444;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color var(--transition-base), color var(--transition-base);
 }
 
 .answersHeading {
@@ -149,7 +161,8 @@
 }
 
 .emptyAnswers {
-  background: #f5f7fa;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 40px 24px;
   text-align: center;
@@ -166,7 +179,7 @@
 }
 
 .emptyText {
-  color: #777;
+  color: var(--text-tertiary);
   margin: 0;
   max-width: 420px;
   margin: 0 auto;
@@ -182,7 +195,7 @@
 }
 
 .answerContent {
-  color: #444;
+  color: var(--text-secondary);
   line-height: 1.6;
   white-space: pre-wrap;
   margin: 0;
@@ -198,8 +211,9 @@
 }
 
 .errorBanner {
-  background: #fdecea;
-  color: #b3261e;
+  background: var(--error-surface);
+  color: var(--error);
+  border: 1px solid var(--error-border);
   padding: 10px 14px;
   border-radius: 8px;
   margin-bottom: 14px;
@@ -207,22 +221,24 @@
 }
 
 .editorBox {
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
+  transition: border-color var(--transition-base), background-color var(--transition-base);
 }
 
 .toolbar {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #f5f7fa;
+  background: var(--surface-container-low);
   padding: 6px 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border);
 }
 
 .toolbar button {
-  background: none;
+  color: var(--text-primary);
+  background: transparent;
   border: none;
   cursor: pointer;
   padding: 4px 8px;
@@ -231,23 +247,30 @@
 }
 
 .toolbar button:hover {
-  background: #e8ecf1;
+  background: var(--surface-hover);
 }
 
 .charCount {
   margin-left: auto;
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .answerTextarea {
   width: 100%;
   border: none;
   padding: 14px;
+  background: var(--surface);
+  color: var(--text-primary);
   font-size: 14px;
   resize: vertical;
   box-sizing: border-box;
   font-family: inherit;
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+.answerTextarea::placeholder {
+  color: var(--text-placeholder);
 }
 
 .answerTextarea:focus {
@@ -263,12 +286,23 @@
 }
 
 .checkFitButton {
-  background: #f5f7fa;
-  border: 1px solid #ddd;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 14px;
   cursor: pointer;
   font-size: 13px;
+  color: var(--text-secondary);
+  transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+}
+
+.checkFitButton:hover:not(:disabled) {
+  background: var(--primary-light);
+  border-color: var(--border-hover);
+  color: var(--primary-dark);
 }
 
 .checkFitButton:disabled {
@@ -277,19 +311,20 @@
 }
 
 .coachHint {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 12px;
   flex: 1;
 }
 
 .submitButton {
-  background: #f2711f;
-  color: #fff;
+  background: var(--primary);
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   padding: 10px 20px;
   cursor: pointer;
   font-weight: 600;
+  transition: background-color var(--transition-base), color var(--transition-base);
 }
 
 .submitButton:disabled {
@@ -301,26 +336,30 @@
   margin-top: 16px;
   padding: 12px 14px;
   border-radius: 8px;
-  background: #f5f5f5;
+  background: var(--surface-container-low);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
 .fit_strong {
-  background: #e6f7ee;
-  color: #1a7a4c;
+  background: var(--success-surface);
+  border-color: var(--success-border);
+  color: var(--success);
 }
 
 .fit_partial {
-  background: #fff6e0;
-  color: #8a6d00;
+  background: var(--surface-container-high);
+  color: var(--warning);
 }
 
 .fit_weak {
-  background: #fdecea;
-  color: #b3261e;
+  background: var(--error-surface);
+  border-color: var(--error-border);
+  color: var(--error);
 }
 
 .ownQuestionNote {
-  color: #888;
+  color: var(--text-tertiary);
   font-style: italic;
   text-align: center;
   padding: 20px 0;
@@ -336,7 +375,7 @@
 }
 
 .sidebarEmpty {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 13px;
 }
 
@@ -350,16 +389,18 @@
 }
 
 .relatedItem {
-  background: #fff;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
 }
 
 .relatedLink {
   background: none;
   border: none;
-  color: #d9541a;
+  color: var(--primary-dark);
   font-weight: 600;
   font-size: 13px;
   text-align: left;
@@ -370,11 +411,11 @@
 }
 
 .relatedMeta {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 11px;
   margin: 0;
 }
 
 .relatedDot {
-  color: #ccc;
+  color: var(--text-placeholder);
 }

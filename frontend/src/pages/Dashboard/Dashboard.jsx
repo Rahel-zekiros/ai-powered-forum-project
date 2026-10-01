@@ -11,6 +11,7 @@ export default function Dashboard() {
   const location = useLocation();
 
   const [questions, setQuestions] = useState([]);
+  console.log("questions", questions)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -154,6 +155,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className={styles.questionList}>
+
               {questions.map((q) => {
                 const isMine = q.author?.id === user?.id;
                 const excerpt = q.content ? q.content.substring(0, 100) + '...' : '';

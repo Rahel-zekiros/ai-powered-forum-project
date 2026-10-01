@@ -1,4 +1,3 @@
-
 const CHUNK_SIZE = 1500;
 const CHUNK_OVERLAP = 100;
 
@@ -16,54 +15,39 @@ export const createChunks = (
   let globalChunkIndex = 0;
 
   for (const page of pages) {
-    if (!page?.text?.trim()) {
+    const pageText = (page?.text || "").trim();
+
+    if (!pageText) {
       continue;
     }
-
-    // Keep the original line breaks
-    const pageText = page.text.trim();
 
     // ==========================================
     // Small page = one chunk
     // ==========================================
-
     if (pageText.length <= chunkSize) {
-      console.log(`\n========== CHUNK ${globalChunkIndex} ==========\n`);
-
-      console.log(pageText);
-
-      console.log(`\n========== END CHUNK ${globalChunkIndex} ==========\n`);
-
       chunks.push({
         content: pageText,
         chunkIndex: globalChunkIndex,
-        pageStart: page.pageNumber,
-        pageEnd: page.pageNumber,
+        pageStart: page.pageNumber || 1,
+        pageEnd: page.pageNumber || 1,
       });
 
       globalChunkIndex++;
       continue;
     }
- // ==========================================
+
+    // ==========================================
     // Large page = multiple chunks
     // ==========================================
-
     let start = 0;
 
     while (start < pageText.length) {
       let end = Math.min(start + chunkSize, pageText.length);
 
       if (end < pageText.length) {
-        // Prefer paragraph boundary
         const paragraphBreak = pageText.lastIndexOf("\n\n", end);
-
-        // Then sentence boundary
         const sentenceBreak = pageText.lastIndexOf(". ", end);
-
-        // Then normal line boundary
         const newlineBreak = pageText.lastIndexOf("\n", end);
-
-        // Finally word boundary
         const spaceBreak = pageText.lastIndexOf(" ", end);
 
         if (paragraphBreak > start + 200) {
@@ -77,35 +61,25 @@ export const createChunks = (
         }
       }
 
-      // ==========================================
-      // Keep formatting
-      // ==========================================
-
       const chunkText = pageText.slice(start, end).trim();
 
       if (chunkText) {
         chunks.push({
           content: chunkText,
           chunkIndex: globalChunkIndex,
-          pageStart: page.pageNumber,
-          pageEnd: page.pageNumber,
+          pageStart: page.pageNumber || 1,
+          pageEnd: page.pageNumber || 1,
         });
 
         globalChunkIndex++;
       }
 
-      // Last chunk
       if (end >= pageText.length) {
         break;
       }
 
-      // ==========================================
-      // Overlap
-      // ==========================================
-
       let nextStart = end - overlap;
 
-      // Don't start in the middle of a word
       while (
         nextStart > start &&
         nextStart < pageText.length &&
@@ -115,12 +89,23 @@ export const createChunks = (
         nextStart--;
       }
 
-      // Safety
       if (nextStart <= start || nextStart >= end) {
         start = end;
       } else {
         start = nextStart;
       }
+    }
+  }
+
+  if (chunks.length === 0 && pages.length > 0) {
+    const fallbackText = (pages[0]?.text || "").trim();
+    if (fallbackText) {
+      chunks.push({
+        content: fallbackText,
+        chunkIndex: 0,
+        pageStart: 1,
+        pageEnd: 1,
+      });
     }
   }
 

@@ -51,10 +51,14 @@
   /* Status colors */
   --success: #10b981;
   --success-light: #d1fae5;
+  --success-surface: #f0fdf4;
+  --success-border: #bbf7d0;
   --warning: #f59e0b;
   --warning-light: #fef3c7;
   --error: #ef4444;
   --error-light: #fee2e2;
+  --error-surface: #fef0f0;
+  --error-border: #fecaca;
   --info: #3b82f6;
   --info-light: #dbeafe;
 
@@ -115,13 +119,51 @@
   --transition-slow: 300ms ease-in-out;
 
   /* App shell: sidebar width and shared horizontal rhythm. */
-  --app-sidebar-width: 17rem;
+  --app-sidebar-width: 16rem;
   /* Primary content column (Layout main + footer + marketing sections aligned to app). */
   --app-content-max: 80rem;
   /* Marketing / explainer columns (auth info panel, success messages). */
   --app-prose-max: 32rem;
   /* Narrow forms (auth sign-in card). */
   --app-form-max: 28rem;
+}
+
+html.dark {
+  --primary: #fb923c;
+  --primary-hover: #fdba74;
+  --primary-light: #431f0b;
+  --primary-dark: #fed7aa;
+  --primary-container: #c2410c;
+  --secondary: #cbd5e1;
+  --secondary-hover: #e2e8f0;
+  --tertiary: #f1f5f9;
+  --tertiary-container: #e2e8f0;
+  --surface: #171d26;
+  --surface-hover: #242c38;
+  --surface-container-low: #202833;
+  --surface-container-high: #303a47;
+  --surface-container-highest: #475569;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #a8b4c4;
+  --text-placeholder: #94a3b8;
+  --text-inverse: #0f172a;
+  --success-surface: rgba(20, 83, 45, 0.28);
+  --success-border: rgba(74, 222, 128, 0.3);
+  --error-surface: rgba(127, 29, 29, 0.28);
+  --error-border: rgba(248, 113, 113, 0.35);
+  --border: #344050;
+  --border-hover: #526174;
+  --background: #10151c;
+  --background-secondary: #171d26;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.28),
+    0 2px 4px -1px rgba(0, 0, 0, 0.18);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.35),
+    0 10px 10px -5px rgba(0, 0, 0, 0.22);
+  color-scheme: dark;
 }
 
 /* Global Resets */
@@ -141,6 +183,7 @@ body {
   font-family: var(--font-sans);
   color: var(--text-primary);
   background-color: var(--background);
+  transition: color var(--transition-base), background-color var(--transition-base);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
+import { ArrowLeft, Share2, MessageSquare, Bold, Italic, Code2, Link2, Sparkles } from "lucide-react";
 import {
   getSingleQuestion,
   getSimilarQuestions,
@@ -43,7 +44,8 @@ export default function QuestionDetail() {
   const [isCheckingFit, setIsCheckingFit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const answerRef = useRef(null);
 
   const fetchQuestion = useCallback(async () => {
     try {
@@ -75,10 +77,51 @@ export default function QuestionDetail() {
     fetchQuestion();
   }, [fetchQuestion]);
 
-  const isOwnQuestion = !!currentUser && !!question && question.author?.id === currentUser.id;
+  const isOwnQuestion =
+    !!currentUser && !!question && question.author?.id === currentUser.id;
 
-  const insertMarkdown = (before) => {
-    setDraftAnswer((prev) => prev + before);
+  const handleShare = async () => {
+    const shareData = {
+      title: question?.title || "Evangadi Forum question",
+      text: "Check out this question on Evangadi Forum.",
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+      }
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2000);
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        setSubmitError("Could not share this question.");
+      }
+    }
+  };
+
+  const insertMarkdown = (before, after = "", placeholder = "text") => {
+    const textarea = answerRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+    const selected = value.slice(start, end) || placeholder;
+
+    const newValue =
+      value.slice(0, start) + before + selected + after + value.slice(end);
+    setDraftAnswer(newValue);
+    setFitResult(null);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const selStart = start + before.length;
+      const selEnd = selStart + selected.length;
+      textarea.setSelectionRange(selStart, selEnd);
+    });
   };
 
   const handleCheckFit = async () => {
@@ -125,7 +168,7 @@ export default function QuestionDetail() {
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-          "Failed to post answer. Please try again."
+        "Failed to post answer. Please try again.",
       );
     } finally {
       setIsSubmitting(false);
@@ -165,7 +208,7 @@ export default function QuestionDetail() {
         className={styles.backLink}
         onClick={() => navigate("/dashboard")}
       >
-        ← Back to feed
+        <ArrowLeft size={16} /> Back to feed
       </button>
 
       <div className={styles.layout}>
@@ -192,18 +235,11 @@ export default function QuestionDetail() {
             </div>
 
             <div className={styles.questionFooter}>
-              <button
-                className={styles.pillButton}
-                onClick={async () => {
-                  await navigator.clipboard.writeText(window.location.href);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-              >
-                {copied ? "✓ Copied!" : "⇄ Share"}
+              <button className={styles.pillButton} onClick={handleShare}>
+                <Share2 size={14} /> {shareCopied ? "Copied!" : "Share"}
               </button>
               <span className={styles.pillButton}>
-                💬 {answers.length}{" "}
+                <MessageSquare size={14} /> {answers.length}{" "}
                 {answers.length === 1 ? "Answer" : "Answers"}
               </span>
             </div>
@@ -263,27 +299,29 @@ export default function QuestionDetail() {
                   <div className={styles.toolbar}>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("**bold**")}
+                      onClick={() => insertMarkdown("**", "**", "bold text")}
                     >
-                      <strong>B</strong>
+                      <Bold size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("*italic*")}
+                      onClick={() => insertMarkdown("*", "*", "italic text")}
                     >
-                      <em>I</em>
+                      <Italic size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("\n```\ncode\n```\n")}
+                      onClick={() =>
+                        insertMarkdown("\n```\n", "\n```\n", "code")
+                      }
                     >
-                      {"</>"}
+                      <Code2 size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertMarkdown("[link](url)")}
+                      onClick={() => insertMarkdown("[", "](url)", "link text")}
                     >
-                      🔗
+                      <Link2 size={14} />
                     </button>
                     <span className={styles.charCount}>
                       {draftAnswer.length} characters
@@ -298,6 +336,7 @@ export default function QuestionDetail() {
                     }}
                     rows={7}
                     placeholder="Type your answer here... You can use Markdown to format your code!"
+                    ref={answerRef}
                   />
                 </div>
 
@@ -308,7 +347,8 @@ export default function QuestionDetail() {
                     onClick={handleCheckFit}
                     disabled={isCheckingFit}
                   >
-                    ✨ {isCheckingFit ? "Checking..." : "Check draft fit"}
+                    <Sparkles size={14} />{" "}
+                    {isCheckingFit ? "Checking..." : "Check draft fit"}
                   </button>
                   <span className={styles.coachHint}>
                     Relevance only. Not grading correctness. You need at least

@@ -10,14 +10,22 @@ export const readPdfFile = async (filePath) => {
 };
 
 // ==========================================
-// Extract Text File
+// Extract Text File (Supports TXT)
 // ==========================================
-
 export const extractTextFile = async (filePath) => {
   try {
+    console.log("Reading TXT from:", filePath);
+
     const fileContent = await fs.readFile(filePath, "utf8");
 
-    return cleanPdfText(fileContent);
+    console.log("TXT length:", fileContent.length);
+    console.log("TXT content:", JSON.stringify(fileContent));
+
+    if (!fileContent || !fileContent.trim()) {
+      throw new Error("The TXT file is empty.");
+    }
+
+    return fileContent.trim();
   } catch (err) {
     throw new Error(err.message || "Failed to read text file");
   }
@@ -29,7 +37,6 @@ export const extractTextFile = async (filePath) => {
 export const extractPdfPages = async (pdfBuffer) => {
   try {
     const pdfExtract = new PDFExtract();
-
     const data = await pdfExtract.extractBuffer(pdfBuffer);
 
     if (!data || !Array.isArray(data.pages)) {
@@ -38,43 +45,24 @@ export const extractPdfPages = async (pdfBuffer) => {
 
     const pages = [];
 
-    // ==========================================
-    // Process Every PDF Page
-    // ==========================================
-
     for (let pageIndex = 0; pageIndex < data.pages.length; pageIndex++) {
       const page = data.pages[pageIndex];
 
       if (!page || !Array.isArray(page.content)) {
         continue;
       }
- // ==========================================
-      // Sort PDF Items
-      // First by Y position
-      // Then by X position
-      // ==========================================
 
       const sortedItems = [...page.content].sort((a, b) => {
         const yA = Number.isFinite(a.y) ? a.y : 0;
-
         const yB = Number.isFinite(b.y) ? b.y : 0;
-
         const xA = Number.isFinite(a.x) ? a.x : 0;
-
         const xB = Number.isFinite(b.x) ? b.x : 0;
 
-        // Different lines
         if (Math.abs(yA - yB) > 3) {
           return yA - yB;
         }
-
-        // Same line
         return xA - xB;
       });
-
-      // ==========================================
-      // Build Lines
-      // ==========================================
 
       const lines = [];
 
@@ -86,56 +74,25 @@ export const extractPdfPages = async (pdfBuffer) => {
         }
 
         const itemY = Number.isFinite(item.y) ? item.y : 0;
-
         const lastLine = lines[lines.length - 1];
-// ========================================
-        // Create New Line
-        // ========================================
 
         if (!lastLine || Math.abs(lastLine.y - itemY) > 3) {
           lines.push({
             y: itemY,
             text,
           });
-
           continue;
         }
 
-        // ========================================
-        // Same Line
-        // ========================================
-
         lastLine.text += ` ${text}`;
       }
-
-      // ==========================================
-      // Convert Lines to Page Text
-      // ==========================================
 
       const pageText = lines
         .map((line) => line.text.trim())
         .filter(Boolean)
         .join("\n");
 
-      // ==========================================
-      // DEBUG: RAW EXTRACTED TEXT
-      // ==========================================
-
-      console.log(`\n========== PAGE ${pageIndex + 1} RAW TEXT ==========\n`);
-
-      console.log(pageText);
-
-      console.log(`\n========== END PAGE ${pageIndex + 1} ==========\n`);
-
-      // ==========================================
-      // Clean Extracted Text
-      // ==========================================
-
       const cleanedPageText = cleanPdfText(pageText);
-
-      // ==========================================
-      // Prevent Raw PDF Binary Text
-      // ==========================================
 
       if (cleanedPageText && !cleanedPageText.startsWith("%PDF")) {
         pages.push({
@@ -144,19 +101,16 @@ export const extractPdfPages = async (pdfBuffer) => {
         });
       }
     }
-    // ==========================================
-    // Make Sure We Found Text
-    // ==========================================
 
     if (pages.length === 0) {
       throw new Error(
-        "No readable text found in this PDF. It might be a scanned image-only PDF.",
+        "No readable text found in this document. It might be a scanned image-only file.",
       );
     }
 
     return pages;
   } catch (err) {
-    throw new Error(err.message || "Failed to parse PDF file");
+    throw new Error(err.message || "Failed to parse document file");
   }
 };
 
@@ -170,56 +124,20 @@ export const cleanPdfText = (text) => {
   }
 
   let cleaned = text;
-
-  // ==========================================
-  // Normalize Line Endings
-  // ==========================================
-
   cleaned = cleaned.replace(/\r\n/g, "\n");
-
   cleaned = cleaned.replace(/\r/g, "\n");
-
-  // ==========================================
-  // Remove HTML Tags
-  // Example:
-  // <h1>0</h1> -> 0
-  // <p>Hello</p> -> Hello
-  // ==========================================
-
   cleaned = cleaned.replace(/<\/?[a-z][^>]*>/gi, "");
-
-  // ==========================================
-  // Remove Spaces at Line Start
-  // ==========================================
-
   cleaned = cleaned.replace(/^[ \t]+/gm, "");
-
-  // ==========================================
-  // Remove Spaces at Line End
-  // ==========================================
-
   cleaned = cleaned.replace(/[ \t]+$/gm, "");
-
-  // ==========================================
-  // Convert PDF Bullet Symbols
-  // to Markdown Bullets
-  // ==========================================
-
   cleaned = cleaned.replace(/^[●•]\s*/gm, "- ");
-
   cleaned = cleaned.replace(/^[○◦]\s*/gm, "  - ");
-
-  // ==========================================
-  // Keep Maximum Two New Lines
-  // ==========================================
-
   cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
 
   return cleaned.trim();
 };
 
 // ==========================================
-// Delete PDF File
+// Delete File
 // ==========================================
 
 export const deletePdfFile = async (filePath) => {

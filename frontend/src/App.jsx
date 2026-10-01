@@ -58,7 +58,7 @@ function App() {
               }
             />
 
-               <Route
+            <Route
               path="/profile/update"
               element={
                 <ProtectedRoute>
@@ -73,8 +73,8 @@ function App() {
               path="/rag-documents"
               element={
                 <ProtectedRoute>
-             <KnowledgeBase />               
-              </ProtectedRoute>
+                  <KnowledgeBase />
+                </ProtectedRoute>
               }
             />
           </Route>

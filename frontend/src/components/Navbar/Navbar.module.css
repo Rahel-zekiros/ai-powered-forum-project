@@ -67,8 +67,8 @@
   display: flex;
   align-items: center;
   width: 100%;
-  background-color: #ffffff;
-  border: 1.5px solid #fe8402;
+  background-color: var(--surface);
+  border: 1.5px solid var(--primary);
   border-radius: 9999px;
   padding: 0.25rem 0.35rem 0.25rem 0.75rem;
   transition: all 0.2s ease;
@@ -85,7 +85,7 @@
   border: none;
   background: transparent;
   font-size: 0.85rem;
-  color: #111827;
+  color: var(--text-primary);
   outline: none;
   min-width: 0;
 }
@@ -129,7 +129,7 @@
 .userName {
   font-size: 0.85rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -165,9 +165,14 @@
   box-shadow: none !important;  
   background: transparent;
   font-size: 0.85rem;
-  color: #111827;
+  color: var(--text-primary);
   padding: 0;                  
   margin: 0;
+}
+
+.searchInput::placeholder {
+  color: var(--text-placeholder);
+  opacity: 0.8;
 }
 
 .searchInput:focus,
