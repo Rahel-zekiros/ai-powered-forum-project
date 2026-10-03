@@ -1,11 +1,13 @@
 import { safeExecute } from "../../db/config.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+const MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash-lite";
 const mapQuestionRow = (row) => ({
   id: row.question_id,
   questionHash: row.question_hash,
   title: row.title,
   content: row.content,
+  imageUrl: row.image_url ?? null, // <- this line must be here
   answerCount: row.reply_count ?? 0,
   createdAt: row.created_at,
   updatedAt: row.updated_at ?? row.created_at,
@@ -17,7 +19,7 @@ const mapQuestionRow = (row) => ({
 });
 
 const AUTHOR_SELECT = `
-  q.question_id, q.question_hash, q.title, q.content, q.created_at, q.updated_at, q.user_id,
+  q.question_id, q.question_hash, q.title, q.content, q.image_url, q.created_at, q.updated_at, q.user_id,
   u.user_id AS author_id, u.first_name, u.last_name
 `;
 

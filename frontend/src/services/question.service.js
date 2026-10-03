@@ -16,12 +16,24 @@ export const searchQuestionsSemantic = async (params = {}) => {
   );
   return response.data;
 };
+//Upload an image file. Returns { url: "http://localhost:3888/uploads/..." }
+
+export const uploadImage = async (file) => {
+  const formData = new FormData();
+  formData.append("image", file); // "image" must match upload.single("image") in the backend
+
+  const response = await apiClient.post("/api/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
 
 // T-07: Create Question
-export const createQuestion = async ({ title, content }) => {
+export const createQuestion = async ({ title, content, imageUrl }) => {
   const response = await apiClient.post("/api/questions", {
     title,
     content,
+    imageUrl,
   });
   return response.data;
 };

@@ -7,6 +7,7 @@ import { CheckCircle2 } from "lucide-react";
 import {
   createQuestion,
   generateQuestionDraftCoach,
+  uploadImage,
 } from "../../services/question.service";
 
 import styles from "./PostQuestion.module.css";
@@ -44,8 +45,12 @@ export default function PostQuestion() {
   const [showImagePopup, setShowImagePopup] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const imageInputRef = useRef(null);
+
+  // Remembers the real image markdown while the AI only sees placeholders
+  const savedImagesRef = useRef({});
 
   // MARKDOWN EDITOR
   const textareaRef = useRef(null);
@@ -164,7 +169,7 @@ export default function PostQuestion() {
     setLinkUrl("");
   };
 
-  // NUMBERED LIST
+  // NUMBERED LIST (works on whole lines, skips blank lines, click again to remove)
   const handleMarkdownNumberedList = () => {
     const textarea = textareaRef.current;
 
@@ -172,33 +177,129 @@ export default function PostQuestion() {
       return;
     }
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    const content = formData.content;
+    const selStart = textarea.selectionStart;
+    const selEnd = textarea.selectionEnd;
 
-    const selectedText = formData.content.slice(start, end);
+    // expand the selection to whole lines
+    const lineStart = content.lastIndexOf("\n", selStart - 1) + 1;
+    let lineEnd = content.indexOf("\n", selEnd);
+    if (lineEnd === -1) lineEnd = content.length;
 
-    if (!selectedText) {
-      insertMarkdown("1. ");
+    const lines = content.slice(lineStart, lineEnd).split("\n");
+    const numberedPattern = /^\d+\.\s/;
+    const nonEmptyLines = lines.filter((line) => line.trim() !== "");
+
+    // only blank lines -> just start a list here
+    if (nonEmptyLines.length === 0) {
+      updateMarkdownContent(
+        content.slice(0, lineStart) + "1. " + content.slice(lineStart),
+      );
+
+      requestAnimationFrame(() => {
+        textarea.focus();
+        textarea.setSelectionRange(lineStart + 3, lineStart + 3); // 3 = length of "1. "
+      });
+
       return;
     }
 
-    const lines = selectedText.split("\n");
+    // if every line is already numbered, remove the numbers instead
+    const allNumbered = nonEmptyLines.every((line) =>
+      numberedPattern.test(line),
+    );
 
-    const numberedLines = lines.map((line, index) => `${index + 1}. ${line}`);
+    let counter = 0;
 
-    const replacement = numberedLines.join("\n");
+    const replacement = lines
+      .map((line) => {
+        if (line.trim() === "") return line; // keep blank lines, no number
+        if (allNumbered) return line.replace(numberedPattern, "");
+        counter += 1;
+        return `${counter}. ${line}`;
+      })
+      .join("\n");
 
-    const newContent =
-      formData.content.slice(0, start) +
-      replacement +
-      formData.content.slice(end);
-
-    updateMarkdownContent(newContent);
+    updateMarkdownContent(
+      content.slice(0, lineStart) + replacement + content.slice(lineEnd),
+    );
 
     requestAnimationFrame(() => {
       textarea.focus();
+      textarea.setSelectionRange(lineStart, lineStart + replacement.length);
+    });
+  };
 
-      textarea.setSelectionRange(start, start + replacement.length);
+  // AUTO-CONTINUE NUMBERED LIST WHEN PRESSING ENTER
+  const handleContentKeyDown = (event) => {
+    // only plain Enter (not Shift+Enter, Ctrl+Enter, etc.)
+    if (
+      event.key !== "Enter" ||
+      event.shiftKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey ||
+      event.nativeEvent.isComposing
+    ) {
+      return;
+    }
+
+    const textarea = event.currentTarget;
+    const pos = textarea.selectionStart;
+
+    // do nothing special if some text is selected
+    if (pos !== textarea.selectionEnd) {
+      return;
+    }
+
+    const content = formData.content;
+
+    // find the line where the cursor is
+    const lineStart = content.lastIndexOf("\n", pos - 1) + 1;
+    let lineEnd = content.indexOf("\n", pos);
+    if (lineEnd === -1) lineEnd = content.length;
+
+    const line = content.slice(lineStart, lineEnd);
+
+    // is this line a numbered item like "1. something"?
+    const match = line.match(/^(\s*)(\d+)\.\s(.*)$/);
+
+    if (!match) {
+      return; // normal line: Enter works as usual
+    }
+
+    const markerLength = match[1].length + match[2].length + 2;
+
+    // cursor is inside the "1. " part: normal Enter
+    if (pos < lineStart + markerLength) {
+      return;
+    }
+
+    event.preventDefault();
+
+    // empty item ("2. " with nothing typed): Enter ends the list
+    if (match[3].trim() === "") {
+      updateMarkdownContent(
+        content.slice(0, lineStart) + content.slice(lineEnd),
+      );
+
+      requestAnimationFrame(() => {
+        textarea.setSelectionRange(lineStart, lineStart);
+      });
+
+      return;
+    }
+
+    // otherwise add the next number on a new line
+    const nextItem = `\n${match[1]}${Number(match[2]) + 1}. `;
+
+    updateMarkdownContent(
+      content.slice(0, pos) + nextItem + content.slice(pos),
+    );
+
+    requestAnimationFrame(() => {
+      const newPos = pos + nextItem.length;
+      textarea.setSelectionRange(newPos, newPos);
     });
   };
 
@@ -269,9 +370,24 @@ export default function PostQuestion() {
     try {
       setIsCoaching(true);
 
+      // Replace image links with a short placeholder the AI can read.
+      // The originals are kept in savedImagesRef and restored on "Apply".
+      savedImagesRef.current = {};
+      let imageCount = 0;
+
+      const contentForAI = formData.content.replace(
+        /!\[([^\]]*)\]\(([^)]*)\)/g,
+        (fullMatch, name) => {
+          imageCount += 1;
+          const placeholder = `[Image ${imageCount}: ${name}]`;
+          savedImagesRef.current[placeholder] = fullMatch;
+          return placeholder;
+        },
+      );
+
       const response = await generateQuestionDraftCoach({
         title,
-        content: formData.content,
+        content: contentForAI,
       });
 
       setCoachFeedback(response.data || response);
@@ -292,7 +408,14 @@ export default function PostQuestion() {
       return;
     }
 
-    const nextContent = coachFeedback.improvedContent || formData.content;
+    let nextContent = coachFeedback.improvedContent || formData.content;
+
+    // Put the real image links back in place of the placeholders
+    Object.entries(savedImagesRef.current).forEach(
+      ([placeholder, original]) => {
+        nextContent = nextContent.split(placeholder).join(original);
+      },
+    );
 
     setFormData((previousData) => ({
       title: coachFeedback.improvedTitle || previousData.title,
@@ -369,9 +492,9 @@ export default function PostQuestion() {
     }
   };
 
-  // INSERT IMAGE INTO MARKDOWN
-  const handleInsertImage = () => {
-    if (!imageFile || !imagePreview) {
+  // INSERT IMAGE INTO MARKDOWN (uploads the file first)
+  const handleInsertImage = async () => {
+    if (!imageFile) {
       return;
     }
 
@@ -381,29 +504,46 @@ export default function PostQuestion() {
       return;
     }
 
+    // remember the cursor position BEFORE the upload starts
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
 
-    const imageMarkdown = `![${imageFile.name}](${imagePreview})`;
+    try {
+      setIsUploadingImage(true);
+      setError("");
 
-    const newContent =
-      formData.content.slice(0, start) +
-      imageMarkdown +
-      formData.content.slice(end);
+      // 1. upload the file -> returns { url: "http://localhost:3888/uploads/..." }
+      const { url } = await uploadImage(imageFile);
 
-    updateMarkdownContent(newContent);
+      // 2. put the REAL url (not the temporary blob link) into the markdown
+      const imageMarkdown = `![${imageFile.name}](${url})`;
 
-    setShowImagePopup(false);
-    setImageFile(null);
-    setImagePreview("");
+      const newContent =
+        formData.content.slice(0, start) +
+        imageMarkdown +
+        formData.content.slice(end);
 
-    requestAnimationFrame(() => {
-      textarea.focus();
+      updateMarkdownContent(newContent);
 
-      const cursorPosition = start + imageMarkdown.length;
+      setShowImagePopup(false);
+      setImageFile(null);
+      setImagePreview("");
 
-      textarea.setSelectionRange(cursorPosition, cursorPosition);
-    });
+      requestAnimationFrame(() => {
+        textarea.focus();
+
+        const cursorPosition = start + imageMarkdown.length;
+
+        textarea.setSelectionRange(cursorPosition, cursorPosition);
+      });
+    } catch (err) {
+      const message =
+        err.response?.data?.message || "Image upload failed. Please try again.";
+
+      setError(message);
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   // CLOSE IMAGE POPUP
@@ -427,9 +567,14 @@ export default function PostQuestion() {
     try {
       setIsSubmitting(true);
 
+      // find the first image link in the markdown, e.g. ![name](http://...)
+      const imageMatch = formData.content.match(/!\[[^\]]*\]\(([^)\s]+)\)/);
+      const imageUrl = imageMatch ? imageMatch[1] : null;
+
       const response = await createQuestion({
         title: formData.title.trim(),
         content: formData.content,
+        imageUrl,
       });
 
       console.log("CREATE QUESTION RESPONSE:", response);
@@ -750,6 +895,7 @@ export default function PostQuestion() {
                   onChange={(event) =>
                     updateMarkdownContent(event.target.value)
                   }
+                  onKeyDown={handleContentKeyDown}
                   className={styles.textarea}
                   placeholder="Introduce the problem and expand on what you put in the title. Minimum 10 characters."
                   disabled={isSubmitting}
@@ -878,6 +1024,7 @@ export default function PostQuestion() {
                         type="button"
                         className={styles.imageCancelButton}
                         onClick={handleCloseImagePopup}
+                        disabled={isUploadingImage}
                       >
                         Cancel
                       </button>
@@ -886,9 +1033,9 @@ export default function PostQuestion() {
                         type="button"
                         className={styles.imageInsertButton}
                         onClick={handleInsertImage}
-                        disabled={!imageFile}
+                        disabled={!imageFile || isUploadingImage}
                       >
-                        Insert image
+                        {isUploadingImage ? "Uploading..." : "Insert image"}
                       </button>
                     </div>
                   </div>
