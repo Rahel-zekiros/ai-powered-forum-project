@@ -2,6 +2,10 @@ import crypto from "crypto";
 import { safeExecute } from "../../db/config.js";
 import { getEmbedding } from "../embeddingServices/embeddingService.js";
 
+// NEW: removes image markdown so the AI never receives image links
+const stripImages = (text = "") =>
+  text.replace(/!\[([^\]]*)\]\([^)]*\)/g, "[image: $1]");
+
 /**
  * List Questions
  * Handles keyword searching and user filtering.
@@ -68,62 +72,69 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
  * Creates a question, generates its AI vector embedding,
  * and stores the embedding in the question_vectors table.
  */
-export const createQuestionWithVectorService = async ({
-  title,
-  content,
-  userId,
-}) => {
-  // Generate a unique 16-character hexadecimal hash
-  const questionHash = crypto.randomBytes(8).toString("hex");
-
-  // Insert the question into the questions table
-  const result = await safeExecute(
-    `
-      INSERT INTO questions
-        (question_hash, user_id, title, content)
-      VALUES (?, ?, ?, ?)
-    `,
-    [questionHash, userId, title, content],
-  );
-
-  // Get the ID of the newly created question
-  const questionId = result.insertId;
-
-  try {
-    const sourceText = `${title}\n${content}`;
-    const embedding = await getEmbedding(sourceText, "RETRIEVAL_DOCUMENT");
-
-    await safeExecute(
-      `
-        INSERT INTO question_vectors
-          (question_id, source_text, embedding, status)
-        VALUES (?, ?, ?, ?)
-      `,
-      [questionId, sourceText, JSON.stringify(embedding), "ready"],
-    );
-  } catch (error) {
-    // If embedding fails, store failed status
-    console.error("Question embedding failed:", error);
-
-    await safeExecute(
-      `
-        INSERT INTO question_vectors
-          (question_id, source_text, embedding, status)
-        VALUES (?, ?, ?, ?)
-      `,
-      [questionId, `${title}\n${content}`, JSON.stringify([]), "failed"],
-    );
-  }
-
-  // Return the newly created question
-  return {
-    id: questionId,
-    questionHash,
-    title,
-    content,
-    userId,
-  };
-};
+ export const createQuestionWithVectorService = async ({
+   title,
+   content,
+   userId,
+   imageUrl = null, 
+ }) => {
+   // Generate a unique 16-character hexadecimal hash
+   const questionHash = crypto.randomBytes(8).toString("hex");
+ 
+   // Insert the question into the questions table
+   const result = await safeExecute(
+     `
+       INSERT INTO questions
+         (question_hash, user_id, title, content, image_url)
+       VALUES (?, ?, ?, ?, ?)
+     `,
+     [questionHash, userId, title, content, imageUrl], // NEW: imageUrl added
+   );
+ 
+   // Get the ID of the newly created question
+   const questionId = result.insertId;
+ 
+   try {
+         const sourceText = `${title}\n${stripImages(content)}`;
+     const embedding = await getEmbedding(sourceText, "RETRIEVAL_DOCUMENT");
+ 
+     await safeExecute(
+       `
+         INSERT INTO question_vectors
+           (question_id, source_text, embedding, status)
+         VALUES (?, ?, ?, ?)
+       `,
+       [questionId, sourceText, JSON.stringify(embedding), "ready"],
+     );
+   } catch (error) {
+     // If embedding fails, store failed status
+     console.error("Question embedding failed:", error);
+ 
+     await safeExecute(
+       `
+         INSERT INTO question_vectors
+           (question_id, source_text, embedding, status)
+         VALUES (?, ?, ?, ?)
+       `,
+       [
+         questionId,
+         `${title}\n${stripImages(content)}`,
+         JSON.stringify([]),
+         "failed",
+       ],
+     );
+   }
+ 
+   // Return the newly created question
+   return {
+     id: questionId,
+     questionHash,
+     title,
+     content,
+     imageUrl, 
+     userId,
+   };
+ };
 
 /**
  * Helper for Task T-11

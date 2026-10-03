@@ -7,6 +7,7 @@ import { CheckCircle2 } from "lucide-react";
 import {
   createQuestion,
   generateQuestionDraftCoach,
+  uploadImage,
 } from "../../services/question.service";
 
 import styles from "./PostQuestion.module.css";
@@ -44,8 +45,12 @@ export default function PostQuestion() {
   const [showImagePopup, setShowImagePopup] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const imageInputRef = useRef(null);
+
+  // Remembers the real image markdown while the AI only sees placeholders
+  const savedImagesRef = useRef({});
 
   // MARKDOWN EDITOR
   const textareaRef = useRef(null);
@@ -269,9 +274,24 @@ export default function PostQuestion() {
     try {
       setIsCoaching(true);
 
+      // Replace image links with a short placeholder the AI can read.
+      // The originals are kept in savedImagesRef and restored on "Apply".
+      savedImagesRef.current = {};
+      let imageCount = 0;
+
+      const contentForAI = formData.content.replace(
+        /!\[([^\]]*)\]\(([^)]*)\)/g,
+        (fullMatch, name) => {
+          imageCount += 1;
+          const placeholder = `[Image ${imageCount}: ${name}]`;
+          savedImagesRef.current[placeholder] = fullMatch;
+          return placeholder;
+        },
+      );
+
       const response = await generateQuestionDraftCoach({
         title,
-        content: formData.content,
+        content: contentForAI,
       });
 
       setCoachFeedback(response.data || response);
@@ -292,7 +312,14 @@ export default function PostQuestion() {
       return;
     }
 
-    const nextContent = coachFeedback.improvedContent || formData.content;
+    let nextContent = coachFeedback.improvedContent || formData.content;
+
+    // Put the real image links back in place of the placeholders
+    Object.entries(savedImagesRef.current).forEach(
+      ([placeholder, original]) => {
+        nextContent = nextContent.split(placeholder).join(original);
+      },
+    );
 
     setFormData((previousData) => ({
       title: coachFeedback.improvedTitle || previousData.title,
@@ -369,9 +396,9 @@ export default function PostQuestion() {
     }
   };
 
-  // INSERT IMAGE INTO MARKDOWN
-  const handleInsertImage = () => {
-    if (!imageFile || !imagePreview) {
+  // INSERT IMAGE INTO MARKDOWN (uploads the file first)
+  const handleInsertImage = async () => {
+    if (!imageFile) {
       return;
     }
 
@@ -381,29 +408,46 @@ export default function PostQuestion() {
       return;
     }
 
+    // remember the cursor position BEFORE the upload starts
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
 
-    const imageMarkdown = `![${imageFile.name}](${imagePreview})`;
+    try {
+      setIsUploadingImage(true);
+      setError("");
 
-    const newContent =
-      formData.content.slice(0, start) +
-      imageMarkdown +
-      formData.content.slice(end);
+      // 1. upload the file -> returns { url: "http://localhost:3888/uploads/..." }
+      const { url } = await uploadImage(imageFile);
 
-    updateMarkdownContent(newContent);
+      // 2. put the REAL url (not the temporary blob link) into the markdown
+      const imageMarkdown = `![${imageFile.name}](${url})`;
 
-    setShowImagePopup(false);
-    setImageFile(null);
-    setImagePreview("");
+      const newContent =
+        formData.content.slice(0, start) +
+        imageMarkdown +
+        formData.content.slice(end);
 
-    requestAnimationFrame(() => {
-      textarea.focus();
+      updateMarkdownContent(newContent);
 
-      const cursorPosition = start + imageMarkdown.length;
+      setShowImagePopup(false);
+      setImageFile(null);
+      setImagePreview("");
 
-      textarea.setSelectionRange(cursorPosition, cursorPosition);
-    });
+      requestAnimationFrame(() => {
+        textarea.focus();
+
+        const cursorPosition = start + imageMarkdown.length;
+
+        textarea.setSelectionRange(cursorPosition, cursorPosition);
+      });
+    } catch (err) {
+      const message =
+        err.response?.data?.message || "Image upload failed. Please try again.";
+
+      setError(message);
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   // CLOSE IMAGE POPUP
@@ -427,9 +471,14 @@ export default function PostQuestion() {
     try {
       setIsSubmitting(true);
 
+           // find the first image link in the markdown, e.g. ![name](http://...)
+      const imageMatch = formData.content.match(/!\[[^\]]*\]\(([^)\s]+)\)/);
+      const imageUrl = imageMatch ? imageMatch[1] : null;
+
       const response = await createQuestion({
         title: formData.title.trim(),
         content: formData.content,
+        imageUrl,
       });
 
       console.log("CREATE QUESTION RESPONSE:", response);
@@ -878,6 +927,7 @@ export default function PostQuestion() {
                         type="button"
                         className={styles.imageCancelButton}
                         onClick={handleCloseImagePopup}
+                        disabled={isUploadingImage}
                       >
                         Cancel
                       </button>
@@ -886,9 +936,9 @@ export default function PostQuestion() {
                         type="button"
                         className={styles.imageInsertButton}
                         onClick={handleInsertImage}
-                        disabled={!imageFile}
+                        disabled={!imageFile || isUploadingImage}
                       >
-                        Insert image
+                        {isUploadingImage ? "Uploading..." : "Insert image"}
                       </button>
                     </div>
                   </div>
