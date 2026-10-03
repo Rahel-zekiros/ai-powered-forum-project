@@ -13,33 +13,33 @@ import { generateQuestionDraftCoachService } from "./geminiTextCoach.service.js"
  * Extracts the question title and content from the request body,
  * gets the authenticated user's ID, and passes the data to the
  * service layer to create the question and generate its embedding.
- */
-export const createQuestionController = async (req, res, next) => {
-  try {
-    // Extract question title and content from the request body
-    const { title, content } = req.body;
-
-    // Get the authenticated user's ID from the JWT middleware
-    const userId = req.user.id;
-
-    // Create the question and generate its AI vector embedding
-    const newQuestion = await createQuestionWithVectorService({
-      title,
-      content,
-      userId,
-    });
-
-    // Return a successful 201 Created response
-    res.status(StatusCodes.CREATED).json({
-      success: true,
-      message: "Question posted successfully.",
-      data: newQuestion,
-    });
-  } catch (error) {
-    // Pass any error to the centralized error-handling middleware
-    next(error);
-  }
-};
+ */export const createQuestionController = async (req, res, next) => {
+   try {
+     // Extract question title, content, and the image link from the request body
+     const { title, content, imageUrl } = req.body; 
+ 
+     // Get the authenticated user's ID from the JWT middleware
+     const userId = req.user.id;
+ 
+     // Create the question and generate its AI vector embedding
+     const newQuestion = await createQuestionWithVectorService({
+       title,
+       content,
+       userId,
+       imageUrl, 
+     });
+ 
+     // Return a successful 201 Created response
+     res.status(StatusCodes.CREATED).json({
+       success: true,
+       message: "Question posted successfully.",
+       data: newQuestion,
+     });
+   } catch (error) {
+     // Pass any error to the centralized error-handling middleware
+     next(error);
+   }
+ };
 
 /**
  * T-13: AI Question Draft Coach

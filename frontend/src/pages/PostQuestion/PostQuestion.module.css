@@ -567,7 +567,7 @@
 .imageSupportedText {
   margin: 7px 0 0;
   color: var(--text-tertiary);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
 }
 
@@ -623,8 +623,13 @@
   cursor: pointer;
 }
 
-.imageCancelButton:hover {
+.imageCancelButton:hover:not(:disabled) {
   background: var(--surface-container-high);
+}
+
+.imageCancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .imageInsertButton {
@@ -639,7 +644,7 @@
   cursor: pointer;
 }
 
-.imageInsertButton:hover {
+.imageInsertButton:hover:not(:disabled) {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
 }
@@ -792,14 +797,6 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.applyButton:hover:not(:disabled) {
-  background: var(--primary-light);
-  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 .applyButton:disabled {
@@ -994,20 +991,9 @@
   cursor: pointer;
 }
 
-.askAnotherButton:hover {
-  background: var(--surface-container-high);
-}
-
 /* ==================================================
    MEDIA QUERIES
 ================================================== */
-
-@media (max-width: 900px) {
-  .container {
-    padding-top: 36px;
-    padding-bottom: 60px;
-  }
-}
 
 @media (max-width: 768px) {
   .container {
@@ -1017,10 +1003,6 @@
 
   .header {
     margin-bottom: 28px;
-  }
-
-  .header h1 {
-    font-size: 27px;
   }
 
   .formCard {
@@ -1173,7 +1155,10 @@
     box-sizing: border-box;
   }
 
+  /* center the image popup on small screens */
   .imagePopup {
+    top: 50%;
+    left: 50%;
     width: calc(100vw - 24px);
   }
 
@@ -1311,10 +1296,6 @@
   .imageDropText {
     font-size: 11px;
   }
-
-  .imageSupportedText {
-    font-size: 9px;
-  }
 }
 
 @media (max-width: 360px) {
@@ -1328,7 +1309,7 @@
 
   .guidelines > p,
   .guidelines li {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .guidelines h3 {
@@ -1345,7 +1326,7 @@
   }
 
   .characterCount {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .publishedCard {
