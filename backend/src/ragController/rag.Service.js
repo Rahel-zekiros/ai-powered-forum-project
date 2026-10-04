@@ -1,6 +1,11 @@
 import fs from "fs/promises";
 import path from "path";
-import { readPdfFile, extractPdfPages, extractTextFile, deletePdfFile } from "./pdfService.js";
+import {
+  readPdfFile,
+  extractPdfPages,
+  extractTextFile,
+  deletePdfFile,
+} from "./pdfService.js";
 import { createChunks } from "./chunkService.js";
 import { createEmbedding } from "./embeddingService.js";
 import { safeExecute } from "../../db/config.js";
@@ -21,7 +26,7 @@ export const processDocument = async ({ userId, file }) => {
     const docResult = await safeExecute(
       `
         INSERT INTO documents
-        (user_id, filename, file_path, status)
+        (user_id, title, storage_path, status)
         VALUES (?, ?, ?, ?)
         `,
       [userId, filename, filePath, "processing"],
@@ -32,15 +37,14 @@ export const processDocument = async ({ userId, file }) => {
     // Check File Type (PDF vs TXT)
     // ==========================================
     const isTxt =
-      file.mimetype === "text/plain" ||
-      filename.toLowerCase().endsWith(".txt");
+      file.mimetype === "text/plain" || filename.toLowerCase().endsWith(".txt");
 
     let pages = [];
 
     if (isTxt) {
       console.log("Reading Text file...");
       const textContent = await extractTextFile(file.path);
-      
+
       pages = [
         {
           pageNumber: 1,
@@ -138,7 +142,7 @@ export const processDocument = async ({ userId, file }) => {
         INSERT INTO document_chunk_vectors
         (
           chunk_id,
-          embedding_vector,
+          embedding,
           status
         )
         VALUES (?, ?, ?)
@@ -274,6 +278,7 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
 
 const TOP_K = 5;
 const SIMILARITY_THRESHOLD = 0.65;
+const normalizeSearchText = (text) => text.toLowerCase().replace(/\s+/g, " ").trim();
 
 // ==========================================
 // Vector Magnitude
@@ -331,7 +336,7 @@ export const getDocumentChunks = async (documentId) => {
       dc.chunk_index,
       dc.page_start,
       dc.page_end,
-      dcv.embedding_vector
+      dcv.embedding
     FROM document_chunks AS dc
     INNER JOIN document_chunk_vectors AS dcv
       ON dc.chunk_id = dcv.chunk_id
@@ -364,9 +369,9 @@ export const rankChunks = (chunks, queryEmbedding) => {
 
       try {
         storedVector =
-          typeof chunk.embedding_vector === "string"
-            ? JSON.parse(chunk.embedding_vector)
-            : chunk.embedding_vector;
+          typeof chunk.embedding === "string"
+            ? JSON.parse(chunk.embedding)
+            : chunk.embedding;
       } catch (err) {
         console.error(`Invalid embedding for chunk ${chunk.chunk_id}`, err);
         return null;
@@ -399,8 +404,8 @@ export const getLibraryDocuments = async (userId) => {
     `
       SELECT
         document_id,
-        filename,
-        file_path,
+        title,
+        storage_path,
         status,
         created_at
       FROM documents
@@ -482,8 +487,8 @@ const getReadyDocument = async ({ documentId, userId }) => {
     `
         SELECT
           document_id,
-          filename,
-          file_path,
+          title,
+          storage_path,
           status
         FROM documents
         WHERE document_id = ?
@@ -533,7 +538,7 @@ export const searchDocument = async ({ userId, documentId, query }) => {
             dc.chunk_index,
             dc.page_start,
             dc.page_end,
-            dcv.embedding_vector
+            dcv.embedding
           FROM document_chunks AS dc
           INNER JOIN document_chunk_vectors AS dcv
             ON dc.chunk_id = dcv.chunk_id
@@ -552,7 +557,7 @@ export const searchDocument = async ({ userId, documentId, query }) => {
   if (!chunks || chunks.length === 0) {
     return {
       documentId: documentId || null,
-      filename: document ? document.filename : "All Documents",
+      title: document ? document.title : "All Documents",
       query,
       totalChunks: 0,
       results: [],
@@ -562,27 +567,25 @@ export const searchDocument = async ({ userId, documentId, query }) => {
 
   const rankedChunks = rankChunks(chunks, queryEmbedding);
 
-  const relevantChunks = rankedChunks
+  const normalizedQuery = normalizeSearchText(query);
+  const exactMatches = rankedChunks.filter((chunk) =>
+    normalizeSearchText(chunk.content).includes(normalizedQuery),
+  );
+  const relevantChunks = exactMatches.length > 0
+    ? exactMatches.slice(0, TOP_K)
+    : rankedChunks
     .filter((chunk) => chunk.similarity >= SIMILARITY_THRESHOLD)
     .slice(0, TOP_K);
-
-  if (relevantChunks.length === 0) {
-    return {
-      documentId: documentId || null,
-      filename: document ? document.filename : "All Documents",
-      query,
-      totalChunks: chunks.length,
-      results: [],
-      message: "No relevant matches found.",
-    };
-  }
+  const results = relevantChunks.length > 0
+    ? relevantChunks
+    : rankedChunks.slice(0, TOP_K);
 
   return {
     documentId: documentId || null,
     filename: document ? document.filename : "All Documents",
     query,
     totalChunks: chunks.length,
-    results: relevantChunks,
+    results,
     message: null,
   };
 };
@@ -611,7 +614,7 @@ export const askDocument = async ({ userId, documentId, question }) => {
             dc.chunk_index,
             dc.page_start,
             dc.page_end,
-            dcv.embedding_vector
+            dcv.embedding
           FROM document_chunks AS dc
           INNER JOIN document_chunk_vectors AS dcv
             ON dc.chunk_id = dcv.chunk_id
@@ -629,7 +632,8 @@ export const askDocument = async ({ userId, documentId, question }) => {
 
   if (!chunks || chunks.length === 0) {
     return {
-      answer: "Your library is currently empty. Please upload a reference file first.",
+      answer:
+        "Your library is currently empty. Please upload a reference file first.",
       sources: [],
     };
   }
@@ -642,7 +646,8 @@ export const askDocument = async ({ userId, documentId, question }) => {
 
   if (selectedChunks.length === 0) {
     return {
-      answer: "For this question, I do not have a corresponding resource in the uploaded document.",
+      answer:
+        "For this question, I do not have a corresponding resource in the uploaded document.",
       sources: [],
     };
   }
@@ -660,14 +665,14 @@ export const askDocument = async ({ userId, documentId, question }) => {
     question,
   });
   console.log("========== ANSWER FROM GEMINI ==========");
-console.log(answer);
-console.log("========================================");
-console.log("========== RETURNING TO FRONTEND ==========");
-console.log({
-  answer,
-  sourcesCount: selectedChunks.length,
-});
-console.log("===========================================");
+  console.log(answer);
+  console.log("========================================");
+  console.log("========== RETURNING TO FRONTEND ==========");
+  console.log({
+    answer,
+    sourcesCount: selectedChunks.length,
+  });
+  console.log("===========================================");
 
   return {
     answer,
@@ -723,7 +728,7 @@ export const fetchUserNotesFromDatabase = async (userId) => {
         dc.chunk_index,
         dc.content,
         d.document_id,
-        d.filename
+        d.title
       FROM chunk_notes AS cn
       INNER JOIN document_chunks AS dc
         ON cn.chunk_id = dc.chunk_id
@@ -734,4 +739,46 @@ export const fetchUserNotesFromDatabase = async (userId) => {
       `,
     [userId],
   );
+};
+// ==========================================
+// Get PDF File
+// ==========================================
+
+export const getDocumentFile = async ({ documentId, userId }) => {
+  const documents = await safeExecute(
+    `
+      SELECT
+        document_id,
+        title,
+        storage_path,
+        status
+      FROM documents
+      WHERE document_id = ?
+        AND user_id = ?
+      LIMIT 1
+    `,
+    [documentId, userId],
+  );
+
+  if (documents.length === 0) {
+    const error = new Error("Document not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const document = documents[0];
+
+  if (document.status !== "ready") {
+    const error = new Error("Document is not ready.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const filePath = path.resolve(process.cwd(), document.file_path);
+  
+
+  return {
+    filePath,
+    filename: document.filename,
+  };
 };
