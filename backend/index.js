@@ -5,7 +5,7 @@ import { db } from "./db/config.js";
 import { mainRouter } from "./src/api/routes.js";
 import { errorHandler } from "./src/middleware/error-handler.js";
 import cors from "cors";
-import uploadRouter from "./src/api/uploads/router.js"; // NEW: image upload route
+import uploadRouter from "./src/api/upload/router.js"; // NEW: image upload route
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
