@@ -76,7 +76,7 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
    title,
    content,
    userId,
-   imageUrl = null, 
+   imageUrl,
  }) => {
    // Generate a unique 16-character hexadecimal hash
    const questionHash = crypto.randomBytes(8).toString("hex");
