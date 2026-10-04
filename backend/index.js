@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Makes files in backend/uploads open in the browser: http://localhost:3888/uploads/<file>
-app.use("/upload", express.static(path.join(__dirname, "upload")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Health check
 app.get("/health", (req, res) => {

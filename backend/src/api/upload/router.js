@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // backend/src/api/uploads -> up 3 levels -> backend/uploads
-const uploadDir = path.join(__dirname, "../../../upload");
+const uploadDir = path.join(__dirname, "../../../uploads");
 
 fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -37,7 +37,7 @@ router.post("/", upload.single("image"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
   }
-  const url = `${req.protocol}://${req.get("host")}/upload/${req.file.filename}`;
+  const url = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
   res.status(201).json({ url });
 });
 
