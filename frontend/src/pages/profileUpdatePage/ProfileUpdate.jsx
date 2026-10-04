@@ -1,42 +1,44 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { KeyRound } from 'lucide-react';
 import styles from './ProfileUpdate.module.css';
-import { apiClient } from '../../services/core/api.client.js'; 
-import { useAuth } from '../../contexts/AuthContext.jsx'; 
+import { apiClient } from '../../services/core/api.client.js';
 
 const ProfileUpdate = () => {
-  const { currentUser, updateUserProfile } = useAuth();
-
-  const [firstName, setFirstName] = useState(currentUser?.first_name || '');
-  const [lastName, setLastName] = useState(currentUser?.last_name || '');
-  const [email, setEmail] = useState(currentUser?.email || '');
-  
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setSuccessMessage('');
     setErrorMessage('');
 
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('New password and confirmation do not match.');
+      return;
+    }
+
+    setLoading(true);
     try {
-     await  apiClient .put('/api/users/profile', {
-        first_name: firstName,
-        last_name: lastName,
-        email: email
+      await apiClient.put('/api/auth/password', {
+        currentPassword,
+        newPassword,
       });
 
-      updateUserProfile({ 
-        first_name: firstName, 
-        last_name: lastName,
-        email: email 
-      });
-
-      setSuccessMessage('Profile updated successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setSuccessMessage('Password changed successfully.');
     } catch (err) {
-      console.error('Error updating profile:', err);
-      setErrorMessage(err.response?.data?.message || 'Something went wrong. Please try again.');
+      setErrorMessage(
+        err.response?.data?.message ||
+        err.response?.data?.msg ||
+        'Unable to change your password. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -45,8 +47,11 @@ const ProfileUpdate = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2 className={styles.headerTitle}>Account Settings</h2>
-        <p className={styles.headerSubtitle}>Update your personal information below.</p>
+        <p className={styles.eyebrow}>ACCOUNT SECURITY</p>
+        <h1 className={styles.headerTitle}>Change password</h1>
+        <p className={styles.headerSubtitle}>
+          Verify your current password before choosing a new one.
+        </p>
       </div>
 
       {successMessage && (
@@ -63,37 +68,51 @@ const ProfileUpdate = () => {
 
       <form onSubmit={handleSubmit}>
         <div className={styles.formGroup}>
-          <label className={styles.label}>First Name</label>
+          <label className={styles.label} htmlFor="current-password">
+            Current password
+          </label>
           <input
-            type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            id="current-password"
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
             className={styles.input}
-            placeholder="Enter your first name"
+            placeholder="Enter current password"
             required
           />
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Last Name</label>
+          <label className={styles.label} htmlFor="new-password">
+            New password
+          </label>
           <input
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            id="new-password"
+            type="password"
+            autoComplete="new-password"
+            minLength={6}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
             className={styles.input}
-            placeholder="Enter your last name"
+            placeholder="At least 6 characters and 1 number"
             required
           />
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Email Address</label>
+          <label className={styles.label} htmlFor="confirm-password">
+            Confirm new password
+          </label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            id="confirm-password"
+            type="password"
+            autoComplete="new-password"
+            minLength={6}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             className={styles.input}
-            placeholder="Enter your email"
+            placeholder="Enter new password again"
             required
           />
         </div>
@@ -103,9 +122,14 @@ const ProfileUpdate = () => {
           disabled={loading}
           className={styles.submitBtn}
         >
-          {loading ? 'Saving Changes...' : 'Save Changes'}
+          <KeyRound size={16} />
+          {loading ? 'Updating password...' : 'Update password'}
         </button>
       </form>
+
+      <Link to="/profile" className={styles.backLink}>
+        Back to account profile
+      </Link>
     </div>
   );
 };
