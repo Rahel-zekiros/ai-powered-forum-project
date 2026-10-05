@@ -1,31 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
-import rehypeRaw from "rehype-raw";
 import toast, { Toaster } from "react-hot-toast";
+
 import { apiClient } from "../../services/core/api.client.js";
 
-import {
-  CloudUpload,
-  FilePlus2,
-  Trash,
-  ScanSearch,
-  WandSparkles,
-  BadgeCheck,
-  CopyCheck,
-  MessageCircle,
-  RefreshCw,
-  FileDown,
-  NotebookPen,
-  LibraryBig,
-  CircleX,
-  DatabaseZap,
-  ChartNoAxesCombined,
-  TriangleAlert,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import LibrarySection from "./LibrarySection";
+import RagFeaturesSection from "./RagFeaturesSection";
 
 import styles from "./knowledgeBase.module.css";
 
@@ -66,16 +45,13 @@ export default function KnowledgeBase() {
   // ==========================================
 
   const [expandedChunks, setExpandedChunks] = useState({});
+const toggleChunkExpand = (chunkKey, e) => {
+  e?.stopPropagation();
 
-  const toggleChunkExpand = (chunkKey, e) => {
-    e?.stopPropagation();
-
-    setExpandedChunks((prev) => ({
-      ...prev,
-      [chunkKey]: !prev[chunkKey],
-    }));
-  };
-
+  setExpandedChunks((prev) => ({
+    [chunkKey]: !prev[chunkKey],
+  }));
+};
   // ==========================================
   // AI CHAT STATES
   // ==========================================
@@ -88,50 +64,10 @@ export default function KnowledgeBase() {
   const [copiedIndex, setCopiedIndex] = useState(null);
 
   // ==========================================
-  // HIGHLIGHTED CHUNK
-  // ==========================================
-
-  const [highlightedChunk, setHighlightedChunk] = useState(null);
-
-  // ==========================================
-  // NOTES
-  // ==========================================
-
-  const [userNotes, setUserNotes] = useState({});
-  const [activeNoteText, setActiveNoteText] = useState("");
-
-  // ==========================================
   // CHAT SCROLL REF
   // ==========================================
 
   const chatEndRef = useRef(null);
-
-  // ==========================================
-  // MARKDOWN RENDERER
-  // ==========================================
-
-  const renderMarkdown = (content) => {
-    return (
-      <div className={styles.markdownContent}>
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkBreaks]}
-          rehypePlugins={[rehypeRaw]}
-        >
-          {content || ""}
-        </ReactMarkdown>
-      </div>
-    );
-  };
-
-  // ==========================================
-  // AUTO SCROLL CHAT
-  // ==========================================
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [chatMessages, isAskingAI]);
 
   // ==========================================
   // FETCH DOCUMENTS
@@ -171,6 +107,16 @@ export default function KnowledgeBase() {
   }, []);
 
   // ==========================================
+  // AUTO SCROLL CHAT
+  // ==========================================
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [chatMessages, isAskingAI]);
+
+  // ==========================================
   // FILE CHANGE
   // ==========================================
 
@@ -183,7 +129,8 @@ export default function KnowledgeBase() {
       const isPdf =
         file.type === "application/pdf" || fileName.endsWith(".pdf");
 
-      const isTxt = file.type === "text/plain" || fileName.endsWith(".txt");
+      const isTxt =
+        file.type === "text/plain" || fileName.endsWith(".txt");
 
       if (!isPdf && !isTxt) {
         toast.error("Please select a valid PDF or TXT file.", {
@@ -244,7 +191,8 @@ export default function KnowledgeBase() {
     } catch (err) {
       console.error("Upload Error:", err);
 
-      const message = err.response?.data?.msg || "Failed to upload document.";
+      const message =
+        err.response?.data?.msg || "Failed to upload document.";
 
       toast.error(message, {
         className: styles.errorToast,
@@ -285,7 +233,9 @@ export default function KnowledgeBase() {
                 toast.dismiss(t.id);
 
                 try {
-                  await apiClient.delete(`/api/rag/documents/${docId}`);
+                  await apiClient.delete(
+                    `/api/rag/documents/${docId}`
+                  );
 
                   if (selectedDoc?.document_id === docId) {
                     setSelectedDoc(null);
@@ -302,27 +252,31 @@ export default function KnowledgeBase() {
                     setChatMessages([]);
                     setAiQuestion("");
                     setAiError("");
-
-                    setHighlightedChunk(null);
                     setExpandedChunks({});
                   }
 
                   setDocuments((prev) =>
-                    prev.filter((doc) => doc.document_id !== docId),
+                    prev.filter(
+                      (doc) => doc.document_id !== docId
+                    )
                   );
 
-                  toast.success("Document deleted successfully.", {
-                    className: styles.successToast,
-                    iconTheme: {
-                      primary: "#16a34a",
-                      secondary: "#dcfce7",
-                    },
-                  });
+                  toast.success(
+                    "Document deleted successfully.",
+                    {
+                      className: styles.successToast,
+                      iconTheme: {
+                        primary: "#16a34a",
+                        secondary: "#dcfce7",
+                      },
+                    }
+                  );
                 } catch (err) {
                   console.error("Delete Error:", err);
 
                   const message =
-                    err.response?.data?.msg || "Failed to delete document.";
+                    err.response?.data?.msg ||
+                    "Failed to delete document.";
 
                   toast.error(message, {
                     className: styles.errorToast,
@@ -344,7 +298,7 @@ export default function KnowledgeBase() {
         duration: Infinity,
         position: "top-center",
         className: styles.customToastStyle,
-      },
+      }
     );
   };
 
@@ -375,7 +329,6 @@ export default function KnowledgeBase() {
     setAiError("");
 
     // Clear highlighted chunk
-    setHighlightedChunk(null);
   };
 
   // ==========================================
@@ -389,48 +342,41 @@ export default function KnowledgeBase() {
         return;
       }
 
-      const isTxt = selectedDoc.filename?.toLowerCase().endsWith(".txt");
+      const isTxt =
+        selectedDoc.filename?.toLowerCase().endsWith(".txt");
 
-      // If selected document is PDF,
-      // do not load TXT content.
       if (!isTxt) {
         setTextContent("");
         return;
       }
 
-      try {
-        setIsLoadingText(true);
+try {
+  setIsLoadingText(true);
 
-        const fileUrl = `http://localhost:5000/${selectedDoc.file_path}`;
+  const response = await apiClient.get(
+    `/${selectedDoc.file_path}`
+  );
 
-        console.log("Loading TXT Reader:", fileUrl);
+  console.log("TXT content loaded:", response.data);
 
-        const response = await fetch(fileUrl);
+  setTextContent(response.data);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load TXT file: ${response.status}`);
-        }
+} catch (error) {
+  console.error("TXT Reader Error:", error);
 
-        const text = await response.text();
+  setTextContent("");
 
-        console.log("TXT content loaded:", text);
+  toast.error("Could not load TXT file.", {
+    className: styles.errorToast,
+    iconTheme: {
+      primary: "#dc2626",
+      secondary: "#fee2e2",
+    },
+  });
 
-        setTextContent(text);
-      } catch (error) {
-        console.error("TXT Reader Error:", error);
-
-        setTextContent("");
-
-        toast.error("Could not load TXT file.", {
-          className: styles.errorToast,
-          iconTheme: {
-            primary: "#dc2626",
-            secondary: "#fee2e2",
-          },
-        });
-      } finally {
-        setIsLoadingText(false);
-      }
+} finally {
+  setIsLoadingText(false);
+}
     };
 
     loadTxtContent();
@@ -444,12 +390,12 @@ export default function KnowledgeBase() {
     const chunkIdx = result.chunkIndex ?? null;
 
     const chunkKey = `${
-      result.documentId || selectedDoc?.document_id || "doc"
+      result.documentId ||
+      selectedDoc?.document_id ||
+      "doc"
     }-${chunkIdx}`;
 
     setSelectedResult(result);
-
-    setHighlightedChunk(chunkIdx);
 
     setExpandedChunks((prev) => ({
       ...prev,
@@ -480,15 +426,18 @@ export default function KnowledgeBase() {
       if (selectedDoc) {
         payload.documentId = selectedDoc.document_id;
       }
-      
 
-      const res = await apiClient.post("/api/rag/ask", payload);
+      const res = await apiClient.post(
+        "/api/rag/ask",
+        payload
+      );
 
       if (res.data?.message) {
         setSearchMessage(res.data.message);
         setSearchResults([]);
       } else {
         const results = res.data?.sources || [];
+
         setSearchResults(results);
         setSearchMessage("");
 
@@ -496,30 +445,33 @@ export default function KnowledgeBase() {
           setSelectedResult(results[0]);
 
           const firstChunkKey = `${
-            results[0].documentId || selectedDoc?.document_id || "doc"
+            results[0].documentId ||
+            selectedDoc?.document_id ||
+            "doc"
           }-${results[0].chunkIndex ?? 0}`;
 
           setExpandedChunks({
             [firstChunkKey]: true,
           });
 
-          setHighlightedChunk(results[0].chunkIndex ?? 0);
-
-          toast.success(`Found ${results.length} matching results.`, {
-            className: styles.successToast,
-            iconTheme: {
-              primary: "#16a34a",
-              secondary: "#dcfce7",
-            },
-          });
+          toast.success(
+            `Found ${results.length} matching results.`,
+            {
+              className: styles.successToast,
+              iconTheme: {
+                primary: "#16a34a",
+                secondary: "#dcfce7",
+              },
+            }
+          );
         } else {
           toast("No matching results found.");
         }
       }
     } catch (err) {
-      
       const errorMsg =
-        err.response?.data?.msg || "Failed to perform semantic search.";
+        err.response?.data?.msg ||
+        "Failed to perform semantic search.";
 
       setSearchError(errorMsg);
 
@@ -572,19 +524,26 @@ export default function KnowledgeBase() {
         payload.documentId = selectedDoc.document_id;
       }
 
-      const res = await apiClient.post("/api/rag/ask", payload);
+      const res = await apiClient.post(
+        "/api/rag/ask",
+        payload
+      );
 
-      const fullAnswer = res.data?.answer || "No answer generated.";
+      const fullAnswer =
+        res.data?.answer || "No answer generated.";
 
       const sources = res.data?.sources || [];
 
-      toast.success("AI answer generated successfully!", {
-        className: styles.successToast,
-        iconTheme: {
-          primary: "#16a34a",
-          secondary: "#dcfce7",
-        },
-      });
+      toast.success(
+        "AI answer generated successfully!",
+        {
+          className: styles.successToast,
+          iconTheme: {
+            primary: "#16a34a",
+            secondary: "#dcfce7",
+          },
+        }
+      );
 
       setChatMessages([
         ...newHistory,
@@ -600,7 +559,8 @@ export default function KnowledgeBase() {
       const words = fullAnswer.split(" ");
 
       for (let i = 0; i < words.length; i++) {
-        currentText += (i === 0 ? "" : " ") + words[i];
+        currentText +=
+          (i === 0 ? "" : " ") + words[i];
 
         setChatMessages([
           ...newHistory,
@@ -611,13 +571,19 @@ export default function KnowledgeBase() {
           },
         ]);
 
-        await new Promise((resolve) => setTimeout(resolve, 25));
+        await new Promise((resolve) =>
+          setTimeout(resolve, 25)
+        );
       }
     } catch (err) {
-      console.error("Ask Document AI Error:", err);
+      console.error(
+        "Ask Document AI Error:",
+        err
+      );
 
       const errorMsg =
-        err.response?.data?.msg || "Failed to generate AI answer.";
+        err.response?.data?.msg ||
+        "Failed to generate AI answer.";
 
       setAiError(errorMsg);
 
@@ -673,11 +639,14 @@ export default function KnowledgeBase() {
   const handleExportChat = () => {
     if (chatMessages.length === 0) return;
 
-    let markdownContent = `# Knowledge Base AI Chat Export\n\n`;
+    let markdownContent =
+      `# Knowledge Base AI Chat Export\n\n`;
 
     chatMessages.forEach((msg) => {
       markdownContent += `### ${
-        msg.role === "user" ? "You" : "AI Assistant"
+        msg.role === "user"
+          ? "You"
+          : "AI Assistant"
       }\n${msg.content}\n\n`;
     });
 
@@ -691,7 +660,10 @@ export default function KnowledgeBase() {
 
     link.href = url;
 
-    link.setAttribute("download", `chat-export-${Date.now()}.md`);
+    link.setAttribute(
+      "download",
+      `chat-export-${Date.now()}.md`
+    );
 
     document.body.appendChild(link);
 
@@ -701,75 +673,57 @@ export default function KnowledgeBase() {
 
     URL.revokeObjectURL(url);
 
-    toast.success("Chat exported successfully!", {
-      className: styles.successToast,
-      iconTheme: {
-        primary: "#16a34a",
-        secondary: "#dcfce7",
-      },
-    });
+    toast.success(
+      "Chat exported successfully!",
+      {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      }
+    );
   };
 
   // ==========================================
-  // SAVE NOTE
-  // ==========================================
-
-  const handleSaveNote = (chunkKey) => {
-    if (!activeNoteText.trim()) return;
-
-    setUserNotes((prev) => ({
-      ...prev,
-      [chunkKey]: activeNoteText.trim(),
-    }));
-
-    setActiveNoteText("");
-
-    toast.success("Note saved successfully for this chunk!", {
-      className: styles.successToast,
-      iconTheme: {
-        primary: "#16a34a",
-        secondary: "#dcfce7",
-      },
-    });
-  };
-
-  // ==========================================
-  // RESULT SCORE
-  // ==========================================
-
-  const getResultScore = (result) => {
-    if (!result) return null;
-
-    return result.relevance ?? result.similarity ?? null;
-  };
-
-  // ==========================================
-  // JSX
+  // RENDER
   // ==========================================
 
   return (
     <div className={styles.contentArea}>
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+      />
 
       {/* ========================================
           TOP BANNER
       ======================================== */}
 
       <div className={styles.bannerCard}>
-        <span className={styles.bannerTag}>KNOWLEDGE BASE & AI RAG</span>
+        <span className={styles.bannerTag}>
+          KNOWLEDGE BASE & AI RAG
+        </span>
 
-        <h1 className={styles.bannerTitle}>Private Document library</h1>
+        <h1 className={styles.bannerTitle}>
+          Private Document library
+        </h1>
 
         <p className={styles.bannerDesc}>
-          Upload study or reference PDFs and TXT files. Run semantic search
-          across single or all documents, chat with streaming AI, take notes,
+          Upload study or reference PDFs and TXT
+          files. Run semantic search across single
+          or all documents, chat with streaming AI,
           and export sessions.
         </p>
       </div>
 
       {/* ERROR */}
 
-      {errorMessage && <div className={styles.errorBanner}>{errorMessage}</div>}
+      {errorMessage && (
+        <div className={styles.errorBanner}>
+          {errorMessage}
+        </div>
+      )}
 
       <div className={styles.splitGrid}>
         {/* ========================================
@@ -777,127 +731,17 @@ export default function KnowledgeBase() {
         ======================================== */}
 
         <div className={styles.leftColumn}>
-          <div className={styles.libraryCard}>
-            <h3 className={styles.cardTitle}>Library</h3>
-
-            <p className={styles.cardSubtitle}>
-              Add and manage your reference files.
-            </p>
-
-            {/* ======================================
-                ALL DOCUMENTS
-            ====================================== */}
-
-            <button
-              type="button"
-              onClick={() => handleSelectDoc(null)}
-              className={
-                selectedDoc === null
-                  ? styles.allDocumentsActive
-                  : styles.allDocumentsButton
-              }
-            >
-              <div className={styles.allDocumentsLeft}>
-                <LibraryBig
-                  size={18}
-                  className={
-                    selectedDoc === null
-                      ? styles.allDocumentsIconActive
-                      : styles.allDocumentsIcon
-                  }
-                />
-
-                <span>All Documents(Cross-Search & Chat)</span>
-              </div>
-
-              <span
-                className={
-                  selectedDoc === null
-                    ? styles.activeDocumentBadge
-                    : styles.selectDocumentBadge
-                }
-              >
-                {selectedDoc === null ? "Active" : "Click to select"}
-              </span>
-            </button>
-
-            {/* ======================================
-                UPLOAD
-            ====================================== */}
-
-            <div className={styles.uploadDashedBox}>
-              <p className={styles.uploadInstruction}>
-                Accepted format: PDF, TXT.
-              </p>
-
-              <div className={styles.uploadControls}>
-                <label className={styles.chooseFileBtn}>
-                  <FilePlus2 size={15} />
-                  Choose file
-                  <input
-                    type="file"
-                    accept=".pdf,.txt,application/pdf,text/plain"
-                    onChange={handleFileChange}
-                    className={styles.hiddenFileInput}
-                  />
-                </label>
-
-                <button
-                  className={styles.uploadBtn}
-                  onClick={handleUpload}
-                  disabled={!selectedFile || isUploading}
-                >
-                  <CloudUpload size={15} />
-
-                  {isUploading ? "Uploading..." : "Upload"}
-                </button>
-              </div>
-
-              <span className={styles.fileNameDisplay}>
-                {selectedFile ? selectedFile.name : "No file selected."}
-              </span>
-            </div>
-
-            {/* ======================================
-                DOCUMENTS
-            ====================================== */}
-
-            {isLoading ? (
-              <p className={styles.statusText}>Loading your library...</p>
-            ) : documents.length === 0 ? (
-              <p className={styles.emptyListText}>
-                Your library is empty. Upload a file to begin.
-              </p>
-            ) : (
-              <div className={styles.documentsList}>
-                {documents.map((doc) => (
-                  <div
-                    key={doc.document_id}
-                    className={`${styles.documentItem} ${
-                      selectedDoc?.document_id === doc.document_id
-                        ? styles.selectedItem
-                        : ""
-                    }`}
-                    onClick={() => handleSelectDoc(doc)}
-                  >
-                    <div className={styles.docInfo}>
-                      <span className={styles.docName}>{doc.filename}</span>
-
-                      <span className={styles.readyBadge}>READY</span>
-                    </div>
-
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={(e) => handleDelete(doc.document_id, e)}
-                      title="Delete"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <LibrarySection
+            documents={documents}
+            selectedDoc={selectedDoc}
+            selectedFile={selectedFile}
+            isLoading={isLoading}
+            isUploading={isUploading}
+            handleFileChange={handleFileChange}
+            handleUpload={handleUpload}
+            handleDelete={handleDelete}
+            handleSelectDoc={handleSelectDoc}
+          />
         </div>
 
         {/* ========================================
@@ -905,523 +749,35 @@ export default function KnowledgeBase() {
         ======================================== */}
 
         <div className={styles.rightColumn}>
-          {/* ======================================
-              READER
-          ====================================== */}
-
-          {selectedDoc ? (
-            <div className={styles.activeReaderContainer}>
-              <div className={styles.readerSection}>
-                <div className={styles.readerHeader}>
-                  <div>
-                    <h3 className={styles.sectionTitle}>
-                      Reader ({selectedDoc.filename})
-                    </h3>
-
-                    <p className={styles.sectionSubtitle}>Interactive Viewer</p>
-                  </div>
-
-                  {highlightedChunk !== null && (
-                    <button
-                      onClick={() => setHighlightedChunk(null)}
-                      className={styles.clearHighlightBtn}
-                    >
-                      Clear Chunk Highlight
-                    </button>
-                  )}
-                </div>
-
-                {/* ==================================
-                    PDF / TXT READER
-                ================================== */}
-
-                <div className={styles.pdfViewerContainer}>
-                  {selectedDoc.filename?.toLowerCase().endsWith(".txt") ? (
-                    isLoadingText ? (
-                      <div className={styles.txtLoading}>
-                        Loading document...
-                      </div>
-                    ) : textContent ? (
-                      <pre className={styles.txtReader}>{textContent}</pre>
-                    ) : (
-                      <div className={styles.txtLoading}>
-                        No text content found.
-                      </div>
-                    )
-                  ) : (
-                    <iframe
-                      src={`http://localhost:5000/${selectedDoc.file_path}`}
-                      title={selectedDoc.filename}
-                      className={styles.pdfIframe}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className={styles.sectionDivider} />
-            </div>
-          ) : (
-            <div className={styles.allDocumentsModeBanner}>
-              <WandSparkles size={16} className={styles.allDocumentsModeIcon} />
-
-              <span>
-                <strong>All Documents Mode Active:</strong> You are currently
-                searching and chatting across your entire library collection.
-              </span>
-            </div>
-          )}
-
-          {/* ======================================
-              SEMANTIC SEARCH
-          ====================================== */}
-
-          <div className={styles.featureSection}>
-            <h3 className={styles.sectionTitle}>Semantic search</h3>
-
-            <p className={styles.sectionSubtitle}>
-              Find passages by contextual meaning.
-            </p>
-
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Search query</label>
-
-              <input
-                type="text"
-                className={styles.textInput}
-                placeholder="Enter keywords or concepts..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isSearching && searchQuery.trim()) {
-                    handleSemanticSearch();
-                  }
-                }}
-              />
-            </div>
-
-            <button
-              className={styles.actionOrangeBtn}
-              onClick={handleSemanticSearch}
-              disabled={isSearching || !searchQuery.trim()}
-            >
-              <ScanSearch size={14} />
-
-              {isSearching ? "Searching..." : "Search"}
-            </button>
-
-            {/* SEARCH ERROR */}
-
-            {searchError && (
-              <div className={styles.searchErrorBanner}>{searchError}</div>
-            )}
-
-            {/* SEARCH MESSAGE */}
-
-            {searchMessage && (
-              <div className={styles.searchMessageBanner}>
-                <span>
-                  <TriangleAlert size={18} />
-                </span>
-
-                <span>{searchMessage}</span>
-              </div>
-            )}
-
-            {/* ====================================
-                SEARCH RESULTS
-            ==================================== */}
-
-            {searchResults.length > 0 && (
-              <div className={styles.searchResultsContainer}>
-                <div className={styles.searchResultsHeader}>
-                  <div className={styles.searchResultsTitle}>
-                    <ChartNoAxesCombined
-                      size={16}
-                      className={styles.blueIcon}
-                    />
-
-                    <strong>Search Results</strong>
-                  </div>
-
-                  <span className={styles.resultCount}>
-                    {searchResults.length} result
-                    {searchResults.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-
-                {searchResults.map((result, index) => {
-                  const score = getResultScore(result);
-
-                  const chunkIdx = result.chunkIndex ?? index;
-
-                  const chunkKey = `${
-                    result.documentId || selectedDoc?.document_id || "doc"
-                  }-${chunkIdx}`;
-
-                  const isSelected =
-                    selectedResult?.chunkId === result.chunkId ||
-                    selectedResult === result;
-
-                  const isExpanded = expandedChunks[chunkKey] || false;
-
-                  return (
-                    <div
-                      key={result.chunkId ?? chunkKey}
-                      className={
-                        isSelected
-                          ? styles.searchResultCardSelected
-                          : styles.searchResultCard
-                      }
-                    >
-                      {/* ACCORDION HEADER */}
-
-                      <div
-                        className={styles.resultHeader}
-                        onClick={(e) => {
-                          handleSelectResult(result);
-
-                          toggleChunkExpand(chunkKey, e);
-                        }}
-                      >
-                        <span className={styles.resultChunkTitle}>
-                          Chunk {chunkIdx}
-                          {score !== undefined &&
-                            score !== null &&
-                            ` • relevance ${score}`}
-                        </span>
-
-                        <div className={styles.chatHeaderButtons}>
-                          <span
-                            className={
-                              isSelected
-                                ? styles.resultSelectedText
-                                : styles.resultInspectText
-                            }
-                          >
-                            {isSelected ? "Selected" : "Click to inspect"}
-                          </span>
-
-                          {isExpanded ? (
-                            <ChevronUp size={16} />
-                          ) : (
-                            <ChevronDown size={16} />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* ACCORDION CONTENT */}
-
-                      {isExpanded && (
-                        <div>
-                          <div className={styles.searchResultContent}>
-                            {renderMarkdown(result.content)}
-                          </div>
-
-                          {/* NOTE */}
-
-                          {userNotes[chunkKey] && (
-                            <div className={styles.noteDisplay}>
-                              <strong>My Note: </strong>
-
-                              {userNotes[chunkKey]}
-                            </div>
-                          )}
-
-                          {/* NOTE INPUT */}
-
-                          <div
-                            className={styles.noteInputRow}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="text"
-                              placeholder="Add private note for this chunk..."
-                              value={activeNoteText}
-                              onChange={(e) =>
-                                setActiveNoteText(e.target.value)
-                              }
-                              className={styles.noteInput}
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => handleSaveNote(chunkKey)}
-                              className={styles.saveNoteBtn}
-                            >
-                              <NotebookPen size={12} />
-                              Save Note
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ====================================
-                SELECTED RESULT
-            ==================================== */}
-
-            {selectedResult && (
-              <div className={styles.selectedResultPanel}>
-                <div className={styles.selectedResultHeader}>
-                  <div className={styles.selectedResultTitleArea}>
-                    <DatabaseZap size={19} className={styles.blueIcon} />
-
-                    <div>
-                      <h3 className={styles.selectedResultTitle}>
-                        Selected Search Result
-                      </h3>
-
-                      <p className={styles.selectedResultSubtitle}>
-                        Detailed semantic search information
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedResult(null);
-                      setHighlightedChunk(null);
-                    }}
-                    className={styles.closeButton}
-                  >
-                    <CircleX size={13} />
-                    Close
-                  </button>
-                </div>
-
-                {/* METADATA */}
-
-                <div className={styles.metadataGrid}>
-                  <div className={styles.metadataCard}>
-                    <div className={styles.metadataLabel}>CHUNK</div>
-
-                    <strong className={styles.metadataValue}>
-                      {selectedResult.chunkIndex ?? "N/A"}
-                    </strong>
-                  </div>
-
-                  <div className={styles.metadataCard}>
-                    <div className={styles.metadataLabel}>RELEVANCE</div>
-
-                    <strong className={styles.metadataRelevance}>
-                      {getResultScore(selectedResult) ?? "N/A"}
-                    </strong>
-                  </div>
-
-                  <div className={styles.metadataCard}>
-                    <div className={styles.metadataLabel}>CHUNK ID</div>
-
-                    <strong className={styles.metadataChunkId}>
-                      {selectedResult.chunkId ?? "N/A"}
-                    </strong>
-                  </div>
-                </div>
-
-                {/* DOCUMENT */}
-
-                <div className={styles.documentInformation}>
-                  <strong>Document:</strong>{" "}
-                  {selectedDoc?.filename || "All Documents"}
-                </div>
-
-                {/* CONTENT */}
-
-                <div>
-                  <h4 className={styles.contentTitle}>Retrieved Content</h4>
-
-                  <div className={styles.retrievedContent}>
-                    {renderMarkdown(selectedResult.content)}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ======================================
-              AI CHAT
-          ====================================== */}
-
-          <div className={styles.sectionDivider} />
-
-          <div className={styles.featureSection}>
-            <div className={styles.chatHeader}>
-              <div>
-                <h3 className={styles.sectionTitle}>Interactive AI Chat</h3>
-
-                <p className={styles.sectionSubtitle}>
-                  Ask follow-up questions with streaming answers grounded in
-                  library.
-                </p>
-              </div>
-
-              <div className={styles.chatHeaderButtons}>
-                {chatMessages.length > 0 && (
-                  <>
-                    <button
-                      onClick={handleExportChat}
-                      className={styles.exportButton}
-                      title="Export Chat as Markdown"
-                    >
-                      <FileDown size={12} />
-                      Export
-                    </button>
-
-                    <button
-                      onClick={handleResetChat}
-                      className={styles.clearButton}
-                    >
-                      <RefreshCw size={12} />
-                      Clear
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* CHAT HISTORY */}
-
-            {chatMessages.length > 0 && (
-              <div className={styles.chatHistory}>
-                {chatMessages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={
-                      msg.role === "user"
-                        ? styles.userChatMessage
-                        : styles.assistantChatMessage
-                    }
-                  >
-                    <div className={styles.chatMessageHeader}>
-                      <span
-                        className={
-                          msg.role === "user"
-                            ? styles.userMessageLabel
-                            : styles.assistantMessageLabel
-                        }
-                      >
-                        {msg.role === "user" ? "You" : "AI Assistant Response"}
-                      </span>
-
-                      {msg.role === "assistant" && (
-                        <button
-                          type="button"
-                          onClick={() => handleCopyAnswer(msg.content, index)}
-                          className={
-                            copiedIndex === index
-                              ? styles.copyButtonCopied
-                              : styles.copyButton
-                          }
-                        >
-                          {copiedIndex === index ? (
-                            <>
-                              <BadgeCheck size={13} />
-
-                              <span>Copied!</span>
-                            </>
-                          ) : (
-                            <>
-                              <CopyCheck size={13} />
-
-                              <span>Copy</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-
-                    <div className={styles.chatMarkdownContent}>
-                      {renderMarkdown(msg.content)}
-                    </div>
-
-                    {/* SOURCES */}
-
-                    {msg.sources && msg.sources.length > 0 && (
-                      <div className={styles.sourcesContainer}>
-                        <strong>Source references: </strong>
-
-                        {msg.sources.map((source, sIdx) => {
-                          const sChunkIdx = source.chunkIndex ?? sIdx;
-
-                          return (
-                            <span
-                              key={source.chunkId || sIdx}
-                              onClick={() => {
-                                setHighlightedChunk(sChunkIdx);
-
-                                const matchingResult = searchResults.find(
-                                  (result) => result.chunkId === source.chunkId,
-                                );
-
-                                if (matchingResult) {
-                                  setSelectedResult(matchingResult);
-
-                                  const matchKey = `${
-                                    matchingResult.documentId ||
-                                    selectedDoc?.document_id ||
-                                    "doc"
-                                  }-${sChunkIdx}`;
-
-                                  setExpandedChunks((prev) => ({
-                                    ...prev,
-                                    [matchKey]: true,
-                                  }));
-                                }
-                              }}
-                              className={styles.sourceLink}
-                              title="Click to inspect source chunk"
-                            >
-                              [{sIdx + 1}] (chunk {sChunkIdx})
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                <div ref={chatEndRef} />
-              </div>
-            )}
-
-            {/* QUESTION INPUT */}
-
-            <form onSubmit={handleAskAI} className={styles.aiQuestionForm}>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>
-                  Follow-up or Question
-                </label>
-
-                <textarea
-                  rows={3}
-                  className={styles.textareaInput}
-                  placeholder="Ask a question or request a follow-up across your library..."
-                  value={aiQuestion}
-                  onChange={(e) => setAiQuestion(e.target.value)}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className={styles.actionOrangeBtn}
-                disabled={isAskingAI || !aiQuestion.trim()}
-              >
-                {isAskingAI ? (
-                  <WandSparkles size={14} className={styles.spin} />
-                ) : (
-                  <MessageCircle size={14} />
-                )}
-
-                {isAskingAI ? "Thinking & Streaming..." : "Ask AI"}
-              </button>
-            </form>
-
-            {aiError && <div className={styles.errorBanner}>{aiError}</div>}
-          </div>
+          <RagFeaturesSection
+            selectedDoc={selectedDoc}
+            textContent={textContent}
+            isLoadingText={isLoadingText}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            searchResults={searchResults}
+            isSearching={isSearching}
+            searchError={searchError}
+            searchMessage={searchMessage}
+            selectedResult={selectedResult}
+            setSelectedResult={setSelectedResult}
+            expandedChunks={expandedChunks}
+            setExpandedChunks={setExpandedChunks}
+            handleSelectResult={handleSelectResult}
+            toggleChunkExpand={toggleChunkExpand}
+            handleSemanticSearch={handleSemanticSearch}
+            chatMessages={chatMessages}
+            aiQuestion={aiQuestion}
+            setAiQuestion={setAiQuestion}
+            isAskingAI={isAskingAI}
+            aiError={aiError}
+            copiedIndex={copiedIndex}
+            handleAskAI={handleAskAI}
+            handleCopyAnswer={handleCopyAnswer}
+            handleResetChat={handleResetChat}
+            handleExportChat={handleExportChat}
+            chatEndRef={chatEndRef}
+          />
         </div>
       </div>
     </div>
