@@ -3,9 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import rehypeRaw from "rehype-raw";
-import toast, { Toaster } from "react-hot-toast";
 import { apiClient } from "../../services/core/api.client.js";
-
 import {
   CloudUpload,
   FilePlus2,
@@ -19,21 +17,12 @@ import {
   FileDown,
   NotebookPen,
   LibraryBig,
-  CircleX,
-  DatabaseZap,
   ChartNoAxesCombined,
   TriangleAlert,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
-
 import styles from "./knowledgeBase.module.css";
 
 export default function KnowledgeBase() {
-  // ==========================================
-  // DOCUMENT STATES
-  // ==========================================
-
   const [documents, setDocuments] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -42,74 +31,35 @@ export default function KnowledgeBase() {
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // ==========================================
-  // TXT READER STATES
-  // ==========================================
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [showPdf, setShowPdf] = useState(true);
 
-  const [textContent, setTextContent] = useState("");
-  const [isLoadingText, setIsLoadingText] = useState(false);
-
-  // ==========================================
-  // SEARCH STATES
-  // ==========================================
-
+  // Search
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeWorkspace, setActiveWorkspace] = useState("search");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [searchMessage, setSearchMessage] = useState("");
 
+  // Selected search result
   const [selectedResult, setSelectedResult] = useState(null);
 
-  // ==========================================
-  // COLLAPSIBLE CHUNKS
-  // ==========================================
-
-  const [expandedChunks, setExpandedChunks] = useState({});
-
-  const toggleChunkExpand = (chunkKey, e) => {
-    e?.stopPropagation();
-
-    setExpandedChunks((prev) => ({
-      ...prev,
-      [chunkKey]: !prev[chunkKey],
-    }));
-  };
-
-  // ==========================================
-  // AI CHAT STATES
-  // ==========================================
-
+  // AI Chat
   const [chatMessages, setChatMessages] = useState([]);
   const [aiQuestion, setAiQuestion] = useState("");
   const [isAskingAI, setIsAskingAI] = useState(false);
   const [aiError, setAiError] = useState("");
-
   const [copiedIndex, setCopiedIndex] = useState(null);
 
-  // ==========================================
-  // HIGHLIGHTED CHUNK
-  // ==========================================
-
+  // Highlight
   const [highlightedChunk, setHighlightedChunk] = useState(null);
-
-  // ==========================================
-  // NOTES
-  // ==========================================
-
-  const [userNotes, setUserNotes] = useState({});
-  const [activeNoteText, setActiveNoteText] = useState("");
-
-  // ==========================================
-  // CHAT SCROLL REF
-  // ==========================================
 
   const chatEndRef = useRef(null);
 
-  // ==========================================
-  // MARKDOWN RENDERER
-  // ==========================================
-
+  /*
+   * Render Markdown content
+   */
   const renderMarkdown = (content) => {
     return (
       <div className={styles.markdownContent}>
@@ -123,20 +73,18 @@ export default function KnowledgeBase() {
     );
   };
 
-  // ==========================================
-  // AUTO SCROLL CHAT
-  // ==========================================
-
+  /*
+   * Keep AI chat scrolled to the latest message
+   */
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [chatMessages, isAskingAI]);
 
-  // ==========================================
-  // FETCH DOCUMENTS
-  // ==========================================
-
+  /*
+   * Fetch documents from the backend
+   */
   async function fetchDocuments() {
     try {
       setIsLoading(true);
@@ -147,33 +95,26 @@ export default function KnowledgeBase() {
       setDocuments(res.data || []);
     } catch (err) {
       console.error("Error loading documents:", err);
-
       setErrorMessage("Could not load documents.");
-
-      toast.error("Could not load documents.", {
-        className: styles.errorToast,
-        iconTheme: {
-          primary: "#dc2626",
-          secondary: "#fee2e2",
-        },
-      });
     } finally {
       setIsLoading(false);
     }
   }
 
-  // ==========================================
-  // LOAD DOCUMENTS ON COMPONENT MOUNT
-  // ==========================================
-
+  /*
+   * Load documents when page opens
+   */
   useEffect(() => {
-    fetchDocuments();
+    const loadDocuments = async () => {
+      await fetchDocuments();
+    };
+
+    loadDocuments();
   }, []);
 
-  // ==========================================
-  // FILE CHANGE
-  // ==========================================
-
+  /*
+   * Handle file selection
+   */
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -186,33 +127,17 @@ export default function KnowledgeBase() {
       const isTxt = file.type === "text/plain" || fileName.endsWith(".txt");
 
       if (!isPdf && !isTxt) {
-        toast.error("Please select a valid PDF or TXT file.", {
-          className: styles.errorToast,
-          iconTheme: {
-            primary: "#dc2626",
-            secondary: "#fee2e2",
-          },
-        });
-
+        alert("Please select a valid PDF or TXT file.");
         return;
       }
 
       setSelectedFile(file);
-
-      toast.success(`File selected: ${file.name}`, {
-        className: styles.successToast,
-        iconTheme: {
-          primary: "#16a34a",
-          secondary: "#dcfce7",
-        },
-      });
     }
   };
 
-  // ==========================================
-  // UPLOAD DOCUMENT
-  // ==========================================
-
+  /*
+   * Upload selected document
+   */
   const handleUpload = async () => {
     if (!selectedFile) return;
 
@@ -232,134 +157,66 @@ export default function KnowledgeBase() {
 
       setSelectedFile(null);
 
-      toast.success("Document uploaded successfully!", {
-        className: styles.successToast,
-        iconTheme: {
-          primary: "#16a34a",
-          secondary: "#dcfce7",
-        },
-      });
-
       await fetchDocuments();
     } catch (err) {
       console.error("Upload Error:", err);
 
       const message = err.response?.data?.msg || "Failed to upload document.";
 
-      toast.error(message, {
-        className: styles.errorToast,
-        iconTheme: {
-          primary: "#dc2626",
-          secondary: "#fee2e2",
-        },
-      });
+      alert(message);
     } finally {
       setIsUploading(false);
     }
   };
 
-  // ==========================================
-  // DELETE DOCUMENT
-  // ==========================================
-
-  const handleDelete = (docId, e) => {
+  /*
+   * Delete document
+   */
+  const handleDelete = async (docId, e) => {
     e.stopPropagation();
 
-    toast(
-      (t) => (
-        <div className={styles.confirmToastContainer}>
-          <span className={styles.confirmToastText}>
-            Are you sure you want to delete this document?
-          </span>
-
-          <div className={styles.confirmToastActions}>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className={styles.confirmCancelBtn}
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={async () => {
-                toast.dismiss(t.id);
-
-                try {
-                  await apiClient.delete(`/api/rag/documents/${docId}`);
-
-                  if (selectedDoc?.document_id === docId) {
-                    setSelectedDoc(null);
-                    setSelectedResult(null);
-
-                    setTextContent("");
-                    setIsLoadingText(false);
-
-                    setSearchQuery("");
-                    setSearchResults([]);
-                    setSearchError("");
-                    setSearchMessage("");
-
-                    setChatMessages([]);
-                    setAiQuestion("");
-                    setAiError("");
-
-                    setHighlightedChunk(null);
-                    setExpandedChunks({});
-                  }
-
-                  setDocuments((prev) =>
-                    prev.filter((doc) => doc.document_id !== docId),
-                  );
-
-                  toast.success("Document deleted successfully.", {
-                    className: styles.successToast,
-                    iconTheme: {
-                      primary: "#16a34a",
-                      secondary: "#dcfce7",
-                    },
-                  });
-                } catch (err) {
-                  console.error("Delete Error:", err);
-
-                  const message =
-                    err.response?.data?.msg || "Failed to delete document.";
-
-                  toast.error(message, {
-                    className: styles.errorToast,
-                    iconTheme: {
-                      primary: "#dc2626",
-                      secondary: "#fee2e2",
-                    },
-                  });
-                }
-              }}
-              className={styles.confirmDeleteBtn}
-            >
-              Yes, Delete
-            </button>
-          </div>
-        </div>
-      ),
-      {
-        duration: Infinity,
-        position: "top-center",
-        className: styles.customToastStyle,
-      },
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this document?",
     );
+
+    if (!confirmed) return;
+
+    try {
+      await apiClient.delete(`/api/rag/documents/${docId}`);
+
+      if (selectedDoc?.document_id === docId) {
+        setSelectedDoc(null);
+
+        setSelectedResult(null);
+
+        setSearchQuery("");
+        setSearchResults([]);
+        setSearchError("");
+        setSearchMessage("");
+
+        setChatMessages([]);
+        setAiQuestion("");
+        setAiError("");
+
+        setHighlightedChunk(null);
+      }
+
+      setDocuments((prev) => prev.filter((doc) => doc.document_id !== docId));
+    } catch (err) {
+      console.error("Delete Error:", err);
+
+      const message = err.response?.data?.msg || "Failed to delete document.";
+
+      alert(message);
+    }
   };
 
-  // ==========================================
-  // SELECT DOCUMENT
-  // ==========================================
-
+  /*
+   * Select document
+   */
   const handleSelectDoc = (doc) => {
     setSelectedDoc(doc);
 
-    // Clear TXT Reader
-    setTextContent("");
-    setIsLoadingText(false);
-
-    // Clear previous search
     setSearchQuery("");
     setSearchResults([]);
     setSelectedResult(null);
@@ -367,100 +224,34 @@ export default function KnowledgeBase() {
     setSearchError("");
     setSearchMessage("");
 
-    setExpandedChunks({});
-
-    // Clear previous chat
     setChatMessages([]);
     setAiQuestion("");
     setAiError("");
 
-    // Clear highlighted chunk
     setHighlightedChunk(null);
+
+    if (doc) {
+      setIsPreviewLoading(true);
+
+      setTimeout(() => {
+        setIsPreviewLoading(false);
+      }, 600);
+    }
   };
 
-  // ==========================================
-  // LOAD TXT CONTENT FOR READER
-  // ==========================================
-
-  useEffect(() => {
-    const loadTxtContent = async () => {
-      if (!selectedDoc) {
-        setTextContent("");
-        return;
-      }
-
-      const isTxt = selectedDoc.filename?.toLowerCase().endsWith(".txt");
-
-      // If selected document is PDF,
-      // do not load TXT content.
-      if (!isTxt) {
-        setTextContent("");
-        return;
-      }
-
-      try {
-        setIsLoadingText(true);
-
-        const fileUrl = `http://localhost:5000/${selectedDoc.file_path}`;
-
-        console.log("Loading TXT Reader:", fileUrl);
-
-        const response = await fetch(fileUrl);
-
-        if (!response.ok) {
-          throw new Error(`Failed to load TXT file: ${response.status}`);
-        }
-
-        const text = await response.text();
-
-        console.log("TXT content loaded:", text);
-
-        setTextContent(text);
-      } catch (error) {
-        console.error("TXT Reader Error:", error);
-
-        setTextContent("");
-
-        toast.error("Could not load TXT file.", {
-          className: styles.errorToast,
-          iconTheme: {
-            primary: "#dc2626",
-            secondary: "#fee2e2",
-          },
-        });
-      } finally {
-        setIsLoadingText(false);
-      }
-    };
-
-    loadTxtContent();
-  }, [selectedDoc]);
-
-  // ==========================================
-  // SELECT SEARCH RESULT
-  // ==========================================
-
+  /*
+   * Select search result
+   */
   const handleSelectResult = (result) => {
     const chunkIdx = result.chunkIndex ?? null;
 
-    const chunkKey = `${
-      result.documentId || selectedDoc?.document_id || "doc"
-    }-${chunkIdx}`;
-
     setSelectedResult(result);
-
     setHighlightedChunk(chunkIdx);
-
-    setExpandedChunks((prev) => ({
-      ...prev,
-      [chunkKey]: true,
-    }));
   };
 
-  // ==========================================
-  // SEMANTIC SEARCH
-  // ==========================================
-
+  /*
+   * Semantic search
+   */
   const handleSemanticSearch = async () => {
     if (!searchQuery.trim()) return;
 
@@ -471,74 +262,46 @@ export default function KnowledgeBase() {
       setSearchResults([]);
       setSelectedResult(null);
       setSearchMessage("");
-      setExpandedChunks({});
 
       const payload = {
-        question: searchQuery.trim(),
+        query: searchQuery.trim(),
       };
 
       if (selectedDoc) {
         payload.documentId = selectedDoc.document_id;
       }
-      
 
-      const res = await apiClient.post("/api/rag/ask", payload);
-
+      const res = await apiClient.post("/api/rag/search", payload);
+      console.log("res", res.data)
       if (res.data?.message) {
         setSearchMessage(res.data.message);
         setSearchResults([]);
       } else {
-        const results = res.data?.sources || [];
+        const results = res.data?.results || [];
+
         setSearchResults(results);
         setSearchMessage("");
 
         if (results.length > 0) {
           setSelectedResult(results[0]);
 
-          const firstChunkKey = `${
-            results[0].documentId || selectedDoc?.document_id || "doc"
-          }-${results[0].chunkIndex ?? 0}`;
-
-          setExpandedChunks({
-            [firstChunkKey]: true,
-          });
-
           setHighlightedChunk(results[0].chunkIndex ?? 0);
-
-          toast.success(`Found ${results.length} matching results.`, {
-            className: styles.successToast,
-            iconTheme: {
-              primary: "#16a34a",
-              secondary: "#dcfce7",
-            },
-          });
-        } else {
-          toast("No matching results found.");
         }
       }
     } catch (err) {
-      
-      const errorMsg =
-        err.response?.data?.msg || "Failed to perform semantic search.";
+      console.error("Semantic Search Error:", err);
 
-      setSearchError(errorMsg);
-
-      toast.error(errorMsg, {
-        className: styles.errorToast,
-        iconTheme: {
-          primary: "#dc2626",
-          secondary: "#fee2e2",
-        },
-      });
+      setSearchError(
+        err.response?.data?.msg || "Failed to perform semantic search.",
+      );
     } finally {
       setIsSearching(false);
     }
   };
 
-  // ==========================================
-  // ASK AI
-  // ==========================================
-
+  /*
+   * Ask AI
+   */
   const handleAskAI = async (e) => {
     e?.preventDefault();
 
@@ -578,14 +341,6 @@ export default function KnowledgeBase() {
 
       const sources = res.data?.sources || [];
 
-      toast.success("AI answer generated successfully!", {
-        className: styles.successToast,
-        iconTheme: {
-          primary: "#16a34a",
-          secondary: "#dcfce7",
-        },
-      });
-
       setChatMessages([
         ...newHistory,
         {
@@ -616,69 +371,46 @@ export default function KnowledgeBase() {
     } catch (err) {
       console.error("Ask Document AI Error:", err);
 
-      const errorMsg =
-        err.response?.data?.msg || "Failed to generate AI answer.";
-
-      setAiError(errorMsg);
-
-      toast.error(errorMsg, {
-        className: styles.errorToast,
-        iconTheme: {
-          primary: "#dc2626",
-          secondary: "#fee2e2",
-        },
-      });
+      setAiError(err.response?.data?.msg || "Failed to generate AI answer.");
     } finally {
       setIsAskingAI(false);
     }
   };
 
-  // ==========================================
-  // COPY ANSWER
-  // ==========================================
-
+  /*
+   * Copy AI answer
+   */
   const handleCopyAnswer = (textToCopy, index) => {
     navigator.clipboard.writeText(textToCopy);
 
     setCopiedIndex(index);
-
-    toast.success("Copied to clipboard!", {
-      className: styles.successToast,
-      iconTheme: {
-        primary: "#16a34a",
-        secondary: "#dcfce7",
-      },
-    });
 
     setTimeout(() => {
       setCopiedIndex(null);
     }, 2000);
   };
 
-  // ==========================================
-  // RESET CHAT
-  // ==========================================
-
+  /*
+   * Reset chat
+   */
   const handleResetChat = () => {
     setChatMessages([]);
     setAiError("");
-
-    toast("Chat cleared.");
   };
 
-  // ==========================================
-  // EXPORT CHAT
-  // ==========================================
-
+  /*
+   * Export chat
+   */
   const handleExportChat = () => {
-    if (chatMessages.length === 0) return;
+    if (chatMessages.length === 0) {
+      return;
+    }
 
     let markdownContent = `# Knowledge Base AI Chat Export\n\n`;
 
     chatMessages.forEach((msg) => {
-      markdownContent += `### ${
-        msg.role === "user" ? "You" : "AI Assistant"
-      }\n${msg.content}\n\n`;
+      markdownContent += `### ${msg.role === "user" ? "You" : "AI Assistant"
+        }\n${msg.content}\n\n`;
     });
 
     const blob = new Blob([markdownContent], {
@@ -700,60 +432,24 @@ export default function KnowledgeBase() {
     document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
-
-    toast.success("Chat exported successfully!", {
-      className: styles.successToast,
-      iconTheme: {
-        primary: "#16a34a",
-        secondary: "#dcfce7",
-      },
-    });
   };
 
-  // ==========================================
-  // SAVE NOTE
-  // ==========================================
 
-  const handleSaveNote = (chunkKey) => {
-    if (!activeNoteText.trim()) return;
 
-    setUserNotes((prev) => ({
-      ...prev,
-      [chunkKey]: activeNoteText.trim(),
-    }));
-
-    setActiveNoteText("");
-
-    toast.success("Note saved successfully for this chunk!", {
-      className: styles.successToast,
-      iconTheme: {
-        primary: "#16a34a",
-        secondary: "#dcfce7",
-      },
-    });
-  };
-
-  // ==========================================
-  // RESULT SCORE
-  // ==========================================
-
+  /*
+   * Get search result score
+   */
   const getResultScore = (result) => {
     if (!result) return null;
 
     return result.relevance ?? result.similarity ?? null;
   };
 
-  // ==========================================
-  // JSX
-  // ==========================================
-
   return (
     <div className={styles.contentArea}>
-      <Toaster position="top-right" reverseOrder={false} />
-
-      {/* ========================================
+      {/* ==================================================
           TOP BANNER
-      ======================================== */}
+          ================================================== */}
 
       <div className={styles.bannerCard}>
         <span className={styles.bannerTag}>KNOWLEDGE BASE & AI RAG</span>
@@ -767,14 +463,18 @@ export default function KnowledgeBase() {
         </p>
       </div>
 
-      {/* ERROR */}
+      {/* GENERAL ERROR */}
 
       {errorMessage && <div className={styles.errorBanner}>{errorMessage}</div>}
 
+      {/* ==================================================
+          MAIN TWO-COLUMN LAYOUT
+          ================================================== */}
+
       <div className={styles.splitGrid}>
-        {/* ========================================
+        {/* ==================================================
             LEFT COLUMN
-        ======================================== */}
+            ================================================== */}
 
         <div className={styles.leftColumn}>
           <div className={styles.libraryCard}>
@@ -784,9 +484,7 @@ export default function KnowledgeBase() {
               Add and manage your reference files.
             </p>
 
-            {/* ======================================
-                ALL DOCUMENTS
-            ====================================== */}
+            {/* ALL DOCUMENTS */}
 
             <button
               type="button"
@@ -807,7 +505,7 @@ export default function KnowledgeBase() {
                   }
                 />
 
-                <span>All Documents(Cross-Search & Chat)</span>
+                <span>All Documents (Cross-Search & Chat)</span>
               </div>
 
               <span
@@ -821,9 +519,7 @@ export default function KnowledgeBase() {
               </span>
             </button>
 
-            {/* ======================================
-                UPLOAD
-            ====================================== */}
+            {/* UPLOAD */}
 
             <div className={styles.uploadDashedBox}>
               <p className={styles.uploadInstruction}>
@@ -843,6 +539,7 @@ export default function KnowledgeBase() {
                 </label>
 
                 <button
+                  type="button"
                   className={styles.uploadBtn}
                   onClick={handleUpload}
                   disabled={!selectedFile || isUploading}
@@ -858,9 +555,7 @@ export default function KnowledgeBase() {
               </span>
             </div>
 
-            {/* ======================================
-                DOCUMENTS
-            ====================================== */}
+            {/* DOCUMENT LIST */}
 
             {isLoading ? (
               <p className={styles.statusText}>Loading your library...</p>
@@ -873,20 +568,20 @@ export default function KnowledgeBase() {
                 {documents.map((doc) => (
                   <div
                     key={doc.document_id}
-                    className={`${styles.documentItem} ${
-                      selectedDoc?.document_id === doc.document_id
-                        ? styles.selectedItem
-                        : ""
-                    }`}
+                    className={`${styles.documentItem} ${selectedDoc?.document_id === doc.document_id
+                      ? styles.selectedItem
+                      : ""
+                      }`}
                     onClick={() => handleSelectDoc(doc)}
                   >
                     <div className={styles.docInfo}>
-                      <span className={styles.docName}>{doc.filename}</span>
+                      <span className={styles.docName}>{doc.title}</span>
 
                       <span className={styles.readyBadge}>READY</span>
                     </div>
 
                     <button
+                      type="button"
                       className={styles.deleteBtn}
                       onClick={(e) => handleDelete(doc.document_id, e)}
                       title="Delete"
@@ -900,14 +595,14 @@ export default function KnowledgeBase() {
           </div>
         </div>
 
-        {/* ========================================
+        {/* ==================================================
             RIGHT COLUMN
-        ======================================== */}
+            ================================================== */}
 
         <div className={styles.rightColumn}>
-          {/* ======================================
+          {/* ==================================================
               READER
-          ====================================== */}
+              ================================================== */}
 
           {selectedDoc ? (
             <div className={styles.activeReaderContainer}>
@@ -915,52 +610,56 @@ export default function KnowledgeBase() {
                 <div className={styles.readerHeader}>
                   <div>
                     <h3 className={styles.sectionTitle}>
-                      Reader ({selectedDoc.filename})
+                      Reader ({selectedDoc.title})
                     </h3>
 
                     <p className={styles.sectionSubtitle}>Interactive Viewer</p>
                   </div>
 
-                  {highlightedChunk !== null && (
+                  <div className={styles.readerHeaderActions}>
+                    {highlightedChunk !== null && (
+                      <button
+                        type="button"
+                        onClick={() => setHighlightedChunk(null)}
+                        className={styles.clearHighlightBtn}
+                      >
+                        Clear Chunk Highlight
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => setHighlightedChunk(null)}
-                      className={styles.clearHighlightBtn}
+                      type="button"
+                      className={styles.pdfHideButton}
+                      onClick={() => setShowPdf((prev) => !prev)}
                     >
-                      Clear Chunk Highlight
+                      {showPdf ? "Hide" : "Show"}
                     </button>
-                  )}
+                  </div>
                 </div>
 
-                {/* ==================================
-                    PDF / TXT READER
-                ================================== */}
+                {/* PDF VIEWER */}
 
-                <div className={styles.pdfViewerContainer}>
-                  {selectedDoc.filename?.toLowerCase().endsWith(".txt") ? (
-                    isLoadingText ? (
-                      <div className={styles.txtLoading}>
-                        Loading document...
-                      </div>
-                    ) : textContent ? (
-                      <pre className={styles.txtReader}>{textContent}</pre>
-                    ) : (
-                      <div className={styles.txtLoading}>
-                        No text content found.
-                      </div>
-                    )
+                {showPdf &&
+                  (isPreviewLoading ? (
+                    <div className={styles.readerBoxPlaceholder}>
+                      Loading document preview...
+                    </div>
                   ) : (
-                    <iframe
-                      src={`http://localhost:5000/${selectedDoc.file_path}`}
-                      title={selectedDoc.filename}
-                      className={styles.pdfIframe}
-                    />
-                  )}
-                </div>
+                    <div className={styles.pdfViewerContainer}>
+                      <iframe
+                        src={`http://localhost:3777/${selectedDoc.storage_path}`}
+                        title="Document Preview"
+                        className={styles.pdfIframe}
+                      />
+                    </div>
+                  ))}
               </div>
 
               <div className={styles.sectionDivider} />
             </div>
           ) : (
+            /* ALL DOCUMENTS MODE */
+
             <div className={styles.allDocumentsModeBanner}>
               <WandSparkles size={16} className={styles.allDocumentsModeIcon} />
 
@@ -971,456 +670,385 @@ export default function KnowledgeBase() {
             </div>
           )}
 
-          {/* ======================================
-              SEMANTIC SEARCH
-          ====================================== */}
+          {/* ==================================================
+              KNOWLEDGE WORKSPACE
+              ================================================== */}
 
-          <div className={styles.featureSection}>
-            <h3 className={styles.sectionTitle}>Semantic search</h3>
+          <div className={styles.knowledgeWorkspace}>
+            {/* ==================================================
+                TABS
+                ================================================== */}
 
-            <p className={styles.sectionSubtitle}>
-              Find passages by contextual meaning.
-            </p>
+            <div className={styles.tabs}>
+              {/* SEARCH TAB */}
 
-            <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Search query</label>
+              <button
+                type="button"
+                className={
+                  activeWorkspace === "search"
+                    ? `${styles.tab} ${styles.tabActive}`
+                    : styles.tab
+                }
+                onClick={() => setActiveWorkspace("search")}
+              >
+                <ScanSearch size={15} />
+                Search
+              </button>
 
-              <input
-                type="text"
-                className={styles.textInput}
-                placeholder="Enter keywords or concepts..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isSearching && searchQuery.trim()) {
-                    handleSemanticSearch();
-                  }
-                }}
-              />
+              {/* ASK AI TAB */}
+
+              <button
+                type="button"
+                className={
+                  activeWorkspace === "ai"
+                    ? `${styles.tab} ${styles.tabActive}`
+                    : styles.tab
+                }
+                onClick={() => setActiveWorkspace("ai")}
+              >
+                <WandSparkles size={15} />
+                Ask AI
+              </button>
             </div>
 
-            <button
-              className={styles.actionOrangeBtn}
-              onClick={handleSemanticSearch}
-              disabled={isSearching || !searchQuery.trim()}
-            >
-              <ScanSearch size={14} />
+            {/* ==================================================
+                SEARCH WORKSPACE
+                ================================================== */}
 
-              {isSearching ? "Searching..." : "Search"}
-            </button>
+            {activeWorkspace === "search" && (
+              <section className={styles.workspaceCard}>
+                {/* SEARCH HEADER */}
 
-            {/* SEARCH ERROR */}
+                <div className={styles.cardHead}>
+                  <div>
+                    <h3 className={styles.cardTitle}>Semantic Search</h3>
 
-            {searchError && (
-              <div className={styles.searchErrorBanner}>{searchError}</div>
-            )}
-
-            {/* SEARCH MESSAGE */}
-
-            {searchMessage && (
-              <div className={styles.searchMessageBanner}>
-                <span>
-                  <TriangleAlert size={18} />
-                </span>
-
-                <span>{searchMessage}</span>
-              </div>
-            )}
-
-            {/* ====================================
-                SEARCH RESULTS
-            ==================================== */}
-
-            {searchResults.length > 0 && (
-              <div className={styles.searchResultsContainer}>
-                <div className={styles.searchResultsHeader}>
-                  <div className={styles.searchResultsTitle}>
-                    <ChartNoAxesCombined
-                      size={16}
-                      className={styles.blueIcon}
-                    />
-
-                    <strong>Search Results</strong>
+                    <p className={styles.cardSub}>
+                      Find passages by contextual meaning.
+                    </p>
                   </div>
-
-                  <span className={styles.resultCount}>
-                    {searchResults.length} result
-                    {searchResults.length !== 1 ? "s" : ""}
-                  </span>
                 </div>
 
-                {searchResults.map((result, index) => {
-                  const score = getResultScore(result);
+                {/* SEARCH INPUT */}
 
-                  const chunkIdx = result.chunkIndex ?? index;
+                <div className={styles.searchRow}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.inputLabel}>Search query</label>
 
-                  const chunkKey = `${
-                    result.documentId || selectedDoc?.document_id || "doc"
-                  }-${chunkIdx}`;
-
-                  const isSelected =
-                    selectedResult?.chunkId === result.chunkId ||
-                    selectedResult === result;
-
-                  const isExpanded = expandedChunks[chunkKey] || false;
-
-                  return (
-                    <div
-                      key={result.chunkId ?? chunkKey}
-                      className={
-                        isSelected
-                          ? styles.searchResultCardSelected
-                          : styles.searchResultCard
-                      }
-                    >
-                      {/* ACCORDION HEADER */}
-
-                      <div
-                        className={styles.resultHeader}
-                        onClick={(e) => {
-                          handleSelectResult(result);
-
-                          toggleChunkExpand(chunkKey, e);
-                        }}
-                      >
-                        <span className={styles.resultChunkTitle}>
-                          Chunk {chunkIdx}
-                          {score !== undefined &&
-                            score !== null &&
-                            ` • relevance ${score}`}
-                        </span>
-
-                        <div className={styles.chatHeaderButtons}>
-                          <span
-                            className={
-                              isSelected
-                                ? styles.resultSelectedText
-                                : styles.resultInspectText
-                            }
-                          >
-                            {isSelected ? "Selected" : "Click to inspect"}
-                          </span>
-
-                          {isExpanded ? (
-                            <ChevronUp size={16} />
-                          ) : (
-                            <ChevronDown size={16} />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* ACCORDION CONTENT */}
-
-                      {isExpanded && (
-                        <div>
-                          <div className={styles.searchResultContent}>
-                            {renderMarkdown(result.content)}
-                          </div>
-
-                          {/* NOTE */}
-
-                          {userNotes[chunkKey] && (
-                            <div className={styles.noteDisplay}>
-                              <strong>My Note: </strong>
-
-                              {userNotes[chunkKey]}
-                            </div>
-                          )}
-
-                          {/* NOTE INPUT */}
-
-                          <div
-                            className={styles.noteInputRow}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="text"
-                              placeholder="Add private note for this chunk..."
-                              value={activeNoteText}
-                              onChange={(e) =>
-                                setActiveNoteText(e.target.value)
-                              }
-                              className={styles.noteInput}
-                            />
-
-                            <button
-                              type="button"
-                              onClick={() => handleSaveNote(chunkKey)}
-                              className={styles.saveNoteBtn}
-                            >
-                              <NotebookPen size={12} />
-                              Save Note
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ====================================
-                SELECTED RESULT
-            ==================================== */}
-
-            {selectedResult && (
-              <div className={styles.selectedResultPanel}>
-                <div className={styles.selectedResultHeader}>
-                  <div className={styles.selectedResultTitleArea}>
-                    <DatabaseZap size={19} className={styles.blueIcon} />
-
-                    <div>
-                      <h3 className={styles.selectedResultTitle}>
-                        Selected Search Result
-                      </h3>
-
-                      <p className={styles.selectedResultSubtitle}>
-                        Detailed semantic search information
-                      </p>
-                    </div>
+                    <input
+                      type="text"
+                      className={styles.textInput}
+                      placeholder="Enter keywords or concepts..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (
+                          e.key === "Enter" &&
+                          !isSearching &&
+                          searchQuery.trim()
+                        ) {
+                          handleSemanticSearch();
+                        }
+                      }}
+                    />
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setSelectedResult(null);
-                      setHighlightedChunk(null);
-                    }}
-                    className={styles.closeButton}
+                    className={styles.primaryBtn}
+                    onClick={handleSemanticSearch}
+                    disabled={isSearching || !searchQuery.trim()}
                   >
-                    <CircleX size={13} />
-                    Close
+                    <ScanSearch size={14} />
+
+                    {isSearching ? "Searching..." : "Search"}
                   </button>
                 </div>
 
-                {/* METADATA */}
+                {/* SEARCH ERROR */}
 
-                <div className={styles.metadataGrid}>
-                  <div className={styles.metadataCard}>
-                    <div className={styles.metadataLabel}>CHUNK</div>
-
-                    <strong className={styles.metadataValue}>
-                      {selectedResult.chunkIndex ?? "N/A"}
-                    </strong>
-                  </div>
-
-                  <div className={styles.metadataCard}>
-                    <div className={styles.metadataLabel}>RELEVANCE</div>
-
-                    <strong className={styles.metadataRelevance}>
-                      {getResultScore(selectedResult) ?? "N/A"}
-                    </strong>
-                  </div>
-
-                  <div className={styles.metadataCard}>
-                    <div className={styles.metadataLabel}>CHUNK ID</div>
-
-                    <strong className={styles.metadataChunkId}>
-                      {selectedResult.chunkId ?? "N/A"}
-                    </strong>
-                  </div>
-                </div>
-
-                {/* DOCUMENT */}
-
-                <div className={styles.documentInformation}>
-                  <strong>Document:</strong>{" "}
-                  {selectedDoc?.filename || "All Documents"}
-                </div>
-
-                {/* CONTENT */}
-
-                <div>
-                  <h4 className={styles.contentTitle}>Retrieved Content</h4>
-
-                  <div className={styles.retrievedContent}>
-                    {renderMarkdown(selectedResult.content)}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ======================================
-              AI CHAT
-          ====================================== */}
-
-          <div className={styles.sectionDivider} />
-
-          <div className={styles.featureSection}>
-            <div className={styles.chatHeader}>
-              <div>
-                <h3 className={styles.sectionTitle}>Interactive AI Chat</h3>
-
-                <p className={styles.sectionSubtitle}>
-                  Ask follow-up questions with streaming answers grounded in
-                  library.
-                </p>
-              </div>
-
-              <div className={styles.chatHeaderButtons}>
-                {chatMessages.length > 0 && (
-                  <>
-                    <button
-                      onClick={handleExportChat}
-                      className={styles.exportButton}
-                      title="Export Chat as Markdown"
-                    >
-                      <FileDown size={12} />
-                      Export
-                    </button>
-
-                    <button
-                      onClick={handleResetChat}
-                      className={styles.clearButton}
-                    >
-                      <RefreshCw size={12} />
-                      Clear
-                    </button>
-                  </>
+                {searchError && (
+                  <div className={styles.searchErrorBanner}>{searchError}</div>
                 )}
-              </div>
-            </div>
 
-            {/* CHAT HISTORY */}
+                {/* SEARCH MESSAGE */}
 
-            {chatMessages.length > 0 && (
-              <div className={styles.chatHistory}>
-                {chatMessages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={
-                      msg.role === "user"
-                        ? styles.userChatMessage
-                        : styles.assistantChatMessage
-                    }
-                  >
-                    <div className={styles.chatMessageHeader}>
-                      <span
-                        className={
-                          msg.role === "user"
-                            ? styles.userMessageLabel
-                            : styles.assistantMessageLabel
-                        }
-                      >
-                        {msg.role === "user" ? "You" : "AI Assistant Response"}
+                {searchMessage && (
+                  <div className={styles.searchMessageBanner}>
+                    <TriangleAlert size={18} className={styles.warningIcon} />
+
+                    <span>{searchMessage}</span>
+                  </div>
+                )}
+
+                {/* ==================================================
+                    SEARCH RESULTS
+                    ================================================== */}
+
+                {searchResults.length > 0 && (
+                  <div className={styles.results}>
+                    <div className={styles.resultsMeta}>
+                      <div className={styles.searchResultsTitle}>
+                        <ChartNoAxesCombined
+                          size={16}
+                          className={styles.blueIcon}
+                        />
+
+                        <strong>Search Results</strong>
+                      </div>
+
+                      <span className={styles.resultCount}>
+                        {Math.min(searchResults.length, 5)} result
+                        {Math.min(searchResults.length, 5) !== 1 ? "s" : ""}
                       </span>
+                    </div>
 
-                      {msg.role === "assistant" && (
-                        <button
-                          type="button"
-                          onClick={() => handleCopyAnswer(msg.content, index)}
+                    {/* RESULT CARDS */}
+
+                    {searchResults.slice(0, 5).map((result, index) => {
+                      const score = getResultScore(result);
+
+                      const chunkIdx = result.chunkIndex ?? index;
+
+                      const chunkKey = `${result.documentId || selectedDoc?.document_id || "doc"
+                        }-${chunkIdx}`;
+
+                      const isSelected =
+                        selectedResult?.chunkId === result.chunkId ||
+                        selectedResult === result;
+
+                      return (
+                        <div
+                          key={result.chunkId ?? chunkKey}
+                          onClick={() => handleSelectResult(result)}
                           className={
-                            copiedIndex === index
-                              ? styles.copyButtonCopied
-                              : styles.copyButton
+                            isSelected
+                              ? `${styles.result} ${styles.resultActive}`
+                              : styles.result
                           }
                         >
-                          {copiedIndex === index ? (
-                            <>
-                              <BadgeCheck size={13} />
+                          {/* RESULT HEADER */}
 
-                              <span>Copied!</span>
-                            </>
-                          ) : (
-                            <>
-                              <CopyCheck size={13} />
-
-                              <span>Copy</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-
-                    <div className={styles.chatMarkdownContent}>
-                      {renderMarkdown(msg.content)}
-                    </div>
-
-                    {/* SOURCES */}
-
-                    {msg.sources && msg.sources.length > 0 && (
-                      <div className={styles.sourcesContainer}>
-                        <strong>Source references: </strong>
-
-                        {msg.sources.map((source, sIdx) => {
-                          const sChunkIdx = source.chunkIndex ?? sIdx;
-
-                          return (
-                            <span
-                              key={source.chunkId || sIdx}
-                              onClick={() => {
-                                setHighlightedChunk(sChunkIdx);
-
-                                const matchingResult = searchResults.find(
-                                  (result) => result.chunkId === source.chunkId,
-                                );
-
-                                if (matchingResult) {
-                                  setSelectedResult(matchingResult);
-
-                                  const matchKey = `${
-                                    matchingResult.documentId ||
-                                    selectedDoc?.document_id ||
-                                    "doc"
-                                  }-${sChunkIdx}`;
-
-                                  setExpandedChunks((prev) => ({
-                                    ...prev,
-                                    [matchKey]: true,
-                                  }));
-                                }
-                              }}
-                              className={styles.sourceLink}
-                              title="Click to inspect source chunk"
-                            >
-                              [{sIdx + 1}] (chunk {sChunkIdx})
+                          <div className={styles.resultHead}>
+                            <span>
+                              Chunk {chunkIdx}
+                              {score !== undefined &&
+                                score !== null &&
+                                ` • relevance ${score}`}
                             </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ))}
 
-                <div ref={chatEndRef} />
-              </div>
+                            <span className={styles.score}>
+                              {isSelected ? "Selected" : "Select"}
+                            </span>
+                          </div>
+
+                          {/* RESULT CONTENT */}
+
+                          <div className={styles.searchResultContent}>
+                            {renderMarkdown(result.content)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
             )}
 
-            {/* QUESTION INPUT */}
+            {/* ==================================================
+                ASK AI WORKSPACE
+                ================================================== */}
 
-            <form onSubmit={handleAskAI} className={styles.aiQuestionForm}>
-              <div className={styles.inputGroup}>
-                <label className={styles.inputLabel}>
-                  Follow-up or Question
-                </label>
+            {activeWorkspace === "ai" && (
+              <section className={styles.workspaceCard}>
+                {/* AI HEADER */}
 
-                <textarea
-                  rows={3}
-                  className={styles.textareaInput}
-                  placeholder="Ask a question or request a follow-up across your library..."
-                  value={aiQuestion}
-                  onChange={(e) => setAiQuestion(e.target.value)}
-                />
-              </div>
+                <div className={styles.cardHead}>
+                  <div>
+                    <h3 className={styles.cardTitle}>Interactive AI Chat</h3>
 
-              <button
-                type="submit"
-                className={styles.actionOrangeBtn}
-                disabled={isAskingAI || !aiQuestion.trim()}
-              >
-                {isAskingAI ? (
-                  <WandSparkles size={14} className={styles.spin} />
-                ) : (
-                  <MessageCircle size={14} />
+                    <p className={styles.cardSub}>
+                      Ask follow-up questions with streaming answers grounded in
+                      your library.
+                    </p>
+                  </div>
+
+                  {/* CHAT ACTIONS */}
+
+                  <div className={styles.chatActions}>
+                    {chatMessages.length > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleExportChat}
+                          className={styles.ghostBtn}
+                          title="Export Chat as Markdown"
+                        >
+                          <FileDown size={12} />
+                          Export
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleResetChat}
+                          className={styles.ghostBtn}
+                        >
+                          <RefreshCw size={12} />
+                          Clear
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* ==================================================
+                    CHAT HISTORY
+                    ================================================== */}
+
+                {chatMessages.length > 0 && (
+                  <div className={styles.chatList}>
+                    {chatMessages.map((msg, index) => (
+                      <div
+                        key={index}
+                        className={
+                          msg.role === "user" ? styles.msgUser : styles.msgAi
+                        }
+                      >
+                        {/* MESSAGE HEADER */}
+
+                        <div className={styles.chatMessageHeader}>
+                          <span
+                            className={
+                              msg.role === "user"
+                                ? styles.userMessageLabel
+                                : styles.assistantMessageLabel
+                            }
+                          >
+                            {msg.role === "user"
+                              ? "You"
+                              : "AI Assistant Response"}
+                          </span>
+
+                          {/* COPY */}
+
+                          {msg.role === "assistant" && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCopyAnswer(msg.content, index)
+                              }
+                              className={
+                                copiedIndex === index
+                                  ? styles.copyBtnCopied
+                                  : styles.copyBtn
+                              }
+                            >
+                              {copiedIndex === index ? (
+                                <>
+                                  <BadgeCheck size={13} />
+
+                                  <span>Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CopyCheck size={13} />
+
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* MESSAGE */}
+
+                        <div className={styles.markdown}>
+                          {renderMarkdown(msg.content)}
+                        </div>
+
+                        {/* SOURCES */}
+
+                        {msg.sources && msg.sources.length > 0 && (
+                          <div className={styles.msgFoot}>
+                            <strong className={styles.sourcesLabel}>
+                              Source references:
+                            </strong>
+
+                            {msg.sources.map((source, sIdx) => {
+                              const sChunkIdx = source.chunkIndex ?? sIdx;
+
+                              return (
+                                <span
+                                  key={source.chunkId || sIdx}
+                                  onClick={() => {
+                                    setHighlightedChunk(sChunkIdx);
+
+                                    const matchingResult = searchResults.find(
+                                      (result) =>
+                                        result.chunkId === source.chunkId,
+                                    );
+
+                                    if (matchingResult) {
+                                      setSelectedResult(matchingResult);
+                                    }
+                                  }}
+                                  className={styles.sourceChip}
+                                  title="Click to inspect source chunk"
+                                >
+                                  [{sIdx + 1}] (chunk {sChunkIdx})
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    <div ref={chatEndRef} />
+                  </div>
                 )}
 
-                {isAskingAI ? "Thinking & Streaming..." : "Ask AI"}
-              </button>
-            </form>
+                {/* ==================================================
+                    ASK AI INPUT
+                    ================================================== */}
 
-            {aiError && <div className={styles.errorBanner}>{aiError}</div>}
+                <form onSubmit={handleAskAI} className={styles.askRow}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.inputLabel}>
+                      Follow-up or Question
+                    </label>
+
+                    <textarea
+                      rows={3}
+                      className={styles.textarea}
+                      placeholder="Ask a question or request a follow-up across your library..."
+                      value={aiQuestion}
+                      onChange={(e) => setAiQuestion(e.target.value)}
+                    />
+                  </div>
+
+                  {/* ASK AI BUTTON */}
+
+                  <button
+                    type="submit"
+                    className={styles.primaryBtn}
+                    disabled={isAskingAI || !aiQuestion.trim()}
+                  >
+                    {isAskingAI ? (
+                      <WandSparkles size={14} className={styles.spin} />
+                    ) : (
+                      <MessageCircle size={14} />
+                    )}
+
+                    {isAskingAI ? "Thinking & Streaming..." : "Ask AI"}
+                  </button>
+                </form>
+
+                {/* AI ERROR */}
+
+                {aiError && <div className={styles.errorBanner}>{aiError}</div>}
+              </section>
+            )}
           </div>
         </div>
       </div>

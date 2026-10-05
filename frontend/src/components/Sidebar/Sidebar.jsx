@@ -76,11 +76,11 @@ export default function Sidebar({ isOpen, onClose }) {
 
           {/* Profile & Logout Section */}
           <div className={styles.profileWrapper}>
-            <Link to="/profile/update" onClick={onClose} className={styles.profileLinkSection}>
+            <Link to="/profile" onClick={onClose} className={styles.profileLinkSection}>
               <div className={styles.avatar}>{initials}</div>
               <div className={styles.profileInfo}>
                 <span className={styles.profileName}>{fullName}</span>
-               
+
               </div>
             </Link>
 
@@ -90,7 +90,7 @@ export default function Sidebar({ isOpen, onClose }) {
               onClick={logoutUser}
               title="Logout"
             >
-               <span className={styles.logoutText}>Log Out</span>
+              <span className={styles.logoutText}>Log Out</span>
               <LogOut size={18} />
             </button>
           </div>
