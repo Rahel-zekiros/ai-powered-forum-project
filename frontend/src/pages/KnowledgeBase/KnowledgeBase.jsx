@@ -9,6 +9,10 @@ import RagFeaturesSection from "./RagFeaturesSection";
 import styles from "./knowledgeBase.module.css";
 
 export default function KnowledgeBase() {
+  // ==========================================
+  // DOCUMENT STATES
+  // ==========================================
+
   const [documents, setDocuments] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -17,18 +21,23 @@ export default function KnowledgeBase() {
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [showPdf, setShowPdf] = useState(true);
+  // ==========================================
+  // TXT READER STATES
+  // ==========================================
 
-  // Search
+  const [textContent, setTextContent] = useState("");
+  const [isLoadingText, setIsLoadingText] = useState(false);
+
+  // ==========================================
+  // SEARCH STATES
+  // ==========================================
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeWorkspace, setActiveWorkspace] = useState("search");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [searchMessage, setSearchMessage] = useState("");
 
-  // Selected search result
   const [selectedResult, setSelectedResult] = useState(null);
 
   // ==========================================
@@ -51,6 +60,7 @@ const toggleChunkExpand = (chunkKey, e) => {
   const [aiQuestion, setAiQuestion] = useState("");
   const [isAskingAI, setIsAskingAI] = useState(false);
   const [aiError, setAiError] = useState("");
+
   const [copiedIndex, setCopiedIndex] = useState(null);
 
   // ==========================================
@@ -73,19 +83,28 @@ const toggleChunkExpand = (chunkKey, e) => {
       setDocuments(res.data || []);
     } catch (err) {
       console.error("Error loading documents:", err);
+
       setErrorMessage("Could not load documents.");
+
+      toast.error("Could not load documents.", {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsLoading(false);
     }
   }
 
-  /*
-   * Load documents when page opens
-   */
+  // ==========================================
+  // LOAD DOCUMENTS ON COMPONENT MOUNT
+  // ==========================================
+
   useEffect(() => {
-    const loadDocuments = async () => {
-      await fetchDocuments();
-    };
+    fetchDocuments();
+  }, []);
 
   // ==========================================
   // AUTO SCROLL CHAT
@@ -101,9 +120,6 @@ const toggleChunkExpand = (chunkKey, e) => {
   // FILE CHANGE
   // ==========================================
 
-  /*
-   * Handle file selection
-   */
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -117,17 +133,33 @@ const toggleChunkExpand = (chunkKey, e) => {
         file.type === "text/plain" || fileName.endsWith(".txt");
 
       if (!isPdf && !isTxt) {
-        alert("Please select a valid PDF or TXT file.");
+        toast.error("Please select a valid PDF or TXT file.", {
+          className: styles.errorToast,
+          iconTheme: {
+            primary: "#dc2626",
+            secondary: "#fee2e2",
+          },
+        });
+
         return;
       }
 
       setSelectedFile(file);
+
+      toast.success(`File selected: ${file.name}`, {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
     }
   };
 
-  /*
-   * Upload selected document
-   */
+  // ==========================================
+  // UPLOAD DOCUMENT
+  // ==========================================
+
   const handleUpload = async () => {
     if (!selectedFile) return;
 
@@ -147,6 +179,14 @@ const toggleChunkExpand = (chunkKey, e) => {
 
       setSelectedFile(null);
 
+      toast.success("Document uploaded successfully!", {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
+
       await fetchDocuments();
     } catch (err) {
       console.error("Upload Error:", err);
@@ -154,42 +194,60 @@ const toggleChunkExpand = (chunkKey, e) => {
       const message =
         err.response?.data?.msg || "Failed to upload document.";
 
-      alert(message);
+      toast.error(message, {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsUploading(false);
     }
   };
 
-  /*
-   * Delete document
-   */
-  const handleDelete = async (docId, e) => {
+  // ==========================================
+  // DELETE DOCUMENT
+  // ==========================================
+
+  const handleDelete = (docId, e) => {
     e.stopPropagation();
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this document?",
-    );
+    toast(
+      (t) => (
+        <div className={styles.confirmToastContainer}>
+          <span className={styles.confirmToastText}>
+            Are you sure you want to delete this document?
+          </span>
 
-    if (!confirmed) return;
+          <div className={styles.confirmToastActions}>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className={styles.confirmCancelBtn}
+            >
+              Cancel
+            </button>
 
-    try {
-      await apiClient.delete(`/api/rag/documents/${docId}`);
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
 
                 try {
                   await apiClient.delete(
                     `/api/rag/documents/${docId}`
                   );
 
-        setSelectedResult(null);
+                  if (selectedDoc?.document_id === docId) {
+                    setSelectedDoc(null);
+                    setSelectedResult(null);
 
-        setSearchQuery("");
-        setSearchResults([]);
-        setSearchError("");
-        setSearchMessage("");
+                    setTextContent("");
+                    setIsLoadingText(false);
 
-        setChatMessages([]);
-        setAiQuestion("");
-        setAiError("");
+                    setSearchQuery("");
+                    setSearchResults([]);
+                    setSearchError("");
+                    setSearchMessage("");
 
                     setChatMessages([]);
                     setAiQuestion("");
@@ -244,16 +302,18 @@ const toggleChunkExpand = (chunkKey, e) => {
     );
   };
 
-      alert(message);
-    }
-  };
+  // ==========================================
+  // SELECT DOCUMENT
+  // ==========================================
 
-  /*
-   * Select document
-   */
   const handleSelectDoc = (doc) => {
     setSelectedDoc(doc);
 
+    // Clear TXT Reader
+    setTextContent("");
+    setIsLoadingText(false);
+
+    // Clear previous search
     setSearchQuery("");
     setSearchResults([]);
     setSelectedResult(null);
@@ -261,6 +321,9 @@ const toggleChunkExpand = (chunkKey, e) => {
     setSearchError("");
     setSearchMessage("");
 
+    setExpandedChunks({});
+
+    // Clear previous chat
     setChatMessages([]);
     setAiQuestion("");
     setAiError("");
@@ -323,9 +386,6 @@ try {
   // SELECT SEARCH RESULT
   // ==========================================
 
-  /*
-   * Select search result
-   */
   const handleSelectResult = (result) => {
     const chunkIdx = result.chunkIndex ?? null;
 
@@ -343,9 +403,10 @@ try {
     }));
   };
 
-  /*
-   * Semantic search
-   */
+  // ==========================================
+  // SEMANTIC SEARCH
+  // ==========================================
+
   const handleSemanticSearch = async () => {
     if (!searchQuery.trim()) return;
 
@@ -356,9 +417,10 @@ try {
       setSearchResults([]);
       setSelectedResult(null);
       setSearchMessage("");
+      setExpandedChunks({});
 
       const payload = {
-        query: searchQuery.trim(),
+        question: searchQuery.trim(),
       };
 
       if (selectedDoc) {
@@ -370,8 +432,6 @@ try {
         payload
       );
 
-      const res = await apiClient.post("/api/rag/search", payload);
-      console.log("res", res.data)
       if (res.data?.message) {
         setSearchMessage(res.data.message);
         setSearchResults([]);
@@ -413,17 +473,24 @@ try {
         err.response?.data?.msg ||
         "Failed to perform semantic search.";
 
-      setSearchError(
-        err.response?.data?.msg || "Failed to perform semantic search.",
-      );
+      setSearchError(errorMsg);
+
+      toast.error(errorMsg, {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsSearching(false);
     }
   };
 
-  /*
-   * Ask AI
-   */
+  // ==========================================
+  // ASK AI
+  // ==========================================
+
   const handleAskAI = async (e) => {
     e?.preventDefault();
 
@@ -532,34 +599,45 @@ try {
     }
   };
 
-  /*
-   * Copy AI answer
-   */
+  // ==========================================
+  // COPY ANSWER
+  // ==========================================
+
   const handleCopyAnswer = (textToCopy, index) => {
     navigator.clipboard.writeText(textToCopy);
 
     setCopiedIndex(index);
+
+    toast.success("Copied to clipboard!", {
+      className: styles.successToast,
+      iconTheme: {
+        primary: "#16a34a",
+        secondary: "#dcfce7",
+      },
+    });
 
     setTimeout(() => {
       setCopiedIndex(null);
     }, 2000);
   };
 
-  /*
-   * Reset chat
-   */
+  // ==========================================
+  // RESET CHAT
+  // ==========================================
+
   const handleResetChat = () => {
     setChatMessages([]);
     setAiError("");
+
+    toast("Chat cleared.");
   };
 
-  /*
-   * Export chat
-   */
+  // ==========================================
+  // EXPORT CHAT
+  // ==========================================
+
   const handleExportChat = () => {
-    if (chatMessages.length === 0) {
-      return;
-    }
+    if (chatMessages.length === 0) return;
 
     let markdownContent =
       `# Knowledge Base AI Chat Export\n\n`;
@@ -588,7 +666,7 @@ try {
     );
 
     document.body.appendChild(link);
-
+{/* <a href="blob:http://localhost:5173/abc123"></a> */}
     link.click();
 
     document.body.removeChild(link);
@@ -620,7 +698,7 @@ try {
 
       {/* ========================================
           TOP BANNER
-          ================================================== */}
+      ======================================== */}
 
       <div className={styles.bannerCard}>
         <span className={styles.bannerTag}>
@@ -639,7 +717,7 @@ try {
         </p>
       </div>
 
-      {/* GENERAL ERROR */}
+      {/* ERROR */}
 
       {errorMessage && (
         <div className={styles.errorBanner}>
@@ -647,14 +725,10 @@ try {
         </div>
       )}
 
-      {/* ==================================================
-          MAIN TWO-COLUMN LAYOUT
-          ================================================== */}
-
       <div className={styles.splitGrid}>
-        {/* ==================================================
+        {/* ========================================
             LEFT COLUMN
-            ================================================== */}
+        ======================================== */}
 
         <div className={styles.leftColumn}>
           <LibrarySection
@@ -670,9 +744,9 @@ try {
           />
         </div>
 
-        {/* ==================================================
+        {/* ========================================
             RIGHT COLUMN
-            ================================================== */}
+        ======================================== */}
 
         <div className={styles.rightColumn}>
           <RagFeaturesSection
