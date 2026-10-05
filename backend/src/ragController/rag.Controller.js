@@ -6,9 +6,9 @@ import {
   askDocument,
   listDocumentsForUserService,
   deleteDocumentService,
-  getDocumentChunks, // 
+  getDocumentChunks,
+  getDocumentFile,
 } from "./rag.Service.js";
-
 
 // Upload and Process Documents  Abduselam
 
@@ -129,7 +129,12 @@ export const deleteDocument = async (req, res) => {
 };
 
 // ==========================================
-// Semantic Search (Updated for Cross-Search)
+// T-21: Semantic Search in RAG Document (DANIEL HAILAY & RAKI)
+//
+// DANIEL'S EXPLANATION FOR PRESENTATION:
+// "When a user searches inside a PDF, this endpoint receives the query, converts it
+// into a vector embedding, and performs cosine similarity against the specific chunks
+// of text extracted from that uploaded PDF document."
 // ==========================================
 
 export const semanticSearch = async (req, res) => {
@@ -146,6 +151,7 @@ export const semanticSearch = async (req, res) => {
   try {
     const result = await searchDocument({
       userId,
+      documentId: documentId || null,
       documentId: documentId || null,
       query: query.trim(),
     });
@@ -184,6 +190,7 @@ export const askDocumentAI = async (req, res) => {
   try {
     const result = await askDocument({
       userId,
+      documentId: documentId || null,
       documentId: documentId || null,
       question: question.trim(),
       history: history || [],
@@ -256,8 +263,6 @@ export const getUserNotes = async (req, res) => {
     });
   }
 };
-<<<<<<< HEAD
-=======
 
 // ==========================================
 // Get Document Chunks (For Interactive Viewer)
@@ -281,4 +286,33 @@ export const getDocumentChunksController = async (req, res, next) => {
     });
   }
 };
->>>>>>> 2a9530c394de906e66756d89276d3529b9b6e6f7
+// ==========================================
+// Get PDF File (For Interactive Viewer)
+// ==========================================
+
+export const getDocumentFileController = async (req, res, next) => {
+  try {
+    const { documentId } = req.params;
+
+    const { filePath, filename } = await getDocumentFile({
+      documentId: Number(documentId),
+      userId: req.user.id,
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+
+    return res.sendFile(filePath);
+  } catch (error) {
+    console.error("Get Document File Error:", error);
+
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return next(error);
+  }
+};

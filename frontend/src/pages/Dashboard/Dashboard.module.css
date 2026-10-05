@@ -39,7 +39,7 @@
 
 .actionCards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 20px;
   margin-bottom: 40px;
 }
@@ -93,7 +93,7 @@
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 40px;
 }
@@ -274,6 +274,63 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+@media (max-width: 700px) {
+  .dashboard {
+    padding: 24px 16px;
+  }
+
+  .topCard {
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .actionCards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .actionCard {
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .statBox {
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .feedHeader {
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .questionCard {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 420px) {
+  .topCard {
+    padding: 16px;
+  }
+
+  .statBox {
+    padding: 12px;
+  }
+
+  .feedHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .yoursBadge {
