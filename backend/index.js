@@ -1,14 +1,8 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
 import { db } from "./db/config.js";
 import { mainRouter } from "./src/api/routes.js";
 import { errorHandler } from "./src/middleware/error-handler.js";
 import cors from "cors";
-import uploadRouter from "./src/api/upload/router.js"; // NEW: image upload route
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -18,17 +12,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Makes files in backend/uploads open in the browser: http://localhost:3888/uploads/<file>
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 // Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
 });
-
-// NEW: POST /api/upload receives an image and returns its URL.
-// Must be BEFORE app.use('/api', mainRouter) so it is matched first.
-app.use("/api/upload", uploadRouter);
 
 app.use("/api", mainRouter);
 

@@ -15,8 +15,8 @@ import { generateQuestionDraftCoachService } from "./geminiTextCoach.service.js"
  * service layer to create the question and generate its embedding.
  */export const createQuestionController = async (req, res, next) => {
    try {
-     // Extract question title, content, and the image link from the request body
-     const { title, content, imageUrl } = req.body; 
+     // Extract question title, content from the request body
+     const { title, content } = req.body; 
  
      // Get the authenticated user's ID from the JWT middleware
      const userId = req.user.id;
@@ -26,7 +26,6 @@ import { generateQuestionDraftCoachService } from "./geminiTextCoach.service.js"
        title,
        content,
        userId,
-       imageUrl, 
      });
  
      // Return a successful 201 Created response
