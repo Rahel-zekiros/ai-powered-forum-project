@@ -21,8 +21,8 @@ export const createQuestionValidation = [
     .optional({ checkFalsy: true }) // OK if missing, null, or empty ""
     .isString()
     .withMessage("Image URL must be a string")
-    .isLength({ max: 500 })
-    .withMessage("Image URL must be at most 500 characters long")
+    .isLength({ min: 5, max: 255 })
+    .withMessage("Image URL must be at most 255  characters long")
     .isURL({ require_tld: false }) // require_tld: false lets http://localhost:3888 pass
     .withMessage("Image URL must be a valid URL"),
 ];
