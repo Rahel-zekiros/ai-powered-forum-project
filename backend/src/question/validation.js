@@ -15,16 +15,6 @@ export const createQuestionValidation = [
     .withMessage("Content must be a string")
     .isLength({ min: 10 })
     .withMessage("Content must be at least 10 characters long"),
-
-  // NEW: the image link is optional
-  body("imageUrl")
-    .optional({ checkFalsy: true }) // OK if missing, null, or empty ""
-    .isString()
-    .withMessage("Image URL must be a string")
-    .isLength({ min: 5, max: 255 })
-    .withMessage("Image URL must be at most 255  characters long")
-    .isURL({ require_tld: false }) // require_tld: false lets http://localhost:3888 pass
-    .withMessage("Image URL must be a valid URL"),
 ];
 
 export const getQuestionsValidation = [
