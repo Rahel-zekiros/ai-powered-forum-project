@@ -51,3 +51,25 @@ export const validateUserLogin = [
   },
   handleValidationErrors,
 ];
+
+export const validatePasswordChange = [
+  (req, res, next) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword) {
+      throw new BadRequestError("Current password is required.");
+    }
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestError("New password must be at least 6 characters long.");
+    }
+    if (!/\d/.test(newPassword)) {
+      throw new BadRequestError("New password must contain at least one number.");
+    }
+    if (currentPassword === newPassword) {
+      throw new BadRequestError("Choose a password different from your current one.");
+    }
+
+    next();
+  },
+  handleValidationErrors,
+];

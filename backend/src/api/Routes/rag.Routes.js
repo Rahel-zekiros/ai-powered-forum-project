@@ -13,7 +13,8 @@ import {
   semanticSearch,
   askDocumentAI,
   listDocumentsController,
-  deleteDocumentController  
+  deleteDocumentController,
+  getDocumentFileController,
 } from '../../ragController/rag.Controller.js';
 
 import { 
@@ -152,6 +153,13 @@ router.delete(
   authMiddleware,
   documentIdParamValidation,
   deleteDocumentController,
+);
+
+router.get(
+  "/documents/:documentId/file",
+  authMiddleware,
+  documentIdParamValidation,
+  getDocumentFileController,
 );
 // GET /api/rag/documents/:documentId/chunks
 router.get(

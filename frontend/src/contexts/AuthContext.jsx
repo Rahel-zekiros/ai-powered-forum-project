@@ -19,9 +19,9 @@ export function AuthProvider({ children }) {
 
       if (savedToken) {
         try {
-            const verifiedUser = await authService.verifyActiveSession();
+          const verifiedUser = await authService.verifyActiveSession();
           setCurrentUser(verifiedUser);
-        } catch (error) {
+        } catch {
           authService.clearSessionData();
           setCurrentUser(null);
         }
@@ -94,6 +94,9 @@ export function AuthProvider({ children }) {
 }
 
 /** Reads the auth context. Throws if called outside <AuthProvider>. */
+// react-refresh only checks component exports in this file; the hook is intentionally
+// shared across modules, so this lint rule is suppressed on the hook export.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const authVal = useContext(AuthContext);
   if (!authVal) {

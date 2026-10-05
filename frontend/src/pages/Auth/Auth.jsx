@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles, Code, ArrowRight, Eye, EyeOff, MessageSquare } from 'lucide-react';
@@ -40,6 +40,14 @@ const validateAuthInput = ({ isSignInMode, email, password, firstName, lastName 
     return null;
 };
 
+const getRememberedEmail = () => {
+    try {
+        return localStorage.getItem('remembered_email') || '';
+    } catch {
+        return '';
+    }
+};
+
 export default function Auth() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -48,22 +56,14 @@ export default function Auth() {
     const [isSignInMode, setIsSignInMode] = useState(true);
     const [fnameInput, setFnameInput] = useState('');
     const [lnameInput, setLnameInput] = useState('');
-    const [emailInput, setEmailInput] = useState('');
+    const [emailInput, setEmailInput] = useState(getRememberedEmail);
     const [passInput, setPassInput] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
+    const [rememberMe, setRememberMe] = useState(() => Boolean(getRememberedEmail()));
     const [isPassVisible, setIsPassVisible] = useState(false);
 
     const [localError, setLocalError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [authSuccessNotice, setAuthSuccessNotice] = useState(null);
-
-    useEffect(() => {
-        const savedEmail = localStorage.getItem('remembered_email');
-        if (savedEmail) {
-            setEmailInput(savedEmail);
-            setRememberMe(true);
-        }
-    }, []);
 
     const toggleAuthMode = () => {
         setIsSignInMode(prev => !prev);

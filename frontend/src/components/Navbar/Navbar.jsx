@@ -1,4 +1,4 @@
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Menu, LogOut, Search, X, Sparkles } from "lucide-react";
 import ThemeToggle from "../ThemeToggle/ThemeToggle";
 import styles from "./Navbar.module.css";
@@ -103,12 +103,13 @@ export default function Navbar({
       {/* User Profile */}
       <div className={styles.userArea}>
         <ThemeToggle />
-        <span className={styles.userName}>
+        <Link to="/profile" className={styles.userName}>
           {user ? `${user.firstName} ${user.lastName}` : "Guest"}
-        </span>
-        <div className={styles.avatarBadge}>
-          {user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : "G"}
-        </div>
+
+          <div className={styles.avatarBadge}>
+            {user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase() : "G"}
+          </div>
+        </Link>
         <button
           type="button"
           className={styles.logoutButton}
