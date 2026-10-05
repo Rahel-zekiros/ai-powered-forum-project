@@ -70,7 +70,7 @@ export const authenticateUserAccount = async ({ email, password }) => {
   const formattedEmail = cleanEmailInput(email);
   const findUserQuery =
     "SELECT user_id, first_name, last_name, email, password_hash FROM users WHERE email = ? LIMIT 1";
-  const matchingUsers = await safeExecute(findUserQuery, [formattedEmail]);// Debugging line
+  const matchingUsers = await safeExecute(findUserQuery, [formattedEmail]);
   if (matchingUsers.length === 0) {
     throw new UnauthenticatedError("Invalid credentials provided.");
   }
@@ -121,4 +121,34 @@ export const fetchUserProfile = async (userId) => {
     lastName: userRecord.last_name,
     email: userRecord.email,
   };
+};
+
+export const updateUserPassword = async ({
+  userId,
+  currentPassword,
+  newPassword,
+}) => {
+  const users = await safeExecute(
+    "SELECT password_hash FROM users WHERE user_id = ? LIMIT 1",
+    [userId],
+  );
+
+  if (users.length === 0) {
+    throw new NotFoundError("User account not found.");
+  }
+
+  const isCurrentPasswordValid = await bcrypt.compare(
+    currentPassword,
+    users[0].password_hash,
+  );
+
+  if (!isCurrentPasswordValid) {
+    throw new BadRequestError("Current password is incorrect.");
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await safeExecute("UPDATE users SET password_hash = ? WHERE user_id = ?", [
+    passwordHash,
+    userId,
+  ]);
 };

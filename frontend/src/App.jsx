@@ -11,6 +11,7 @@ import AskQuestion from "./pages/PostQuestion/PostQuestion";
 // import RagAnswerBody from './components/RagAnswerBody/RagAnswerBody';
 import QuestionDetail from "./pages/QuestionDetail/QuestionDetail";
 import ProfileUpdate from './pages/profileUpdatePage/ProfileUpdate'
+import AccountProfile from './pages/profileUpdatePage/AccountProfile'
 import KnowledgeBase from "./pages/KnowledgeBase/KnowledgeBase";
 function App() {
   return (
@@ -54,6 +55,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <QuestionDetail />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <AccountProfile />
                 </ProtectedRoute>
               }
             />
