@@ -93,14 +93,14 @@ export const getQuestionsService = async ({ search, mine, userId }) => {
          const sourceText = `${title}\n${content}`;
      const embedding = await getEmbedding(sourceText, "RETRIEVAL_DOCUMENT");
  
-     await safeExecute(
-       `
-         INSERT INTO question_vectors
-           (question_id, source_text, embedding, status)
-         VALUES (?, ?, ?, ?)
-       `,
-       [questionId, sourceText, JSON.stringify(embedding), "ready"],
-     );
+    await safeExecute(
+  `
+    INSERT INTO question_vectors
+      (question_id, source_text, embedding_vector, status)
+    VALUES (?, ?, ?, ?)
+  `,
+  [questionId, sourceText, JSON.stringify(embedding), "ready"],
+);
    } catch (error) {
      // If embedding fails, store failed status
      console.error("Question embedding failed:", error);

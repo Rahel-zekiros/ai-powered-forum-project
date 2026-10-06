@@ -20,6 +20,8 @@ export const createEmbedding = async (text) => {
             },
           ],
         },
+          outputDimensionality: 768,
+
       },
       {
         headers: {

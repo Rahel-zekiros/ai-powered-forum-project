@@ -45,13 +45,14 @@ export default function KnowledgeBase() {
   // ==========================================
 
   const [expandedChunks, setExpandedChunks] = useState({});
-const toggleChunkExpand = (chunkKey, e) => {
-  e?.stopPropagation();
+  const toggleChunkExpand = (chunkKey, e) => {
+    if (e) e.stopPropagation();
 
-  setExpandedChunks((prev) => ({
-    [chunkKey]: !prev[chunkKey],
-  }));
-};
+    setExpandedChunks((prev) => ({
+      ...prev,
+      [chunkKey]: !prev[chunkKey],
+    }));
+  };
   // ==========================================
   // AI CHAT STATES
   // ==========================================
@@ -129,8 +130,7 @@ const toggleChunkExpand = (chunkKey, e) => {
       const isPdf =
         file.type === "application/pdf" || fileName.endsWith(".pdf");
 
-      const isTxt =
-        file.type === "text/plain" || fileName.endsWith(".txt");
+      const isTxt = file.type === "text/plain" || fileName.endsWith(".txt");
 
       if (!isPdf && !isTxt) {
         toast.error("Please select a valid PDF or TXT file.", {
@@ -191,8 +191,7 @@ const toggleChunkExpand = (chunkKey, e) => {
     } catch (err) {
       console.error("Upload Error:", err);
 
-      const message =
-        err.response?.data?.msg || "Failed to upload document.";
+      const message = err.response?.data?.msg || "Failed to upload document.";
 
       toast.error(message, {
         className: styles.errorToast,
@@ -233,9 +232,7 @@ const toggleChunkExpand = (chunkKey, e) => {
                 toast.dismiss(t.id);
 
                 try {
-                  await apiClient.delete(
-                    `/api/rag/documents/${docId}`
-                  );
+                  await apiClient.delete(`/api/rag/documents/${docId}`);
 
                   if (selectedDoc?.document_id === docId) {
                     setSelectedDoc(null);
@@ -256,27 +253,21 @@ const toggleChunkExpand = (chunkKey, e) => {
                   }
 
                   setDocuments((prev) =>
-                    prev.filter(
-                      (doc) => doc.document_id !== docId
-                    )
+                    prev.filter((doc) => doc.document_id !== docId),
                   );
 
-                  toast.success(
-                    "Document deleted successfully.",
-                    {
-                      className: styles.successToast,
-                      iconTheme: {
-                        primary: "#16a34a",
-                        secondary: "#dcfce7",
-                      },
-                    }
-                  );
+                  toast.success("Document deleted successfully.", {
+                    className: styles.successToast,
+                    iconTheme: {
+                      primary: "#16a34a",
+                      secondary: "#dcfce7",
+                    },
+                  });
                 } catch (err) {
                   console.error("Delete Error:", err);
 
                   const message =
-                    err.response?.data?.msg ||
-                    "Failed to delete document.";
+                    err.response?.data?.msg || "Failed to delete document.";
 
                   toast.error(message, {
                     className: styles.errorToast,
@@ -298,7 +289,7 @@ const toggleChunkExpand = (chunkKey, e) => {
         duration: Infinity,
         position: "top-center",
         className: styles.customToastStyle,
-      }
+      },
     );
   };
 
@@ -342,41 +333,36 @@ const toggleChunkExpand = (chunkKey, e) => {
         return;
       }
 
-      const isTxt =
-        selectedDoc.filename?.toLowerCase().endsWith(".txt");
+      const isTxt = selectedDoc.filename?.toLowerCase().endsWith(".txt");
 
       if (!isTxt) {
         setTextContent("");
         return;
       }
 
-try {
-  setIsLoadingText(true);
+      try {
+        setIsLoadingText(true);
 
-  const response = await apiClient.get(
-    `/${selectedDoc.file_path}`
-  );
+        const response = await apiClient.get(`/${selectedDoc.file_path}`);
 
-  console.log("TXT content loaded:", response.data);
+        console.log("TXT content loaded:", response.data);
 
-  setTextContent(response.data);
+        setTextContent(response.data);
+      } catch (error) {
+        console.error("TXT Reader Error:", error);
 
-} catch (error) {
-  console.error("TXT Reader Error:", error);
+        setTextContent("");
 
-  setTextContent("");
-
-  toast.error("Could not load TXT file.", {
-    className: styles.errorToast,
-    iconTheme: {
-      primary: "#dc2626",
-      secondary: "#fee2e2",
-    },
-  });
-
-} finally {
-  setIsLoadingText(false);
-}
+        toast.error("Could not load TXT file.", {
+          className: styles.errorToast,
+          iconTheme: {
+            primary: "#dc2626",
+            secondary: "#fee2e2",
+          },
+        });
+      } finally {
+        setIsLoadingText(false);
+      }
     };
 
     loadTxtContent();
@@ -390,9 +376,7 @@ try {
     const chunkIdx = result.chunkIndex ?? null;
 
     const chunkKey = `${
-      result.documentId ||
-      selectedDoc?.document_id ||
-      "doc"
+      result.documentId || selectedDoc?.document_id || "doc"
     }-${chunkIdx}`;
 
     setSelectedResult(result);
@@ -406,13 +390,11 @@ try {
   // ==========================================
   // SEMANTIC SEARCH
   // ==========================================
-
   const handleSemanticSearch = async () => {
     if (!searchQuery.trim()) return;
 
     try {
       setIsSearching(true);
-
       setSearchError("");
       setSearchResults([]);
       setSelectedResult(null);
@@ -420,23 +402,20 @@ try {
       setExpandedChunks({});
 
       const payload = {
-        question: searchQuery.trim(),
+        query: searchQuery.trim(),
       };
 
       if (selectedDoc) {
         payload.documentId = selectedDoc.document_id;
       }
 
-      const res = await apiClient.post(
-        "/api/rag/ask",
-        payload
-      );
+      const res = await apiClient.post("/api/rag/search", payload);
 
       if (res.data?.message) {
         setSearchMessage(res.data.message);
         setSearchResults([]);
       } else {
-        const results = res.data?.sources || [];
+        const results = res.data?.results || [];
 
         setSearchResults(results);
         setSearchMessage("");
@@ -445,33 +424,28 @@ try {
           setSelectedResult(results[0]);
 
           const firstChunkKey = `${
-            results[0].documentId ||
-            selectedDoc?.document_id ||
-            "doc"
+            results[0].documentId || selectedDoc?.document_id || "doc"
           }-${results[0].chunkIndex ?? 0}`;
 
           setExpandedChunks({
             [firstChunkKey]: true,
           });
 
-          toast.success(
-            `Found ${results.length} matching results.`,
-            {
-              className: styles.successToast,
-              iconTheme: {
-                primary: "#16a34a",
-                secondary: "#dcfce7",
-              },
-            }
-          );
+          toast.success(`Found ${results.length} matching results.`, {
+            className: styles.successToast,
+            iconTheme: {
+              primary: "#16a34a",
+              secondary: "#dcfce7",
+            },
+          });
         } else {
           toast("No matching results found.");
         }
       }
     } catch (err) {
+      console.error("Search Error:", err);
       const errorMsg =
-        err.response?.data?.msg ||
-        "Failed to perform semantic search.";
+        err.response?.data?.msg || "Failed to perform semantic search.";
 
       setSearchError(errorMsg);
 
@@ -524,26 +498,19 @@ try {
         payload.documentId = selectedDoc.document_id;
       }
 
-      const res = await apiClient.post(
-        "/api/rag/ask",
-        payload
-      );
+      const res = await apiClient.post("/api/rag/ask", payload);
 
-      const fullAnswer =
-        res.data?.answer || "No answer generated.";
+      const fullAnswer = res.data?.answer || "No answer generated.";
 
       const sources = res.data?.sources || [];
 
-      toast.success(
-        "AI answer generated successfully!",
-        {
-          className: styles.successToast,
-          iconTheme: {
-            primary: "#16a34a",
-            secondary: "#dcfce7",
-          },
-        }
-      );
+      toast.success("AI answer generated successfully!", {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
 
       setChatMessages([
         ...newHistory,
@@ -559,8 +526,7 @@ try {
       const words = fullAnswer.split(" ");
 
       for (let i = 0; i < words.length; i++) {
-        currentText +=
-          (i === 0 ? "" : " ") + words[i];
+        currentText += (i === 0 ? "" : " ") + words[i];
 
         setChatMessages([
           ...newHistory,
@@ -571,19 +537,13 @@ try {
           },
         ]);
 
-        await new Promise((resolve) =>
-          setTimeout(resolve, 25)
-        );
+        await new Promise((resolve) => setTimeout(resolve, 25));
       }
     } catch (err) {
-      console.error(
-        "Ask Document AI Error:",
-        err
-      );
+      console.error("Ask Document AI Error:", err);
 
       const errorMsg =
-        err.response?.data?.msg ||
-        "Failed to generate AI answer.";
+        err.response?.data?.msg || "Failed to generate AI answer.";
 
       setAiError(errorMsg);
 
@@ -639,14 +599,11 @@ try {
   const handleExportChat = () => {
     if (chatMessages.length === 0) return;
 
-    let markdownContent =
-      `# Knowledge Base AI Chat Export\n\n`;
+    let markdownContent = `# Knowledge Base AI Chat Export\n\n`;
 
     chatMessages.forEach((msg) => {
       markdownContent += `### ${
-        msg.role === "user"
-          ? "You"
-          : "AI Assistant"
+        msg.role === "user" ? "You" : "AI Assistant"
       }\n${msg.content}\n\n`;
     });
 
@@ -660,29 +617,25 @@ try {
 
     link.href = url;
 
-    link.setAttribute(
-      "download",
-      `chat-export-${Date.now()}.md`
-    );
+    link.setAttribute("download", `chat-export-${Date.now()}.md`);
 
     document.body.appendChild(link);
-{/* <a href="blob:http://localhost:5173/abc123"></a> */}
+    {
+      /* <a href="blob:http://localhost:5173/abc123"></a> */
+    }
     link.click();
 
     document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
 
-    toast.success(
-      "Chat exported successfully!",
-      {
-        className: styles.successToast,
-        iconTheme: {
-          primary: "#16a34a",
-          secondary: "#dcfce7",
-        },
-      }
-    );
+    toast.success("Chat exported successfully!", {
+      className: styles.successToast,
+      iconTheme: {
+        primary: "#16a34a",
+        secondary: "#dcfce7",
+      },
+    });
   };
 
   // ==========================================
@@ -691,39 +644,27 @@ try {
 
   return (
     <div className={styles.contentArea}>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-      />
+      <Toaster position="top-right" reverseOrder={false} />
 
       {/* ========================================
           TOP BANNER
       ======================================== */}
 
       <div className={styles.bannerCard}>
-        <span className={styles.bannerTag}>
-          KNOWLEDGE BASE & AI RAG
-        </span>
+        <span className={styles.bannerTag}>KNOWLEDGE BASE & AI RAG</span>
 
-        <h1 className={styles.bannerTitle}>
-          Private Document library
-        </h1>
+        <h1 className={styles.bannerTitle}>Private Document library</h1>
 
         <p className={styles.bannerDesc}>
-          Upload study or reference PDFs and TXT
-          files. Run semantic search across single
-          or all documents, chat with streaming AI,
-          and export sessions.
+          Upload study or reference PDFs and TXT files. Run semantic search
+          across single or all documents, chat with streaming AI, and export
+          sessions.
         </p>
       </div>
 
       {/* ERROR */}
 
-      {errorMessage && (
-        <div className={styles.errorBanner}>
-          {errorMessage}
-        </div>
-      )}
+      {errorMessage && <div className={styles.errorBanner}>{errorMessage}</div>}
 
       <div className={styles.splitGrid}>
         {/* ========================================

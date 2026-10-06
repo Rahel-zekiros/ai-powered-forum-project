@@ -17,10 +17,6 @@ import {
   getDocumentFileController,
 } from '../../ragController/rag.Controller.js';
 
-import { 
-  saveChunkNote, 
-  getUserNotes 
-} from '../../ragController/rag.Controller.js';
 
 import { documentIdParamValidation } from '../../ragController/rag.validation.js';
 import authMiddleware from '../../middleware/authentication.js';

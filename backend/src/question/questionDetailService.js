@@ -23,6 +23,9 @@ const AUTHOR_SELECT = `
 `;
 
 const cosSimilarity = (vecA, vecB) => {
+  if (!Array.isArray(vecA) || !Array.isArray(vecB) || vecA.length === 0 || vecB.length === 0) {
+    return 0;
+  }
   const dotProduct = vecA.reduce((sum, val, i) => sum + val * vecB[i], 0);
   const magA = Math.sqrt(vecA.reduce((sum, val) => sum + val * val, 0));
   const magB = Math.sqrt(vecB.reduce((sum, val) => sum + val * val, 0));
@@ -160,10 +163,11 @@ export const getSimilarQuestionsService = async ({
   questionHash,
   userId,
   k = 5,
-  threshold = 0.75,
+  threshold = 0.5,
 }) => {
+  // 1. Fetch current question vector
   const sourceResult = await safeExecute(
-    `SELECT qv.question_id, qv.embedding
+    `SELECT qv.question_id, qv.embedding_vector
      FROM question_vectors qv
      JOIN questions q ON qv.question_id = q.question_id
      WHERE q.question_hash = ?`,
@@ -180,13 +184,27 @@ export const getSimilarQuestionsService = async ({
   }
 
   const sourceQuestionId = sourceRows[0].question_id;
-  const sourceEmbedding =
-    typeof sourceRows[0].embedding === "string"
-      ? JSON.parse(sourceRows[0].embedding)
-      : sourceRows[0].embedding;
+  const rawSource = sourceRows[0].embedding_vector;
 
+  // Safe Parsing for Source Embedding
+  let sourceEmbedding = [];
+  try {
+    sourceEmbedding = typeof rawSource === "string" ? JSON.parse(rawSource) : rawSource;
+  } catch (e) {
+    sourceEmbedding = [];
+  }
+
+  // Source vector 
+  if (!Array.isArray(sourceEmbedding) || sourceEmbedding.length === 0) {
+    return {
+      data: [],
+      meta: { total: 0, k: parseInt(k, 10), threshold: parseFloat(threshold), query: null, questionHash },
+    };
+  }
+
+  // 2. Fetch target question vectors
   const targetResult = await safeExecute(
-    `SELECT qv.question_id, qv.embedding
+    `SELECT qv.question_id, qv.embedding_vector
      FROM question_vectors qv
      WHERE qv.question_id != ? AND qv.status = 'ready'`,
     [sourceQuestionId],
@@ -194,17 +212,28 @@ export const getSimilarQuestionsService = async ({
 
   const targetRows = Array.isArray(targetResult?.[0]) ? targetResult[0] : targetResult;
 
+  // 3. Compute Similarity Score Safely
   const scoredQuestions = (targetRows || []).map((row) => {
-    const targetEmbedding =
-      typeof row.embedding === "string"
-        ? JSON.parse(row.embedding)
-        : row.embedding;
+    const rawTarget = row.embedding_vector;
+    let targetEmbedding = [];
+
+    try {
+      targetEmbedding = typeof rawTarget === "string" ? JSON.parse(rawTarget) : rawTarget;
+    } catch (e) {
+      targetEmbedding = [];
+    }
+
+    if (!Array.isArray(targetEmbedding) || targetEmbedding.length === 0) {
+      return { question_id: row.question_id, score: 0 };
+    }
+
     return {
       question_id: row.question_id,
       score: cosSimilarity(sourceEmbedding, targetEmbedding),
     };
   });
 
+  // 4. Filter, Sort and Limit
   const filtered = scoredQuestions
     .filter((q) => q.score >= parseFloat(threshold))
     .sort((a, b) => b.score - a.score)
@@ -213,6 +242,7 @@ export const getSimilarQuestionsService = async ({
   const questionIds = filtered.map((q) => q.question_id);
   let data = [];
 
+  // 5. Fetch Hydrated Question Details
   if (questionIds.length > 0) {
     const placeholders = questionIds.map(() => "?").join(",");
     const detailsResult = await safeExecute(
@@ -245,7 +275,6 @@ export const getSimilarQuestionsService = async ({
     },
   };
 };
-
 /**
  * Service for AI Answer Fit Evaluation (Task 14) Abdulhadi seid
  */
@@ -269,11 +298,10 @@ export const assessAnswerAgainstQuestionService = async ({
   const { title: questionTitle, content: questionContent } = questionRows[0];
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({
-    model: "gemini-3.6-flash",
-    generationConfig: { responseMimeType: "application/json" },
-  });
-
+const model = genAI.getGenerativeModel({
+  model: MODEL, 
+  generationConfig: { responseMimeType: "application/json" },
+});
   const prompt = `
 You are an expert technical evaluator. Evaluate whether the provided answer properly addresses the core issue in the question below.
 
