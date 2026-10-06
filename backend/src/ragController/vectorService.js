@@ -17,6 +17,7 @@ export const vectorMagnitude = (vector) => {
 // ==========================================
 // Cosine Similarity
 // ==========================================
+
 export const cosineSimilarity = (vectorA, vectorB) => {
   if (!Array.isArray(vectorA) || !Array.isArray(vectorB)) {
     return 0;
@@ -25,6 +26,7 @@ export const cosineSimilarity = (vectorA, vectorB) => {
   if (vectorA.length === 0 || vectorB.length === 0) {
     return 0;
   }
+
   if (vectorA.length !== vectorB.length) {
     return 0;
   }
@@ -44,6 +46,7 @@ export const cosineSimilarity = (vectorA, vectorB) => {
 
   return dotProduct / (magnitudeA * magnitudeB);
 };
+
 // ==========================================
 // Get Document Chunks + Vectors
 // ==========================================
@@ -58,7 +61,7 @@ export const getDocumentChunks = async (documentId) => {
       dc.chunk_index,
       dc.page_start,
       dc.page_end,
-      dcv.embedding AS embedding_vector
+      dcv.embedding_vector
     FROM document_chunks AS dc
     INNER JOIN document_chunk_vectors AS dcv
       ON dc.chunk_id = dcv.chunk_id
@@ -104,7 +107,7 @@ export const rankChunks = (chunks, queryEmbedding) => {
 
           return null;
         }
-
+     if (!storedVector) return null;
         // ==========================================
         // Calculate cosine similarity
         // ==========================================
@@ -139,6 +142,7 @@ export const rankChunks = (chunks, queryEmbedding) => {
           relevance: score,
         };
       })
+
       // Remove invalid chunks
       .filter(Boolean)
 
