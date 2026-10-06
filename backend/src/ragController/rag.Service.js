@@ -17,6 +17,7 @@ import { generateGroundedAnswer } from "./aiService.js";
 
 export const processDocument = async ({ userId, file }) => {
   let documentId = null;
+
   try {
     const filename = file.originalname;
     const filePath = file.path.replace(/\\/g, "/");
@@ -26,23 +27,27 @@ export const processDocument = async ({ userId, file }) => {
     const docResult = await safeExecute(
       `
         INSERT INTO documents
-        (user_id, title, storage_path, status)
+        (user_id, filename, file_path, status)
         VALUES (?, ?, ?, ?)
-        `,
-      [userId, filename, filePath, "processing"],
+      `,
+      [userId, filename, filePath, "processing"]
     );
+
     documentId = docResult.insertId;
 
     // ==========================================
     // Check File Type (PDF vs TXT)
     // ==========================================
+
     const isTxt =
-      file.mimetype === "text/plain" || filename.toLowerCase().endsWith(".txt");
+      file.mimetype === "text/plain" ||
+      filename.toLowerCase().endsWith(".txt");
 
     let pages = [];
 
     if (isTxt) {
       console.log("Reading Text file...");
+
       const textContent = await extractTextFile(file.path);
 
       pages = [
@@ -51,12 +56,10 @@ export const processDocument = async ({ userId, file }) => {
           text: textContent,
         },
       ];
+
       console.log("Text file read successfully.");
     } else {
-      console.log("Reading PDF file...");
       const pdfBuffer = await readPdfFile(file.path);
-
-      console.log("Extracting PDF pages...");
       pages = await extractPdfPages(pdfBuffer);
     }
 
@@ -69,10 +72,12 @@ export const processDocument = async ({ userId, file }) => {
     // ==========================================
     // Create chunks with Fallback Protection
     // ==========================================
+
     let chunks = createChunks(pages);
 
     if (!chunks || chunks.length === 0) {
       const rawText = pages[0]?.text?.trim();
+
       if (rawText) {
         chunks = [
           {
@@ -91,7 +96,10 @@ export const processDocument = async ({ userId, file }) => {
 
     console.log(`Created ${chunks.length} text chunks.`);
 
-    // create embeddings
+    // ==========================================
+    // Create Embeddings and Save Chunks
+    // ==========================================
+
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       const chunkContent = chunk.content;
@@ -102,9 +110,10 @@ export const processDocument = async ({ userId, file }) => {
         throw new Error("Invalid text content extracted.");
       }
 
-      // ----------------------------------
-      // Save chunk
-      // ----------------------------------
+      // ==========================================
+      // Save Chunk
+      // ==========================================
+
       const chunkResult = await safeExecute(
         `
           INSERT INTO document_chunks
@@ -116,49 +125,54 @@ export const processDocument = async ({ userId, file }) => {
             page_end
           )
           VALUES (?, ?, ?, ?, ?)
-          `,
+        `,
         [
           documentId,
           chunkContent,
           chunk.chunkIndex,
           chunk.pageStart,
           chunk.pageEnd,
-        ],
+        ]
       );
 
       const chunkId = chunkResult.insertId;
 
-      // ----------------------------------
-      // Create embedding
-      // ----------------------------------
+      // ==========================================
+      // Create Embedding
+      // ==========================================
+
       const embedding = await createEmbedding(chunkContent);
       const embeddingVectorJson = JSON.stringify(embedding);
 
-      // ----------------------------------
-      // Save embedding
-      // ----------------------------------
+      // ==========================================
+      // Save Embedding
+      // ==========================================
+
       await safeExecute(
         `
-        INSERT INTO document_chunk_vectors
-        (
-          chunk_id,
-          embedding,
-          status
-        )
-        VALUES (?, ?, ?)
+          INSERT INTO document_chunk_vectors
+          (
+            chunk_id,
+            embedding_vector,
+            status
+          )
+          VALUES (?, ?, ?)
         `,
-        [chunkId, embeddingVectorJson, "ready"],
+        [chunkId, embeddingVectorJson, "ready"]
       );
     }
 
-    //mark document ready
+    // ==========================================
+    // Mark Document Ready
+    // ==========================================
+
     await safeExecute(
       `
-      UPDATE documents
-      SET status = ?
-      WHERE document_id = ?
+        UPDATE documents
+        SET status = ?
+        WHERE document_id = ?
       `,
-      ["ready", documentId],
+      ["ready", documentId]
     );
 
     return {
@@ -168,17 +182,18 @@ export const processDocument = async ({ userId, file }) => {
       chunksCreated: chunks.length,
       status: "ready",
     };
+
   } catch (err) {
     console.error("Document Processing Error:", err);
 
     if (documentId) {
       await safeExecute(
         `
-        UPDATE documents
-        SET status = ?
-        WHERE document_id = ?
+          UPDATE documents
+          SET status = ?
+          WHERE document_id = ?
         `,
-        ["error", documentId],
+        ["error", documentId]
       ).catch(() => {});
     }
 
@@ -190,54 +205,53 @@ export const processDocument = async ({ userId, file }) => {
   }
 };
 
-// *==== list document:GET /api/rag/documents ======
+// ==========================================
+// List Documents
+// GET /api/rag/documents
+// ==========================================
 
 export const listDocumentsForUserService = async ({ userId }) => {
   const rows = await safeExecute(
     `
-    SELECT
-      document_id,
-      title,
-      mime_type,
-      byte_size,
-      status,
-      error_message,
-      created_at,
-      updated_at
-    FROM documents
-    WHERE user_id = ?
-    ORDER BY created_at DESC
+      SELECT
+        document_id,
+        filename AS title,
+        file_path,
+        status,
+        created_at
+      FROM documents
+      WHERE user_id = ?
+      ORDER BY created_at DESC
     `,
-    [userId],
+    [userId]
   );
 
   return rows.map((document) => ({
     documentId: document.document_id,
     title: document.title,
-    mimeType: document.mime_type,
-    byteSize: document.byte_size,
+    filePath: document.file_path,
     status: document.status,
-    errorMessage: document.error_message,
     createdAt: document.created_at,
-    updatedAt: document.updated_at,
   }));
 };
 
-// * ======= DELETE /api/rag/documents/:documentId ======
+// ==========================================
+// DELETE /api/rag/documents/:documentId
+// ==========================================
 
 export const deleteDocumentService = async ({ documentId, userId }) => {
   const rows = await safeExecute(
     `
-    SELECT
-      document_id,
-      user_id,
-      storage_path
-    FROM documents
-    WHERE document_id = ?
-      AND user_id = ?
-    LIMIT 1
+      SELECT
+        document_id,
+        user_id,
+        file_path
+      FROM documents
+      WHERE document_id = ?
+        AND user_id = ?
+      LIMIT 1
     `,
-    [documentId, userId],
+    [documentId, userId]
   );
 
   if (!rows.length) {
@@ -247,24 +261,22 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
   }
 
   const document = rows[0];
-  const uploadDir = path.resolve(process.cwd(), "upload", "rag");
-  const absoluteFilePath = path.resolve(uploadDir, document.storage_path);
 
   try {
-    await fs.unlink(absoluteFilePath);
-  } catch (error) {
-    if (error.code !== "ENOENT") {
-      throw error;
+    if (document.file_path) {
+      await deletePdfFile(document.file_path);
     }
+  } catch (error) {
+    console.error("Error deleting file physically:", error);
   }
 
   await safeExecute(
     `
-    DELETE FROM documents
-    WHERE document_id = ?
-      AND user_id = ?
+      DELETE FROM documents
+      WHERE document_id = ?
+        AND user_id = ?
     `,
-    [documentId, userId],
+    [documentId, userId]
   );
 
   return {
@@ -273,16 +285,14 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
 };
 
 // ==========================================
-// Settings
+// Settings & Math Helpers
 // ==========================================
 
 const TOP_K = 5;
 const SIMILARITY_THRESHOLD = 0.65;
-const normalizeSearchText = (text) => text.toLowerCase().replace(/\s+/g, " ").trim();
 
-// ==========================================
-// Vector Magnitude
-// ==========================================
+const normalizeSearchText = (text) =>
+  text.toLowerCase().replace(/\s+/g, " ").trim();
 
 export const vectorMagnitude = (vector) => {
   let sum = 0;
@@ -291,10 +301,6 @@ export const vectorMagnitude = (vector) => {
   }
   return Math.sqrt(sum);
 };
-
-// ==========================================
-// Cosine Similarity
-// ==========================================
 
 export const cosineSimilarity = (vectorA, vectorB) => {
   if (
@@ -308,6 +314,7 @@ export const cosineSimilarity = (vectorA, vectorB) => {
   }
 
   let dotProduct = 0;
+
   for (let i = 0; i < vectorA.length; i++) {
     dotProduct += vectorA[i] * vectorB[i];
   }
@@ -323,28 +330,29 @@ export const cosineSimilarity = (vectorA, vectorB) => {
 };
 
 // ==========================================
-// Get Document Chunks + Vectors
+// Get Document Chunks
 // ==========================================
 
 export const getDocumentChunks = async (documentId) => {
   const result = await safeExecute(
     `
-    SELECT
-      dc.chunk_id,
-      dc.document_id,
-      dc.content,
-      dc.chunk_index,
-      dc.page_start,
-      dc.page_end,
-      dcv.embedding
-    FROM document_chunks AS dc
-    INNER JOIN document_chunk_vectors AS dcv
-      ON dc.chunk_id = dcv.chunk_id
-    WHERE dc.document_id = ?
-      AND dcv.status = ?
-    ORDER BY dc.chunk_index ASC
+      SELECT
+        dc.chunk_id,
+        dc.document_id,
+        dc.content,
+        dc.chunk_index,
+        dc.page_start,
+        dc.page_end,
+        dcv.embedding_vector AS embedding,
+        dcv.embedding_vector AS embedding_vector
+      FROM document_chunks AS dc
+      INNER JOIN document_chunk_vectors AS dcv
+        ON dc.chunk_id = dcv.chunk_id
+      WHERE dc.document_id = ?
+        AND dcv.status = ?
+      ORDER BY dc.chunk_index ASC
     `,
-    [documentId, "ready"],
+    [documentId, "ready"]
   );
 
   if (Array.isArray(result)) {
@@ -373,7 +381,10 @@ export const rankChunks = (chunks, queryEmbedding) => {
             ? JSON.parse(chunk.embedding)
             : chunk.embedding;
       } catch (err) {
-        console.error(`Invalid embedding for chunk ${chunk.chunk_id}`, err);
+        console.error(
+          `Invalid embedding for chunk ${chunk.chunk_id}`,
+          err
+        );
         return null;
       }
 
@@ -404,15 +415,15 @@ export const getLibraryDocuments = async (userId) => {
     `
       SELECT
         document_id,
-        title,
-        storage_path,
+        filename AS title,
+        file_path,
         status,
         created_at
       FROM documents
       WHERE user_id = ?
       ORDER BY created_at DESC
-      `,
-    [userId],
+    `,
+    [userId]
   );
 };
 
@@ -423,14 +434,14 @@ export const getLibraryDocuments = async (userId) => {
 export const removeDocument = async ({ docId, userId }) => {
   const existingDocs = await safeExecute(
     `
-        SELECT
-          document_id,
-          file_path
-        FROM documents
-        WHERE document_id = ?
-          AND user_id = ?
-        `,
-    [docId, userId],
+      SELECT
+        document_id,
+        file_path
+      FROM documents
+      WHERE document_id = ?
+        AND user_id = ?
+    `,
+    [docId, userId]
   );
 
   if (existingDocs.length === 0) {
@@ -441,6 +452,7 @@ export const removeDocument = async ({ docId, userId }) => {
 
   const document = existingDocs[0];
 
+  // Delete embeddings first
   await safeExecute(
     `
       DELETE dcv
@@ -448,27 +460,30 @@ export const removeDocument = async ({ docId, userId }) => {
       INNER JOIN document_chunks AS dc
         ON dcv.chunk_id = dc.chunk_id
       WHERE dc.document_id = ?
-      `,
-    [docId],
+    `,
+    [docId]
   );
 
+  // Delete chunks
   await safeExecute(
     `
       DELETE FROM document_chunks
       WHERE document_id = ?
-      `,
-    [docId],
+    `,
+    [docId]
   );
 
+  // Delete document
   await safeExecute(
     `
       DELETE FROM documents
       WHERE document_id = ?
         AND user_id = ?
-      `,
-    [docId, userId],
+    `,
+    [docId, userId]
   );
 
+  // Delete physical file
   if (document.file_path) {
     await deletePdfFile(document.file_path);
   }
@@ -485,16 +500,16 @@ export const removeDocument = async ({ docId, userId }) => {
 const getReadyDocument = async ({ documentId, userId }) => {
   const documents = await safeExecute(
     `
-        SELECT
-          document_id,
-          title,
-          storage_path,
-          status
-        FROM documents
-        WHERE document_id = ?
-          AND user_id = ?
-        `,
-    [documentId, userId],
+      SELECT
+        document_id,
+        filename AS title,
+        file_path,
+        status
+      FROM documents
+      WHERE document_id = ?
+        AND user_id = ?
+    `,
+    [documentId, userId]
   );
 
   if (documents.length === 0) {
@@ -527,31 +542,33 @@ export const searchDocument = async ({ userId, documentId, query }) => {
       documentId,
       userId,
     });
+
     chunks = await getDocumentChunks(documentId);
   } else {
     chunks = await safeExecute(
       `
-          SELECT
-            dc.chunk_id,
-            dc.document_id,
-            dc.content,
-            dc.chunk_index,
-            dc.page_start,
-            dc.page_end,
-            dcv.embedding
-          FROM document_chunks AS dc
-          INNER JOIN document_chunk_vectors AS dcv
-            ON dc.chunk_id = dcv.chunk_id
-          INNER JOIN documents AS d
-            ON dc.document_id = d.document_id
-          WHERE d.user_id = ?
-            AND d.status = 'ready'
-          `,
-      [userId],
+        SELECT
+          dc.chunk_id,
+          dc.document_id,
+          dc.content,
+          dc.chunk_index,
+          dc.page_start,
+          dc.page_end,
+          dcv.embedding_vector
+        FROM document_chunks AS dc
+        INNER JOIN document_chunk_vectors AS dcv
+          ON dc.chunk_id = dcv.chunk_id
+        INNER JOIN documents AS d
+          ON dc.document_id = d.document_id
+        WHERE d.user_id = ?
+          AND d.status = 'ready'
+      `,
+      [userId]
     );
   }
 
   console.log("Creating query embedding...");
+
   const queryEmbedding = await createEmbedding(query);
 
   if (!chunks || chunks.length === 0) {
@@ -566,23 +583,27 @@ export const searchDocument = async ({ userId, documentId, query }) => {
   }
 
   const rankedChunks = rankChunks(chunks, queryEmbedding);
-
   const normalizedQuery = normalizeSearchText(query);
+
   const exactMatches = rankedChunks.filter((chunk) =>
-    normalizeSearchText(chunk.content).includes(normalizedQuery),
+    normalizeSearchText(chunk.content).includes(normalizedQuery)
   );
-  const relevantChunks = exactMatches.length > 0
-    ? exactMatches.slice(0, TOP_K)
-    : rankedChunks
-    .filter((chunk) => chunk.similarity >= SIMILARITY_THRESHOLD)
-    .slice(0, TOP_K);
-  const results = relevantChunks.length > 0
-    ? relevantChunks
-    : rankedChunks.slice(0, TOP_K);
+
+  const relevantChunks =
+    exactMatches.length > 0
+      ? exactMatches.slice(0, TOP_K)
+      : rankedChunks
+          .filter((chunk) => chunk.similarity >= SIMILARITY_THRESHOLD)
+          .slice(0, TOP_K);
+
+  const results =
+    relevantChunks.length > 0
+      ? relevantChunks
+      : rankedChunks.slice(0, TOP_K);
 
   return {
     documentId: documentId || null,
-    filename: document ? document.filename : "All Documents",
+    filename: document ? document.title : "All Documents",
     query,
     totalChunks: chunks.length,
     results,
@@ -603,37 +624,41 @@ export const askDocument = async ({ userId, documentId, question }) => {
       documentId,
       userId,
     });
+
     chunks = await getDocumentChunks(documentId);
   } else {
+    // Cross-Search (All Documents Mode)
     chunks = await safeExecute(
       `
-          SELECT
-            dc.chunk_id,
-            dc.document_id,
-            dc.content,
-            dc.chunk_index,
-            dc.page_start,
-            dc.page_end,
-            dcv.embedding
-          FROM document_chunks AS dc
-          INNER JOIN document_chunk_vectors AS dcv
-            ON dc.chunk_id = dcv.chunk_id
-          INNER JOIN documents AS d
-            ON dc.document_id = d.document_id
-          WHERE d.user_id = ?
-            AND d.status = 'ready'
-          `,
-      [userId],
+        SELECT
+          dc.chunk_id,
+          dc.document_id,
+          dc.content,
+          dc.chunk_index,
+          dc.page_start,
+          dc.page_end,
+          dcv.embedding_vector AS embedding,
+          dcv.embedding_vector AS embedding_vector
+        FROM document_chunks AS dc
+        INNER JOIN document_chunk_vectors AS dcv
+          ON dc.chunk_id = dcv.chunk_id
+        INNER JOIN documents AS d
+          ON dc.document_id = d.document_id
+        WHERE d.user_id = ?
+          AND d.status = 'ready'
+      `,
+      [userId]
     );
   }
 
   console.log("Creating question embedding...");
+
   const questionEmbedding = await createEmbedding(question);
 
   if (!chunks || chunks.length === 0) {
     return {
       answer:
-        "Your library is currently empty. Please upload a reference file first.",
+        "Your library is currently empty. Please upload a reference PDF first.",
       sources: [],
     };
   }
@@ -655,7 +680,7 @@ export const askDocument = async ({ userId, documentId, question }) => {
   const context = selectedChunks
     .map(
       (chunk) =>
-        `[Chunk ${chunk.chunkIndex} | Page ${chunk.pageStart}]\n${chunk.content}`,
+        `[Chunk ${chunk.chunkIndex} | Page ${chunk.pageStart}]\n${chunk.content}`
     )
     .join("\n\n");
 
@@ -664,15 +689,6 @@ export const askDocument = async ({ userId, documentId, question }) => {
     context,
     question,
   });
-  console.log("========== ANSWER FROM GEMINI ==========");
-  console.log(answer);
-  console.log("========================================");
-  console.log("========== RETURNING TO FRONTEND ==========");
-  console.log({
-    answer,
-    sourcesCount: selectedChunks.length,
-  });
-  console.log("===========================================");
 
   return {
     answer,
@@ -690,95 +706,35 @@ export const askDocument = async ({ userId, documentId, question }) => {
 };
 
 // ==========================================
-// Save Chunk Note
-// ==========================================
-
-export const saveChunkNote = async ({ userId, chunkId, noteText }) => {
-  const result = await safeExecute(
-    `
-        INSERT INTO chunk_notes
-        (
-          user_id,
-          chunk_id,
-          note_text
-        )
-        VALUES (?, ?, ?)
-        `,
-    [userId, chunkId, noteText],
-  );
-
-  return {
-    msg: "Note saved successfully!",
-    noteId: result.insertId,
-  };
-};
-
-// ==========================================
-// Get User Notes
-// ==========================================
-
-export const fetchUserNotesFromDatabase = async (userId) => {
-  return await safeExecute(
-    `
-      SELECT
-        cn.note_id,
-        cn.note_text,
-        cn.created_at,
-        dc.chunk_id,
-        dc.chunk_index,
-        dc.content,
-        d.document_id,
-        d.title
-      FROM chunk_notes AS cn
-      INNER JOIN document_chunks AS dc
-        ON cn.chunk_id = dc.chunk_id
-      INNER JOIN documents AS d
-        ON dc.document_id = d.document_id
-      WHERE cn.user_id = ?
-      ORDER BY cn.created_at DESC
-      `,
-    [userId],
-  );
-};
-// ==========================================
-// Get PDF File
+// Get Document File Path for Download/View
 // ==========================================
 
 export const getDocumentFile = async ({ documentId, userId }) => {
-  const documents = await safeExecute(
+  const rows = await safeExecute(
     `
       SELECT
         document_id,
-        title,
-        storage_path,
-        status
+        filename,
+        file_path
       FROM documents
       WHERE document_id = ?
         AND user_id = ?
       LIMIT 1
     `,
-    [documentId, userId],
+    [documentId, userId]
   );
 
-  if (documents.length === 0) {
-    const error = new Error("Document not found.");
+  if (!rows || rows.length === 0) {
+    const error = new Error("Document not found or unauthorized.");
     error.statusCode = 404;
     throw error;
   }
 
-  const document = documents[0];
-
-  if (document.status !== "ready") {
-    const error = new Error("Document is not ready.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const filePath = path.resolve(process.cwd(), document.file_path);
-  
+  const document = rows[0];
+  const absolutePath = path.resolve(document.file_path);
 
   return {
-    filePath,
+    filePath: absolutePath,
     filename: document.filename,
   };
 };
