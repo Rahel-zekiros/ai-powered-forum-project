@@ -58,7 +58,6 @@ async function verifyActiveSession() {
 function clearSessionData() {
   localStorage.removeItem("authToken");
   localStorage.removeItem("activeUser");
-  // apiClient Header ላይ የተሰቀለውን Token ማወረድ
   delete apiClient.defaults.headers.common["Authorization"];
 }
 
