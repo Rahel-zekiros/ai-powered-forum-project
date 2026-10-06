@@ -128,14 +128,6 @@ export const deleteDocument = async (req, res) => {
   }
 };
 
-// ==========================================
-// T-21: Semantic Search in RAG Document (DANIEL HAILAY & RAKI)
-// 
-// DANIEL'S EXPLANATION FOR PRESENTATION:
-// "When a user searches inside a PDF, this endpoint receives the query, converts it 
-// into a vector embedding, and performs cosine similarity against the specific chunks 
-// of text extracted from that uploaded PDF document."
-// ==========================================
 
 export const semanticSearch = async (req, res) => {
   const userId = req.user.id || req.user.userId;
@@ -189,7 +181,7 @@ export const askDocumentAI = async (req, res) => {
   try {
     const result = await askDocument({
       userId,
-      documentId: documentId || null,
+      documentId: documentId || null, 
       question: question.trim(),
       history: history || [],
     });
@@ -211,56 +203,8 @@ export const askDocumentAI = async (req, res) => {
   }
 };
 
-// ==========================================
-// Save Chunk Note
-// ==========================================
 
-export const saveChunkNote = async (req, res) => {
-  const userId = req.user.id || req.user.userId;
-  const { chunkId, noteText } = req.body;
 
-  if (!chunkId || !noteText?.trim()) {
-    return res.status(400).json({
-      msg: "Chunk ID and note text are required.",
-    });
-  }
-
-  try {
-    const result = await saveNoteToDatabase({
-      userId,
-      chunkId,
-      noteText: noteText.trim(),
-    });
-
-    return res.status(201).json({
-      msg: "Note saved successfully!",
-      ...result,
-    });
-  } catch (err) {
-    console.error("Save Note Error:", err);
-    return res.status(500).json({
-      msg: "Server error occurred while saving the note.",
-    });
-  }
-};
-
-// ==========================================
-// Get User Notes
-// ==========================================
-
-export const getUserNotes = async (req, res) => {
-  const userId = req.user.id || req.user.userId;
-
-  try {
-    const notes = await fetchUserNotesFromDatabase(userId);
-    return res.status(200).json(notes);
-  } catch (err) {
-    console.error("Get Notes Error:", err);
-    return res.status(500).json({
-      msg: "Server error occurred while fetching notes.",
-    });
-  }
-};
 
 // ==========================================
 // Get Document Chunks (For Interactive Viewer)
