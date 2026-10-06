@@ -66,7 +66,7 @@ export default function RagFeaturesSection({
           remarkPlugins={[remarkGfm, remarkBreaks]}
           rehypePlugins={[rehypeRaw]}
         >
-          {content || ""}
+          {content || "No text available for this chunk."}
         </ReactMarkdown>
       </div>
     );
@@ -98,7 +98,9 @@ export default function RagFeaturesSection({
                 ) : textContent ? (
                   <pre className={styles.txtReader}>{textContent}</pre>
                 ) : (
-                  <div className={styles.txtLoading}>No text content found.</div>
+                  <div className={styles.txtLoading}>
+                    No text content found.
+                  </div>
                 )
               ) : (
                 <iframe
@@ -116,43 +118,48 @@ export default function RagFeaturesSection({
         <div className={styles.allDocumentsModeBanner}>
           <WandSparkles size={16} className={styles.allDocumentsModeIcon} />
           <span>
-            <strong>All Documents Mode Active:</strong> You are currently searching and chatting across your entire library collection.
+            <strong>All Documents Mode Active:</strong> You are currently
+            searching and chatting across your entire library collection.
           </span>
         </div>
       )}
 
       {/* ======================================
-          SEMANTIC SEARCH
-      ====================================== */}
+    SEMANTIC SEARCH
+====================================== */}
 
       <div className={styles.featureSection}>
         <h3 className={styles.sectionTitle}>Semantic search</h3>
-        <p className={styles.sectionSubtitle}>Find passages by contextual meaning.</p>
+        <p className={styles.sectionSubtitle}>
+          Find passages by contextual meaning.
+        </p>
 
-        <div className={styles.inputGroup}>
-          <label className={styles.inputLabel}>Search query</label>
-          <input
-            type="text"
-            className={styles.textInput}
-            placeholder="Enter keywords or concepts..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !isSearching && searchQuery.trim()) {
-                handleSemanticSearch();
-              }
-            }}
-          />
+        <div className={styles.searchRow}>
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel}>Search query</label>
+            <input
+              type="text"
+              className={styles.textInput}
+              placeholder="Enter keywords or concepts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isSearching && searchQuery.trim()) {
+                  handleSemanticSearch();
+                }
+              }}
+            />
+          </div>
+
+          <button
+            className={styles.actionOrangeBtn}
+            onClick={handleSemanticSearch}
+            disabled={isSearching || !searchQuery.trim()}
+          >
+            <ScanSearch size={14} />
+            {isSearching ? "Searching..." : "Search"}
+          </button>
         </div>
-
-        <button
-          className={styles.actionOrangeBtn}
-          onClick={handleSemanticSearch}
-          disabled={isSearching || !searchQuery.trim()}
-        >
-          <ScanSearch size={14} />
-          {isSearching ? "Searching..." : "Search"}
-        </button>
 
         {/* SEARCH ERROR */}
         {searchError && (
@@ -181,20 +188,27 @@ export default function RagFeaturesSection({
                 <strong>Search Results</strong>
               </div>
               <span className={styles.resultCount}>
-                {searchResults.length} result{searchResults.length !== 1 ? "s" : ""}
+                {searchResults.length} result
+                {searchResults.length !== 1 ? "s" : ""}
               </span>
             </div>
 
             {searchResults.map((result, index) => {
               const chunkIdx = result.chunkIndex ?? index;
               const chunkKey = `${result.documentId || selectedDoc?.document_id || "doc"}-${chunkIdx}`;
-              const isSelected = selectedResult?.chunkId === result.chunkId || selectedResult === result;
-              const isExpanded = expandedChunks[chunkKey] || false;
+              const isSelected =
+                selectedResult?.chunkId === result.chunkId ||
+                selectedResult === result;
+              const isExpanded = expandedChunks[chunkKey] ?? true; // Default expanded for search visibility
 
               return (
                 <div
                   key={result.chunkId ?? chunkKey}
-                  className={isSelected ? styles.searchResultCardSelected : styles.searchResultCard}
+                  className={
+                    isSelected
+                      ? styles.searchResultCardSelected
+                      : styles.searchResultCard
+                  }
                 >
                   {/* ACCORDION HEADER */}
                   <div
@@ -209,19 +223,27 @@ export default function RagFeaturesSection({
                     </span>
 
                     <div className={styles.chatHeaderButtons}>
-                      <span className={isSelected ? styles.resultSelectedText : styles.resultInspectText}>
+                      <span
+                        className={
+                          isSelected
+                            ? styles.resultSelectedText
+                            : styles.resultInspectText
+                        }
+                      >
                         {isSelected ? "Selected" : "Click to inspect"}
                       </span>
-                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      {isExpanded ? (
+                        <ChevronUp size={16} />
+                      ) : (
+                        <ChevronDown size={16} />
+                      )}
                     </div>
                   </div>
 
-                  {/* ACCORDION CONTENT */}
+                  {/* ACCORDION CONTENT (SHOW CONTENT HERE DIRECTLY) */}
                   {isExpanded && (
-                    <div>
-                      <div className={styles.searchResultContent}>
-                        {renderMarkdown(result.content)}
-                      </div>
+                    <div className={styles.searchResultContent}>
+                      {renderMarkdown(result.content)}
                     </div>
                   )}
                 </div>
@@ -240,8 +262,12 @@ export default function RagFeaturesSection({
               <div className={styles.selectedResultTitleArea}>
                 <DatabaseZap size={19} className={styles.blueIcon} />
                 <div>
-                  <h3 className={styles.selectedResultTitle}>Selected Search Result</h3>
-                  <p className={styles.selectedResultSubtitle}>Detailed semantic search information</p>
+                  <h3 className={styles.selectedResultTitle}>
+                    Selected Search Result
+                  </h3>
+                  <p className={styles.selectedResultSubtitle}>
+                    Detailed semantic search information
+                  </p>
                 </div>
               </div>
 
@@ -257,7 +283,8 @@ export default function RagFeaturesSection({
 
             {/* DOCUMENT INFORMATION */}
             <div className={styles.documentInformation}>
-              <strong>Document:</strong> {selectedDoc?.filename || "All Documents"}
+              <strong>Document:</strong>{" "}
+              {selectedDoc?.filename || "All Documents"}
             </div>
 
             {/* CONTENT */}
@@ -282,7 +309,8 @@ export default function RagFeaturesSection({
           <div>
             <h3 className={styles.sectionTitle}>Interactive AI Chat</h3>
             <p className={styles.sectionSubtitle}>
-              Ask follow-up questions with streaming answers grounded in library.
+              Ask follow-up questions with streaming answers grounded in
+              library.
             </p>
           </div>
 
@@ -298,7 +326,10 @@ export default function RagFeaturesSection({
                   Export
                 </button>
 
-                <button onClick={handleResetChat} className={styles.clearButton}>
+                <button
+                  onClick={handleResetChat}
+                  className={styles.clearButton}
+                >
                   <RefreshCw size={12} />
                   Clear
                 </button>
@@ -313,10 +344,20 @@ export default function RagFeaturesSection({
             {chatMessages.map((msg, index) => (
               <div
                 key={index}
-                className={msg.role === "user" ? styles.userChatMessage : styles.assistantChatMessage}
+                className={
+                  msg.role === "user"
+                    ? styles.userChatMessage
+                    : styles.assistantChatMessage
+                }
               >
                 <div className={styles.chatMessageHeader}>
-                  <span className={msg.role === "user" ? styles.userMessageLabel : styles.assistantMessageLabel}>
+                  <span
+                    className={
+                      msg.role === "user"
+                        ? styles.userMessageLabel
+                        : styles.assistantMessageLabel
+                    }
+                  >
                     {msg.role === "user" ? "You" : "AI Assistant Response"}
                   </span>
 
@@ -324,7 +365,11 @@ export default function RagFeaturesSection({
                     <button
                       type="button"
                       onClick={() => handleCopyAnswer(msg.content, index)}
-                      className={copiedIndex === index ? styles.copyButtonCopied : styles.copyButton}
+                      className={
+                        copiedIndex === index
+                          ? styles.copyButtonCopied
+                          : styles.copyButton
+                      }
                     >
                       {copiedIndex === index ? (
                         <>
@@ -357,7 +402,7 @@ export default function RagFeaturesSection({
                           key={source.chunkId || sIdx}
                           onClick={() => {
                             const matchingResult = searchResults.find(
-                              (result) => result.chunkId === source.chunkId
+                              (result) => result.chunkId === source.chunkId,
                             );
 
                             if (matchingResult) {
