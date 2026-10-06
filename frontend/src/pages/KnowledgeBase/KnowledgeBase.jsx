@@ -9,6 +9,10 @@ import RagFeaturesSection from "./RagFeaturesSection";
 import styles from "./knowledgeBase.module.css";
 
 export default function KnowledgeBase() {
+  // ==========================================
+  // DOCUMENT STATES
+  // ==========================================
+
   const [documents, setDocuments] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -17,18 +21,23 @@ export default function KnowledgeBase() {
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [showPdf, setShowPdf] = useState(true);
+  // ==========================================
+  // TXT READER STATES
+  // ==========================================
 
-  // Search
+  const [textContent, setTextContent] = useState("");
+  const [isLoadingText, setIsLoadingText] = useState(false);
+
+  // ==========================================
+  // SEARCH STATES
+  // ==========================================
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeWorkspace, setActiveWorkspace] = useState("search");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [searchMessage, setSearchMessage] = useState("");
 
-  // Selected search result
   const [selectedResult, setSelectedResult] = useState(null);
 
   // ==========================================
@@ -36,13 +45,14 @@ export default function KnowledgeBase() {
   // ==========================================
 
   const [expandedChunks, setExpandedChunks] = useState({});
-const toggleChunkExpand = (chunkKey, e) => {
-  e?.stopPropagation();
+  const toggleChunkExpand = (chunkKey, e) => {
+    if (e) e.stopPropagation();
 
-  setExpandedChunks((prev) => ({
-    [chunkKey]: !prev[chunkKey],
-  }));
-};
+    setExpandedChunks((prev) => ({
+      ...prev,
+      [chunkKey]: !prev[chunkKey],
+    }));
+  };
   // ==========================================
   // AI CHAT STATES
   // ==========================================
@@ -51,6 +61,7 @@ const toggleChunkExpand = (chunkKey, e) => {
   const [aiQuestion, setAiQuestion] = useState("");
   const [isAskingAI, setIsAskingAI] = useState(false);
   const [aiError, setAiError] = useState("");
+
   const [copiedIndex, setCopiedIndex] = useState(null);
 
   // ==========================================
@@ -73,19 +84,28 @@ const toggleChunkExpand = (chunkKey, e) => {
       setDocuments(res.data || []);
     } catch (err) {
       console.error("Error loading documents:", err);
+
       setErrorMessage("Could not load documents.");
+
+      toast.error("Could not load documents.", {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsLoading(false);
     }
   }
 
-  /*
-   * Load documents when page opens
-   */
+  // ==========================================
+  // LOAD DOCUMENTS ON COMPONENT MOUNT
+  // ==========================================
+
   useEffect(() => {
-    const loadDocuments = async () => {
-      await fetchDocuments();
-    };
+    fetchDocuments();
+  }, []);
 
   // ==========================================
   // AUTO SCROLL CHAT
@@ -101,9 +121,6 @@ const toggleChunkExpand = (chunkKey, e) => {
   // FILE CHANGE
   // ==========================================
 
-  /*
-   * Handle file selection
-   */
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -113,21 +130,36 @@ const toggleChunkExpand = (chunkKey, e) => {
       const isPdf =
         file.type === "application/pdf" || fileName.endsWith(".pdf");
 
-      const isTxt =
-        file.type === "text/plain" || fileName.endsWith(".txt");
+      const isTxt = file.type === "text/plain" || fileName.endsWith(".txt");
 
       if (!isPdf && !isTxt) {
-        alert("Please select a valid PDF or TXT file.");
+        toast.error("Please select a valid PDF or TXT file.", {
+          className: styles.errorToast,
+          iconTheme: {
+            primary: "#dc2626",
+            secondary: "#fee2e2",
+          },
+        });
+
         return;
       }
 
       setSelectedFile(file);
+
+      toast.success(`File selected: ${file.name}`, {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
     }
   };
 
-  /*
-   * Upload selected document
-   */
+  // ==========================================
+  // UPLOAD DOCUMENT
+  // ==========================================
+
   const handleUpload = async () => {
     if (!selectedFile) return;
 
@@ -147,49 +179,72 @@ const toggleChunkExpand = (chunkKey, e) => {
 
       setSelectedFile(null);
 
+      toast.success("Document uploaded successfully!", {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
+
       await fetchDocuments();
     } catch (err) {
       console.error("Upload Error:", err);
 
-      const message =
-        err.response?.data?.msg || "Failed to upload document.";
+      const message = err.response?.data?.msg || "Failed to upload document.";
 
-      alert(message);
+      toast.error(message, {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsUploading(false);
     }
   };
 
-  /*
-   * Delete document
-   */
-  const handleDelete = async (docId, e) => {
+  // ==========================================
+  // DELETE DOCUMENT
+  // ==========================================
+
+  const handleDelete = (docId, e) => {
     e.stopPropagation();
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this document?",
-    );
+    toast(
+      (t) => (
+        <div className={styles.confirmToastContainer}>
+          <span className={styles.confirmToastText}>
+            Are you sure you want to delete this document?
+          </span>
 
-    if (!confirmed) return;
+          <div className={styles.confirmToastActions}>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className={styles.confirmCancelBtn}
+            >
+              Cancel
+            </button>
 
-    try {
-      await apiClient.delete(`/api/rag/documents/${docId}`);
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
 
                 try {
-                  await apiClient.delete(
-                    `/api/rag/documents/${docId}`
-                  );
+                  await apiClient.delete(`/api/rag/documents/${docId}`);
 
-        setSelectedResult(null);
+                  if (selectedDoc?.document_id === docId) {
+                    setSelectedDoc(null);
+                    setSelectedResult(null);
 
-        setSearchQuery("");
-        setSearchResults([]);
-        setSearchError("");
-        setSearchMessage("");
+                    setTextContent("");
+                    setIsLoadingText(false);
 
-        setChatMessages([]);
-        setAiQuestion("");
-        setAiError("");
+                    setSearchQuery("");
+                    setSearchResults([]);
+                    setSearchError("");
+                    setSearchMessage("");
 
                     setChatMessages([]);
                     setAiQuestion("");
@@ -198,27 +253,21 @@ const toggleChunkExpand = (chunkKey, e) => {
                   }
 
                   setDocuments((prev) =>
-                    prev.filter(
-                      (doc) => doc.document_id !== docId
-                    )
+                    prev.filter((doc) => doc.document_id !== docId),
                   );
 
-                  toast.success(
-                    "Document deleted successfully.",
-                    {
-                      className: styles.successToast,
-                      iconTheme: {
-                        primary: "#16a34a",
-                        secondary: "#dcfce7",
-                      },
-                    }
-                  );
+                  toast.success("Document deleted successfully.", {
+                    className: styles.successToast,
+                    iconTheme: {
+                      primary: "#16a34a",
+                      secondary: "#dcfce7",
+                    },
+                  });
                 } catch (err) {
                   console.error("Delete Error:", err);
 
                   const message =
-                    err.response?.data?.msg ||
-                    "Failed to delete document.";
+                    err.response?.data?.msg || "Failed to delete document.";
 
                   toast.error(message, {
                     className: styles.errorToast,
@@ -240,20 +289,22 @@ const toggleChunkExpand = (chunkKey, e) => {
         duration: Infinity,
         position: "top-center",
         className: styles.customToastStyle,
-      }
+      },
     );
   };
 
-      alert(message);
-    }
-  };
+  // ==========================================
+  // SELECT DOCUMENT
+  // ==========================================
 
-  /*
-   * Select document
-   */
   const handleSelectDoc = (doc) => {
     setSelectedDoc(doc);
 
+    // Clear TXT Reader
+    setTextContent("");
+    setIsLoadingText(false);
+
+    // Clear previous search
     setSearchQuery("");
     setSearchResults([]);
     setSelectedResult(null);
@@ -261,6 +312,9 @@ const toggleChunkExpand = (chunkKey, e) => {
     setSearchError("");
     setSearchMessage("");
 
+    setExpandedChunks({});
+
+    // Clear previous chat
     setChatMessages([]);
     setAiQuestion("");
     setAiError("");
@@ -279,41 +333,36 @@ const toggleChunkExpand = (chunkKey, e) => {
         return;
       }
 
-      const isTxt =
-        selectedDoc.filename?.toLowerCase().endsWith(".txt");
+      const isTxt = selectedDoc.filename?.toLowerCase().endsWith(".txt");
 
       if (!isTxt) {
         setTextContent("");
         return;
       }
 
-try {
-  setIsLoadingText(true);
+      try {
+        setIsLoadingText(true);
 
-  const response = await apiClient.get(
-    `/${selectedDoc.file_path}`
-  );
+        const response = await apiClient.get(`/${selectedDoc.file_path}`);
 
-  console.log("TXT content loaded:", response.data);
+        console.log("TXT content loaded:", response.data);
 
-  setTextContent(response.data);
+        setTextContent(response.data);
+      } catch (error) {
+        console.error("TXT Reader Error:", error);
 
-} catch (error) {
-  console.error("TXT Reader Error:", error);
+        setTextContent("");
 
-  setTextContent("");
-
-  toast.error("Could not load TXT file.", {
-    className: styles.errorToast,
-    iconTheme: {
-      primary: "#dc2626",
-      secondary: "#fee2e2",
-    },
-  });
-
-} finally {
-  setIsLoadingText(false);
-}
+        toast.error("Could not load TXT file.", {
+          className: styles.errorToast,
+          iconTheme: {
+            primary: "#dc2626",
+            secondary: "#fee2e2",
+          },
+        });
+      } finally {
+        setIsLoadingText(false);
+      }
     };
 
     loadTxtContent();
@@ -323,16 +372,11 @@ try {
   // SELECT SEARCH RESULT
   // ==========================================
 
-  /*
-   * Select search result
-   */
   const handleSelectResult = (result) => {
     const chunkIdx = result.chunkIndex ?? null;
 
     const chunkKey = `${
-      result.documentId ||
-      selectedDoc?.document_id ||
-      "doc"
+      result.documentId || selectedDoc?.document_id || "doc"
     }-${chunkIdx}`;
 
     setSelectedResult(result);
@@ -343,19 +387,19 @@ try {
     }));
   };
 
-  /*
-   * Semantic search
-   */
+  // ==========================================
+  // SEMANTIC SEARCH
+  // ==========================================
   const handleSemanticSearch = async () => {
     if (!searchQuery.trim()) return;
 
     try {
       setIsSearching(true);
-
       setSearchError("");
       setSearchResults([]);
       setSelectedResult(null);
       setSearchMessage("");
+      setExpandedChunks({});
 
       const payload = {
         query: searchQuery.trim(),
@@ -365,18 +409,13 @@ try {
         payload.documentId = selectedDoc.document_id;
       }
 
-      const res = await apiClient.post(
-        "/api/rag/ask",
-        payload
-      );
-
       const res = await apiClient.post("/api/rag/search", payload);
-      console.log("res", res.data)
+
       if (res.data?.message) {
         setSearchMessage(res.data.message);
         setSearchResults([]);
       } else {
-        const results = res.data?.sources || [];
+        const results = res.data?.results || [];
 
         setSearchResults(results);
         setSearchMessage("");
@@ -385,45 +424,47 @@ try {
           setSelectedResult(results[0]);
 
           const firstChunkKey = `${
-            results[0].documentId ||
-            selectedDoc?.document_id ||
-            "doc"
+            results[0].documentId || selectedDoc?.document_id || "doc"
           }-${results[0].chunkIndex ?? 0}`;
 
           setExpandedChunks({
             [firstChunkKey]: true,
           });
 
-          toast.success(
-            `Found ${results.length} matching results.`,
-            {
-              className: styles.successToast,
-              iconTheme: {
-                primary: "#16a34a",
-                secondary: "#dcfce7",
-              },
-            }
-          );
+          toast.success(`Found ${results.length} matching results.`, {
+            className: styles.successToast,
+            iconTheme: {
+              primary: "#16a34a",
+              secondary: "#dcfce7",
+            },
+          });
         } else {
           toast("No matching results found.");
         }
       }
     } catch (err) {
+      console.error("Search Error:", err);
       const errorMsg =
-        err.response?.data?.msg ||
-        "Failed to perform semantic search.";
+        err.response?.data?.msg || "Failed to perform semantic search.";
 
-      setSearchError(
-        err.response?.data?.msg || "Failed to perform semantic search.",
-      );
+      setSearchError(errorMsg);
+
+      toast.error(errorMsg, {
+        className: styles.errorToast,
+        iconTheme: {
+          primary: "#dc2626",
+          secondary: "#fee2e2",
+        },
+      });
     } finally {
       setIsSearching(false);
     }
   };
 
-  /*
-   * Ask AI
-   */
+  // ==========================================
+  // ASK AI
+  // ==========================================
+
   const handleAskAI = async (e) => {
     e?.preventDefault();
 
@@ -457,26 +498,19 @@ try {
         payload.documentId = selectedDoc.document_id;
       }
 
-      const res = await apiClient.post(
-        "/api/rag/ask",
-        payload
-      );
+      const res = await apiClient.post("/api/rag/ask", payload);
 
-      const fullAnswer =
-        res.data?.answer || "No answer generated.";
+      const fullAnswer = res.data?.answer || "No answer generated.";
 
       const sources = res.data?.sources || [];
 
-      toast.success(
-        "AI answer generated successfully!",
-        {
-          className: styles.successToast,
-          iconTheme: {
-            primary: "#16a34a",
-            secondary: "#dcfce7",
-          },
-        }
-      );
+      toast.success("AI answer generated successfully!", {
+        className: styles.successToast,
+        iconTheme: {
+          primary: "#16a34a",
+          secondary: "#dcfce7",
+        },
+      });
 
       setChatMessages([
         ...newHistory,
@@ -492,8 +526,7 @@ try {
       const words = fullAnswer.split(" ");
 
       for (let i = 0; i < words.length; i++) {
-        currentText +=
-          (i === 0 ? "" : " ") + words[i];
+        currentText += (i === 0 ? "" : " ") + words[i];
 
         setChatMessages([
           ...newHistory,
@@ -504,19 +537,13 @@ try {
           },
         ]);
 
-        await new Promise((resolve) =>
-          setTimeout(resolve, 25)
-        );
+        await new Promise((resolve) => setTimeout(resolve, 25));
       }
     } catch (err) {
-      console.error(
-        "Ask Document AI Error:",
-        err
-      );
+      console.error("Ask Document AI Error:", err);
 
       const errorMsg =
-        err.response?.data?.msg ||
-        "Failed to generate AI answer.";
+        err.response?.data?.msg || "Failed to generate AI answer.";
 
       setAiError(errorMsg);
 
@@ -532,43 +559,51 @@ try {
     }
   };
 
-  /*
-   * Copy AI answer
-   */
+  // ==========================================
+  // COPY ANSWER
+  // ==========================================
+
   const handleCopyAnswer = (textToCopy, index) => {
     navigator.clipboard.writeText(textToCopy);
 
     setCopiedIndex(index);
+
+    toast.success("Copied to clipboard!", {
+      className: styles.successToast,
+      iconTheme: {
+        primary: "#16a34a",
+        secondary: "#dcfce7",
+      },
+    });
 
     setTimeout(() => {
       setCopiedIndex(null);
     }, 2000);
   };
 
-  /*
-   * Reset chat
-   */
+  // ==========================================
+  // RESET CHAT
+  // ==========================================
+
   const handleResetChat = () => {
     setChatMessages([]);
     setAiError("");
+
+    toast("Chat cleared.");
   };
 
-  /*
-   * Export chat
-   */
-  const handleExportChat = () => {
-    if (chatMessages.length === 0) {
-      return;
-    }
+  // ==========================================
+  // EXPORT CHAT
+  // ==========================================
 
-    let markdownContent =
-      `# Knowledge Base AI Chat Export\n\n`;
+  const handleExportChat = () => {
+    if (chatMessages.length === 0) return;
+
+    let markdownContent = `# Knowledge Base AI Chat Export\n\n`;
 
     chatMessages.forEach((msg) => {
       markdownContent += `### ${
-        msg.role === "user"
-          ? "You"
-          : "AI Assistant"
+        msg.role === "user" ? "You" : "AI Assistant"
       }\n${msg.content}\n\n`;
     });
 
@@ -582,29 +617,25 @@ try {
 
     link.href = url;
 
-    link.setAttribute(
-      "download",
-      `chat-export-${Date.now()}.md`
-    );
+    link.setAttribute("download", `chat-export-${Date.now()}.md`);
 
     document.body.appendChild(link);
-
+    {
+      /* <a href="blob:http://localhost:5173/abc123"></a> */
+    }
     link.click();
 
     document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
 
-    toast.success(
-      "Chat exported successfully!",
-      {
-        className: styles.successToast,
-        iconTheme: {
-          primary: "#16a34a",
-          secondary: "#dcfce7",
-        },
-      }
-    );
+    toast.success("Chat exported successfully!", {
+      className: styles.successToast,
+      iconTheme: {
+        primary: "#16a34a",
+        secondary: "#dcfce7",
+      },
+    });
   };
 
   // ==========================================
@@ -613,48 +644,32 @@ try {
 
   return (
     <div className={styles.contentArea}>
-      <Toaster
-        position="top-right"
-        reverseOrder={false}
-      />
+      <Toaster position="top-right" reverseOrder={false} />
 
       {/* ========================================
           TOP BANNER
-          ================================================== */}
+      ======================================== */}
 
       <div className={styles.bannerCard}>
-        <span className={styles.bannerTag}>
-          KNOWLEDGE BASE & AI RAG
-        </span>
+        <span className={styles.bannerTag}>KNOWLEDGE BASE & AI RAG</span>
 
-        <h1 className={styles.bannerTitle}>
-          Private Document library
-        </h1>
+        <h1 className={styles.bannerTitle}>Private Document library</h1>
 
         <p className={styles.bannerDesc}>
-          Upload study or reference PDFs and TXT
-          files. Run semantic search across single
-          or all documents, chat with streaming AI,
-          and export sessions.
+          Upload study or reference PDFs and TXT files. Run semantic search
+          across single or all documents, chat with streaming AI, and export
+          sessions.
         </p>
       </div>
 
-      {/* GENERAL ERROR */}
+      {/* ERROR */}
 
-      {errorMessage && (
-        <div className={styles.errorBanner}>
-          {errorMessage}
-        </div>
-      )}
-
-      {/* ==================================================
-          MAIN TWO-COLUMN LAYOUT
-          ================================================== */}
+      {errorMessage && <div className={styles.errorBanner}>{errorMessage}</div>}
 
       <div className={styles.splitGrid}>
-        {/* ==================================================
+        {/* ========================================
             LEFT COLUMN
-            ================================================== */}
+        ======================================== */}
 
         <div className={styles.leftColumn}>
           <LibrarySection
@@ -670,9 +685,9 @@ try {
           />
         </div>
 
-        {/* ==================================================
+        {/* ========================================
             RIGHT COLUMN
-            ================================================== */}
+        ======================================== */}
 
         <div className={styles.rightColumn}>
           <RagFeaturesSection

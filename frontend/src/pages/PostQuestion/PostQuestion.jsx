@@ -7,7 +7,6 @@ import { CheckCircle2 } from "lucide-react";
 import {
   createQuestion,
   generateQuestionDraftCoach,
-  uploadImage,
 } from "../../services/question.service";
 
 import styles from "./PostQuestion.module.css";
@@ -40,17 +39,6 @@ export default function PostQuestion() {
   // LINK POPUP STATE
   const [showLinkPopup, setShowLinkPopup] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
-
-  // IMAGE POPUP STATE
-  const [showImagePopup, setShowImagePopup] = useState(false);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState("");
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-
-  const imageInputRef = useRef(null);
-
-  // Remembers the real image markdown while the AI only sees placeholders
-  const savedImagesRef = useRef({});
 
   // MARKDOWN EDITOR
   const textareaRef = useRef(null);
@@ -370,24 +358,9 @@ export default function PostQuestion() {
     try {
       setIsCoaching(true);
 
-      // Replace image links with a short placeholder the AI can read.
-      // The originals are kept in savedImagesRef and restored on "Apply".
-      savedImagesRef.current = {};
-      let imageCount = 0;
-
-      const contentForAI = formData.content.replace(
-        /!\[([^\]]*)\]\(([^)]*)\)/g,
-        (fullMatch, name) => {
-          imageCount += 1;
-          const placeholder = `[Image ${imageCount}: ${name}]`;
-          savedImagesRef.current[placeholder] = fullMatch;
-          return placeholder;
-        },
-      );
-
       const response = await generateQuestionDraftCoach({
         title,
-        content: contentForAI,
+        content: formData.content,
       });
 
       setCoachFeedback(response.data || response);
@@ -408,14 +381,7 @@ export default function PostQuestion() {
       return;
     }
 
-    let nextContent = coachFeedback.improvedContent || formData.content;
-
-    // Put the real image links back in place of the placeholders
-    Object.entries(savedImagesRef.current).forEach(
-      ([placeholder, original]) => {
-        nextContent = nextContent.split(placeholder).join(original);
-      },
-    );
+    const nextContent = coachFeedback.improvedContent || formData.content;
 
     setFormData((previousData) => ({
       title: coachFeedback.improvedTitle || previousData.title,
@@ -425,132 +391,6 @@ export default function PostQuestion() {
     setCharacterCount(nextContent.length);
 
     setSuccess("AI suggestions applied to your draft.");
-  };
-
-  // IMAGE VALIDATION
-  const handleImageFile = (file) => {
-    if (!file) {
-      return;
-    }
-
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-
-    if (!allowedTypes.includes(file.type)) {
-      setError("Only JPEG, PNG, and GIF images are supported.");
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Image size must be 2 MiB or smaller.");
-      return;
-    }
-
-    setError("");
-    setImageFile(file);
-
-    const previewUrl = URL.createObjectURL(file);
-
-    setImagePreview(previewUrl);
-  };
-
-  // SELECT IMAGE
-  const handleImageSelect = (event) => {
-    const file = event.target.files?.[0];
-
-    handleImageFile(file);
-
-    event.target.value = "";
-  };
-
-  // DRAG AND DROP IMAGE
-  const handleImageDrop = (event) => {
-    event.preventDefault();
-
-    const file = event.dataTransfer.files?.[0];
-
-    handleImageFile(file);
-  };
-
-  // PASTE IMAGE
-  const handleImagePaste = (event) => {
-    const items = event.clipboardData?.items;
-
-    if (!items) {
-      return;
-    }
-
-    for (const item of items) {
-      if (item.type.startsWith("image/")) {
-        const file = item.getAsFile();
-
-        handleImageFile(file);
-
-        event.preventDefault();
-
-        return;
-      }
-    }
-  };
-
-  // INSERT IMAGE INTO MARKDOWN (uploads the file first)
-  const handleInsertImage = async () => {
-    if (!imageFile) {
-      return;
-    }
-
-    const textarea = textareaRef.current;
-
-    if (!textarea) {
-      return;
-    }
-
-    // remember the cursor position BEFORE the upload starts
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    try {
-      setIsUploadingImage(true);
-      setError("");
-
-      // 1. upload the file -> returns { url: "http://localhost:3888/uploads/..." }
-      const { url } = await uploadImage(imageFile);
-
-      // 2. put the REAL url (not the temporary blob link) into the markdown
-      const imageMarkdown = `![${imageFile.name}](${url})`;
-
-      const newContent =
-        formData.content.slice(0, start) +
-        imageMarkdown +
-        formData.content.slice(end);
-
-      updateMarkdownContent(newContent);
-
-      setShowImagePopup(false);
-      setImageFile(null);
-      setImagePreview("");
-
-      requestAnimationFrame(() => {
-        textarea.focus();
-
-        const cursorPosition = start + imageMarkdown.length;
-
-        textarea.setSelectionRange(cursorPosition, cursorPosition);
-      });
-    } catch (err) {
-      const message =
-        err.response?.data?.message || "Image upload failed. Please try again.";
-
-      setError(message);
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
-  // CLOSE IMAGE POPUP
-  const handleCloseImagePopup = () => {
-    setShowImagePopup(false);
-    setImageFile(null);
-    setImagePreview("");
   };
 
   // SUBMIT QUESTION
@@ -567,14 +407,9 @@ export default function PostQuestion() {
     try {
       setIsSubmitting(true);
 
-      // find the first image link in the markdown, e.g. ![name](http://...)
-      const imageMatch = formData.content.match(/!\[[^\]]*\]\(([^)\s]+)\)/);
-      const imageUrl = imageMatch ? imageMatch[1] : null;
-
       const response = await createQuestion({
         title: formData.title.trim(),
         content: formData.content,
-        imageUrl,
       });
 
       console.log("CREATE QUESTION RESPONSE:", response);
@@ -869,16 +704,6 @@ export default function PostQuestion() {
                         </span>
                       </span>
                     </button>
-
-                    {/* Image */}
-                    <button
-                      type="button"
-                      aria-label="Insert Image"
-                      title="Insert Image"
-                      onClick={() => setShowImagePopup(true)}
-                    >
-                      <span>🖼️</span>
-                    </button>
                   </div>
 
                   <span className={styles.characterCount}>
@@ -929,113 +754,6 @@ export default function PostQuestion() {
                         onClick={handleAddMarkdownLink}
                       >
                         Add Link
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Image Popup */}
-                {showImagePopup && (
-                  <div className={styles.imagePopup}>
-                    <div className={styles.imagePopupHeader}>
-                      <h3>Add image</h3>
-
-                      <button
-                        type="button"
-                        className={styles.imagePopupClose}
-                        onClick={handleCloseImagePopup}
-                        aria-label="Close image popup"
-                      >
-                        ×
-                      </button>
-                    </div>
-
-                    <p className={styles.imagePopupDescription}>
-                      Images are useful in a post, but make sure the post is
-                      still clear without them. If you post images of code or
-                      error messages, copy and paste or type the actual code or
-                      message into the post directly.
-                    </p>
-
-                    <div
-                      className={styles.imageDropZone}
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={handleImageDrop}
-                      onPaste={handleImagePaste}
-                      tabIndex={0}
-                    >
-                      <input
-                        ref={imageInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/gif"
-                        onChange={handleImageSelect}
-                        hidden
-                      />
-
-                      {!imagePreview ? (
-                        <>
-                          <div className={styles.imageUploadIcon}>↑</div>
-
-                          <p className={styles.imageDropText}>
-                            Browse, drag & drop, or paste an image.
-                          </p>
-
-                          <button
-                            type="button"
-                            className={styles.browseImageButton}
-                            onClick={() => imageInputRef.current?.click()}
-                          >
-                            Browse
-                          </button>
-
-                          <p className={styles.imageSupportedText}>
-                            Supported file types: jpeg, png, gif (Max size 2
-                            MiB)
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <img
-                            src={imagePreview}
-                            alt="Selected preview"
-                            className={styles.imagePreview}
-                          />
-
-                          <p className={styles.selectedImageName}>
-                            {imageFile?.name}
-                          </p>
-
-                          <button
-                            type="button"
-                            className={styles.removeImageButton}
-                            onClick={() => {
-                              setImageFile(null);
-                              setImagePreview("");
-                            }}
-                          >
-                            Remove image
-                          </button>
-                        </>
-                      )}
-                    </div>
-
-                    <div className={styles.imagePopupActions}>
-                      <button
-                        type="button"
-                        className={styles.imageCancelButton}
-                        onClick={handleCloseImagePopup}
-                        disabled={isUploadingImage}
-                      >
-                        Cancel
-                      </button>
-
-                      <button
-                        type="button"
-                        className={styles.imageInsertButton}
-                        onClick={handleInsertImage}
-                        disabled={!imageFile || isUploadingImage}
-                      >
-                        {isUploadingImage ? "Uploading..." : "Insert image"}
                       </button>
                     </div>
                   </div>
