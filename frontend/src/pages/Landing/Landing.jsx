@@ -230,7 +230,7 @@ export default function Landing() {
                 playsInline
                 className={styles.previewVideo}
               >
-                <source src="/forum-demo.mp4" type="video/mp4" />
+                <source src="/Forum-demo2.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             </div>
