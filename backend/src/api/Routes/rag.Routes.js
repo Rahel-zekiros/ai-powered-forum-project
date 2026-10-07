@@ -8,8 +8,6 @@ import { getDocumentChunksController } from '../../ragController/rag.Controller.
 // ==========================================
 import {
   uploadAndProcessDocument,
-  getCohortLibrary,
-  deleteDocument,
   semanticSearch,
   askDocumentAI,
   listDocumentsController,
@@ -79,15 +77,6 @@ const upload = multer({
 // Routes
 // ==========================================
 
-// ==========================================
-//  Get Library
-// GET /api/rag/library
-// ==========================================
-router.get(
-  '/library',
-  authMiddleware,
-  getCohortLibrary
-);
 
 // ==========================================
 // List Documents
@@ -128,16 +117,6 @@ router.post(
   '/ask',
   authMiddleware,
   askDocumentAI
-);
-
-// ==========================================
-// Delete Document (by docId)
-// DELETE /api/rag/documents/:docId
-// ==========================================
-router.delete(
-  '/documents/:docId',
-  authMiddleware,
-  deleteDocument
 );
 
 // ==========================================

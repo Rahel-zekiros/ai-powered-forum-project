@@ -79,9 +79,8 @@ export default function KnowledgeBase() {
       setIsLoading(true);
       setErrorMessage("");
 
-      const res = await apiClient.get("/api/rag/library");
-
-      setDocuments(res.data || []);
+const res = await apiClient.get("/api/rag/documents");
+      setDocuments(res.data.data || []);
     } catch (err) {
       console.error("Error loading documents:", err);
 
@@ -234,7 +233,7 @@ export default function KnowledgeBase() {
                 try {
                   await apiClient.delete(`/api/rag/documents/${docId}`);
 
-                  if (selectedDoc?.document_id === docId) {
+                  if (selectedDoc?.documentId === docId) {
                     setSelectedDoc(null);
                     setSelectedResult(null);
 
@@ -253,7 +252,7 @@ export default function KnowledgeBase() {
                   }
 
                   setDocuments((prev) =>
-                    prev.filter((doc) => doc.document_id !== docId),
+                    prev.filter((doc) => doc.documentId !== docId),
                   );
 
                   toast.success("Document deleted successfully.", {
@@ -376,7 +375,7 @@ export default function KnowledgeBase() {
     const chunkIdx = result.chunkIndex ?? null;
 
     const chunkKey = `${
-      result.documentId || selectedDoc?.document_id || "doc"
+      result.documentId || selectedDoc?.documentId|| "doc"
     }-${chunkIdx}`;
 
     setSelectedResult(result);
@@ -406,7 +405,7 @@ export default function KnowledgeBase() {
       };
 
       if (selectedDoc) {
-        payload.documentId = selectedDoc.document_id;
+        payload.documentId = selectedDoc.documentId;
       }
 
       const res = await apiClient.post("/api/rag/search", payload);
@@ -424,7 +423,7 @@ export default function KnowledgeBase() {
           setSelectedResult(results[0]);
 
           const firstChunkKey = `${
-            results[0].documentId || selectedDoc?.document_id || "doc"
+            results[0].documentId || selectedDoc?.documentId || "doc"
           }-${results[0].chunkIndex ?? 0}`;
 
           setExpandedChunks({
