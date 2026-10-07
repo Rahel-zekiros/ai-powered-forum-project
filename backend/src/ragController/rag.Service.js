@@ -30,7 +30,7 @@ export const processDocument = async ({ userId, file }) => {
         (user_id, filename, file_path, status)
         VALUES (?, ?, ?, ?)
       `,
-      [userId, filename, filePath, "processing"]
+      [userId, filename, filePath, "processing"],
     );
 
     documentId = docResult.insertId;
@@ -40,8 +40,7 @@ export const processDocument = async ({ userId, file }) => {
     // ==========================================
 
     const isTxt =
-      file.mimetype === "text/plain" ||
-      filename.toLowerCase().endsWith(".txt");
+      file.mimetype === "text/plain" || filename.toLowerCase().endsWith(".txt");
 
     let pages = [];
 
@@ -132,7 +131,7 @@ export const processDocument = async ({ userId, file }) => {
           chunk.chunkIndex,
           chunk.pageStart,
           chunk.pageEnd,
-        ]
+        ],
       );
 
       const chunkId = chunkResult.insertId;
@@ -158,7 +157,7 @@ export const processDocument = async ({ userId, file }) => {
           )
           VALUES (?, ?, ?)
         `,
-        [chunkId, embeddingVectorJson, "ready"]
+        [chunkId, embeddingVectorJson, "ready"],
       );
     }
 
@@ -172,7 +171,7 @@ export const processDocument = async ({ userId, file }) => {
         SET status = ?
         WHERE document_id = ?
       `,
-      ["ready", documentId]
+      ["ready", documentId],
     );
 
     return {
@@ -182,7 +181,6 @@ export const processDocument = async ({ userId, file }) => {
       chunksCreated: chunks.length,
       status: "ready",
     };
-
   } catch (err) {
     console.error("Document Processing Error:", err);
 
@@ -193,7 +191,7 @@ export const processDocument = async ({ userId, file }) => {
           SET status = ?
           WHERE document_id = ?
         `,
-        ["error", documentId]
+        ["error", documentId],
       ).catch(() => {});
     }
 
@@ -223,7 +221,7 @@ export const listDocumentsForUserService = async ({ userId }) => {
       WHERE user_id = ?
       ORDER BY created_at DESC
     `,
-    [userId]
+    [userId],
   );
 
   return rows.map((document) => ({
@@ -251,7 +249,7 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
         AND user_id = ?
       LIMIT 1
     `,
-    [documentId, userId]
+    [documentId, userId],
   );
 
   if (!rows.length) {
@@ -276,7 +274,7 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
       WHERE document_id = ?
         AND user_id = ?
     `,
-    [documentId, userId]
+    [documentId, userId],
   );
 
   return {
@@ -285,24 +283,13 @@ export const deleteDocumentService = async ({ documentId, userId }) => {
 };
 
 // ==========================================
-<<<<<<< HEAD
-// my task
-=======
 // Settings & Math Helpers
->>>>>>> main
 // ==========================================
 
 const TOP_K = 5;
 const SIMILARITY_THRESHOLD = 0.65;
-<<<<<<< HEAD
 const normalizeSearchText = (text) =>
   text.toLowerCase().replace(/\s+/g, " ").trim();
-=======
->>>>>>> main
-
-const normalizeSearchText = (text) =>
-  text.toLowerCase().replace(/\s+/g, " ").trim();
-
 export const vectorMagnitude = (vector) => {
   let sum = 0;
   for (const value of vector) {
@@ -361,7 +348,7 @@ export const getDocumentChunks = async (documentId) => {
         AND dcv.status = ?
       ORDER BY dc.chunk_index ASC
     `,
-    [documentId, "ready"]
+    [documentId, "ready"],
   );
 
   if (Array.isArray(result)) {
@@ -390,10 +377,7 @@ export const rankChunks = (chunks, queryEmbedding) => {
             ? JSON.parse(chunk.embedding)
             : chunk.embedding;
       } catch (err) {
-        console.error(
-          `Invalid embedding for chunk ${chunk.chunk_id}`,
-          err
-        );
+        console.error(`Invalid embedding for chunk ${chunk.chunk_id}`, err);
         return null;
       }
 
@@ -416,93 +400,6 @@ export const rankChunks = (chunks, queryEmbedding) => {
 };
 
 // ==========================================
-// Get Library Documents
-// ==========================================
-
-export const getLibraryDocuments = async (userId) => {
-  return await safeExecute(
-    `
-      SELECT
-        document_id,
-        filename AS title,
-        file_path,
-        status,
-        created_at
-      FROM documents
-      WHERE user_id = ?
-      ORDER BY created_at DESC
-    `,
-    [userId]
-  );
-};
-
-// ==========================================
-// Remove Document
-// ==========================================
-
-export const removeDocument = async ({ docId, userId }) => {
-  const existingDocs = await safeExecute(
-    `
-      SELECT
-        document_id,
-        file_path
-      FROM documents
-      WHERE document_id = ?
-        AND user_id = ?
-    `,
-    [docId, userId]
-  );
-
-  if (existingDocs.length === 0) {
-    const error = new Error("Document not found or unauthorized.");
-    error.statusCode = 404;
-    throw error;
-  }
-
-  const document = existingDocs[0];
-
-  // Delete embeddings first
-  await safeExecute(
-    `
-      DELETE dcv
-      FROM document_chunk_vectors AS dcv
-      INNER JOIN document_chunks AS dc
-        ON dcv.chunk_id = dc.chunk_id
-      WHERE dc.document_id = ?
-    `,
-    [docId]
-  );
-
-  // Delete chunks
-  await safeExecute(
-    `
-      DELETE FROM document_chunks
-      WHERE document_id = ?
-    `,
-    [docId]
-  );
-
-  // Delete document
-  await safeExecute(
-    `
-      DELETE FROM documents
-      WHERE document_id = ?
-        AND user_id = ?
-    `,
-    [docId, userId]
-  );
-
-  // Delete physical file
-  if (document.file_path) {
-    await deletePdfFile(document.file_path);
-  }
-
-  return {
-    msg: "Document deleted successfully!",
-  };
-};
-
-// ==========================================
 // Get Ready Document
 // ==========================================
 
@@ -518,7 +415,7 @@ const getReadyDocument = async ({ documentId, userId }) => {
       WHERE document_id = ?
         AND user_id = ?
     `,
-    [documentId, userId]
+    [documentId, userId],
   );
 
   if (documents.length === 0) {
@@ -572,7 +469,7 @@ export const searchDocument = async ({ userId, documentId, query }) => {
         WHERE d.user_id = ?
           AND d.status = 'ready'
       `,
-      [userId]
+      [userId],
     );
   }
 
@@ -595,29 +492,18 @@ export const searchDocument = async ({ userId, documentId, query }) => {
   const normalizedQuery = normalizeSearchText(query);
 
   const exactMatches = rankedChunks.filter((chunk) =>
-    normalizeSearchText(chunk.content).includes(normalizedQuery)
+    normalizeSearchText(chunk.content).includes(normalizedQuery),
   );
-<<<<<<< HEAD
-=======
 
->>>>>>> main
   const relevantChunks =
     exactMatches.length > 0
       ? exactMatches.slice(0, TOP_K)
       : rankedChunks
           .filter((chunk) => chunk.similarity >= SIMILARITY_THRESHOLD)
           .slice(0, TOP_K);
-<<<<<<< HEAD
+
   const results =
     relevantChunks.length > 0 ? relevantChunks : rankedChunks.slice(0, TOP_K);
-=======
-
-  const results =
-    relevantChunks.length > 0
-      ? relevantChunks
-      : rankedChunks.slice(0, TOP_K);
->>>>>>> main
-
   return {
     documentId: documentId || null,
     filename: document ? document.title : "All Documents",
@@ -664,7 +550,7 @@ export const askDocument = async ({ userId, documentId, question }) => {
         WHERE d.user_id = ?
           AND d.status = 'ready'
       `,
-      [userId]
+      [userId],
     );
   }
 
@@ -697,7 +583,7 @@ export const askDocument = async ({ userId, documentId, question }) => {
   const context = selectedChunks
     .map(
       (chunk) =>
-        `[Chunk ${chunk.chunkIndex} | Page ${chunk.pageStart}]\n${chunk.content}`
+        `[Chunk ${chunk.chunkIndex} | Page ${chunk.pageStart}]\n${chunk.content}`,
     )
     .join("\n\n");
 
@@ -725,7 +611,6 @@ export const askDocument = async ({ userId, documentId, question }) => {
 // ==========================================
 // Get Document File Path for Download/View
 // ==========================================
-
 export const getDocumentFile = async ({ documentId, userId }) => {
   const rows = await safeExecute(
     `
@@ -738,7 +623,7 @@ export const getDocumentFile = async ({ documentId, userId }) => {
         AND user_id = ?
       LIMIT 1
     `,
-    [documentId, userId]
+    [documentId, userId],
   );
 
   if (!rows || rows.length === 0) {
@@ -747,20 +632,8 @@ export const getDocumentFile = async ({ documentId, userId }) => {
     throw error;
   }
 
-<<<<<<< HEAD
-  const document = documents[0];
-
-  if (document.status !== "ready") {
-    const error = new Error("Document is not ready.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const filePath = path.resolve(process.cwd(), document.file_path);
-=======
   const document = rows[0];
   const absolutePath = path.resolve(document.file_path);
->>>>>>> main
 
   return {
     filePath: absolutePath,

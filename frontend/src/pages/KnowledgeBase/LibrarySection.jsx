@@ -108,9 +108,9 @@ export default function LibrarySection({
         <div className={styles.documentsList}>
           {documents.map((doc) => (
             <div
-              key={doc.document_id}
+              key={doc.documentId}
               className={`${styles.documentItem} ${
-                selectedDoc?.document_id === doc.document_id
+                selectedDoc?.documentId === doc.documentId
                   ? styles.selectedItem
                   : ""
               }`}
@@ -130,7 +130,7 @@ export default function LibrarySection({
 
               <button
                 className={styles.deleteBtn}
-                onClick={(e) => handleDelete(doc.document_id, e)}
+                onClick={(e) => handleDelete(doc.documentId, e)}
                 title="Delete"
               >
                 <Trash size={16} />

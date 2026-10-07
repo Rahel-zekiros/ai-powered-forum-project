@@ -1,7 +1,5 @@
 import {
   processDocument,
-  getLibraryDocuments,
-  removeDocument,
   searchDocument,
   askDocument,
   listDocumentsForUserService,
@@ -78,56 +76,6 @@ export const deleteDocumentController = async (req, res, next) => {
   }
 };
 
-// ==========================================
-// Get Library Documents
-// ==========================================
-
-export const getCohortLibrary = async (req, res) => {
-  const userId = req.user.id || req.user.userId;
-
-  try {
-    const documents = await getLibraryDocuments(userId);
-
-    return res.status(200).json(documents);
-  } catch (err) {
-    console.error("Get Library Error:", err.message);
-
-    return res.status(500).json({
-      msg: "Server error occurred while fetching the document library.",
-    });
-  }
-};
-
-// ==========================================
-// Delete Document (Alt)
-// ==========================================
-
-export const deleteDocument = async (req, res) => {
-  const { docId } = req.params;
-  const userId = req.user.id || req.user.userId;
-
-  try {
-    const result = await removeDocument({
-      docId,
-      userId,
-    });
-
-    return res.status(200).json(result);
-  } catch (err) {
-    console.error("Delete Document Error:", err.message);
-
-    if (err.statusCode) {
-      return res.status(err.statusCode).json({
-        msg: err.message,
-      });
-    }
-
-    return res.status(500).json({
-      msg: "Server error occurred while deleting the document.",
-    });
-  }
-};
-
 export const semanticSearch = async (req, res) => {
   const userId = req.user.id || req.user.userId;
 
@@ -142,7 +90,6 @@ export const semanticSearch = async (req, res) => {
   try {
     const result = await searchDocument({
       userId,
-      documentId: documentId || null,
       documentId: documentId || null,
       query: query.trim(),
     });
