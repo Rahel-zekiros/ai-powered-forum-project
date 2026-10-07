@@ -51,7 +51,7 @@ export default function RagFeaturesSection({
   handleExportChat,
   chatEndRef,
 }) {
-  // Active Tab State (default: 'search')
+  // Active Tab State
   const [activeTab, setActiveTab] = useState("search");
 
   // MARKDOWN RENDERER
@@ -67,27 +67,31 @@ export default function RagFeaturesSection({
       </div>
     );
   };
+
   const token = localStorage.getItem("authToken") || "";
+
   return (
     <>
       {/* ======================================
           READER SECTION
       ====================================== */}
+
       {selectedDoc ? (
         <div className={styles.activeReaderContainer}>
           <div className={styles.readerSection}>
             <div className={styles.readerHeader}>
               <div>
                 <h3 className={styles.sectionTitle}>
-                  Reader ({selectedDoc.filename})
+                  Reader ({selectedDoc.title})
                 </h3>
+
                 <p className={styles.sectionSubtitle}>Interactive Viewer</p>
               </div>
             </div>
 
             {/* PDF / TXT READER */}
             <div className={styles.pdfViewerContainer}>
-              {selectedDoc.filename?.toLowerCase().endsWith(".txt") ? (
+              {selectedDoc.title?.toLowerCase().endsWith(".txt") ? (
                 isLoadingText ? (
                   <div className={styles.txtLoading}>Loading document...</div>
                 ) : textContent ? (
@@ -99,8 +103,10 @@ export default function RagFeaturesSection({
                 )
               ) : (
                 <iframe
-                  src={`http://localhost:5000/api/rag/documents/${selectedDoc?.documentId}/file?token=${encodeURIComponent(token)}`}
-                  title={selectedDoc?.title || selectedDoc?.filename}
+                  src={`http://localhost:5000/api/rag/documents/${selectedDoc.documentId}/file?token=${encodeURIComponent(
+                    token,
+                  )}`}
+                  title={selectedDoc.title}
                   className={styles.pdfIframe}
                 />
               )}
@@ -112,6 +118,7 @@ export default function RagFeaturesSection({
       ) : (
         <div className={styles.allDocumentsModeBanner}>
           <WandSparkles size={16} className={styles.allDocumentsModeIcon} />
+
           <span>
             <strong>All Documents Mode Active:</strong> You are currently
             searching and chatting across your entire library collection.
@@ -122,6 +129,7 @@ export default function RagFeaturesSection({
       {/* ======================================
           TABS CONTAINER FOR FEATURES
       ====================================== */}
+
       <div className={styles.tabContainer}>
         {/* TABS HEADER BUTTONS */}
         <div className={styles.tabHeader}>
@@ -135,7 +143,9 @@ export default function RagFeaturesSection({
             onClick={() => setActiveTab("search")}
           >
             <ScanSearch size={16} />
+
             <span>Semantic Search</span>
+
             {searchResults.length > 0 && (
               <span className={styles.tabBadge}>{searchResults.length}</span>
             )}
@@ -151,7 +161,9 @@ export default function RagFeaturesSection({
             onClick={() => setActiveTab("chat")}
           >
             <MessageCircle size={16} />
+
             <span>Interactive AI Chat</span>
+
             {chatMessages.length > 0 && (
               <span className={styles.tabBadge}>{chatMessages.length}</span>
             )}
@@ -163,9 +175,11 @@ export default function RagFeaturesSection({
           {/* ======================================
               TAB 1: SEMANTIC SEARCH
           ====================================== */}
+
           {activeTab === "search" && (
             <div className={styles.featureSection}>
               <h3 className={styles.sectionTitle}>Semantic search</h3>
+
               <p className={styles.sectionSubtitle}>
                 Find passages by contextual meaning.
               </p>
@@ -173,6 +187,7 @@ export default function RagFeaturesSection({
               <div className={styles.searchRow}>
                 <div className={styles.inputGroup}>
                   <label className={styles.inputLabel}>Search query</label>
+
                   <input
                     type="text"
                     className={styles.textInput}
@@ -197,6 +212,7 @@ export default function RagFeaturesSection({
                   disabled={isSearching || !searchQuery.trim()}
                 >
                   <ScanSearch size={14} />
+
                   {isSearching ? "Searching..." : "Search"}
                 </button>
               </div>
@@ -210,6 +226,7 @@ export default function RagFeaturesSection({
                   <span>
                     <TriangleAlert size={18} />
                   </span>
+
                   <span>{searchMessage}</span>
                 </div>
               )}
@@ -223,8 +240,10 @@ export default function RagFeaturesSection({
                         size={16}
                         className={styles.blueIcon}
                       />
+
                       <strong>Search Results</strong>
                     </div>
+
                     <span className={styles.resultCount}>
                       {searchResults.length} result
                       {searchResults.length !== 1 ? "s" : ""}
@@ -233,10 +252,15 @@ export default function RagFeaturesSection({
 
                   {searchResults.map((result, index) => {
                     const chunkIdx = result.chunkIndex ?? index;
-                    const chunkKey = `${result.documentId || selectedDoc?.document_id || "doc"}-${chunkIdx}`;
+
+                    const chunkKey = `${
+                      result.documentId || selectedDoc?.documentId || "doc"
+                    }-${chunkIdx}`;
+
                     const isSelected =
                       selectedResult?.chunkId === result.chunkId ||
                       selectedResult === result;
+
                     const isExpanded = expandedChunks[chunkKey] ?? true;
 
                     return (
@@ -269,6 +293,7 @@ export default function RagFeaturesSection({
                             >
                               {isSelected ? "Selected" : "Click to inspect"}
                             </span>
+
                             {isExpanded ? (
                               <ChevronUp size={16} />
                             ) : (
@@ -294,10 +319,12 @@ export default function RagFeaturesSection({
                   <div className={styles.selectedResultHeader}>
                     <div className={styles.selectedResultTitleArea}>
                       <DatabaseZap size={19} className={styles.blueIcon} />
+
                       <div>
                         <h3 className={styles.selectedResultTitle}>
                           Selected Search Result
                         </h3>
+
                         <p className={styles.selectedResultSubtitle}>
                           Detailed semantic search information
                         </p>
@@ -316,11 +343,12 @@ export default function RagFeaturesSection({
 
                   <div className={styles.documentInformation}>
                     <strong>Document:</strong>{" "}
-                    {selectedDoc?.filename || "All Documents"}
+                    {selectedDoc?.title || "All Documents"}
                   </div>
 
                   <div>
                     <h4 className={styles.contentTitle}>Retrieved Content</h4>
+
                     <div className={styles.retrievedContent}>
                       {renderMarkdown(selectedResult.content)}
                     </div>
@@ -333,11 +361,13 @@ export default function RagFeaturesSection({
           {/* ======================================
               TAB 2: INTERACTIVE AI CHAT
           ====================================== */}
+
           {activeTab === "chat" && (
             <div className={styles.featureSection}>
               <div className={styles.chatHeader}>
                 <div>
                   <h3 className={styles.sectionTitle}>Interactive AI Chat</h3>
+
                   <p className={styles.sectionSubtitle}>
                     Ask follow-up questions with streaming answers grounded in
                     library.
@@ -426,6 +456,7 @@ export default function RagFeaturesSection({
                       {msg.sources && msg.sources.length > 0 && (
                         <div className={styles.sourcesContainer}>
                           <strong>Source references: </strong>
+
                           {msg.sources.map((source, sIdx) => {
                             const sChunkIdx = source.chunkIndex ?? sIdx;
 
@@ -433,7 +464,8 @@ export default function RagFeaturesSection({
                               <span
                                 key={source.chunkId || sIdx}
                                 onClick={() => {
-                                  setActiveTab("search"); // Switch to search tab on source click
+                                  setActiveTab("search");
+
                                   const matchingResult = searchResults.find(
                                     (result) =>
                                       result.chunkId === source.chunkId,
@@ -444,7 +476,7 @@ export default function RagFeaturesSection({
 
                                     const matchKey = `${
                                       matchingResult.documentId ||
-                                      selectedDoc?.document_id ||
+                                      selectedDoc?.documentId ||
                                       "doc"
                                     }-${sChunkIdx}`;
 
@@ -476,6 +508,7 @@ export default function RagFeaturesSection({
                   <label className={styles.inputLabel}>
                     Follow-up or Question
                   </label>
+
                   <textarea
                     rows={3}
                     className={styles.textareaInput}
@@ -495,6 +528,7 @@ export default function RagFeaturesSection({
                   ) : (
                     <MessageCircle size={14} />
                   )}
+
                   {isAskingAI ? "Thinking & Streaming..." : "Ask AI"}
                 </button>
               </form>

@@ -2,7 +2,6 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { getDocumentChunksController } from '../../ragController/rag.Controller.js';
 // ==========================================
 // Controllers & Validations (Imports)
 // ==========================================
@@ -130,17 +129,11 @@ router.delete(
   deleteDocumentController,
 );
 
+// Get a document PDF file for the authenticated user
 router.get(
   "/documents/:documentId/file",
   authMiddleware,
   documentIdParamValidation,
   getDocumentFileController,
 );
-// GET /api/rag/documents/:documentId/chunks
-router.get(
-  '/documents/:documentId/chunks',
-  authMiddleware,
-  getDocumentChunksController
-);
-
 export default router;

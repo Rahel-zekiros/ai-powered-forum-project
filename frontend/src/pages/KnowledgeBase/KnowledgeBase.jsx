@@ -295,31 +295,30 @@ const res = await apiClient.get("/api/rag/documents");
   // ==========================================
   // SELECT DOCUMENT
   // ==========================================
+const handleSelectDoc = (doc) => {
+  console.log("SELECTED DOC:", doc);
+  console.log("TITLE:", doc?.title);
+  console.log("FILE PATH:", doc?.filePath);
+  console.log("DOCUMENT ID:", doc?.documentId);
 
-  const handleSelectDoc = (doc) => {
-    setSelectedDoc(doc);
+  setSelectedDoc(doc);
 
-    // Clear TXT Reader
-    setTextContent("");
-    setIsLoadingText(false);
+  setTextContent("");
+  setIsLoadingText(false);
 
-    // Clear previous search
-    setSearchQuery("");
-    setSearchResults([]);
-    setSelectedResult(null);
+  setSearchQuery("");
+  setSearchResults([]);
+  setSelectedResult(null);
 
-    setSearchError("");
-    setSearchMessage("");
+  setSearchError("");
+  setSearchMessage("");
 
-    setExpandedChunks({});
+  setExpandedChunks({});
 
-    // Clear previous chat
-    setChatMessages([]);
-    setAiQuestion("");
-    setAiError("");
-
-    // Clear highlighted chunk
-  };
+  setChatMessages([]);
+  setAiQuestion("");
+  setAiError("");
+};
 
   // ==========================================
   // LOAD TXT CONTENT FOR READER
@@ -332,8 +331,7 @@ const res = await apiClient.get("/api/rag/documents");
         return;
       }
 
-      const isTxt = selectedDoc.filename?.toLowerCase().endsWith(".txt");
-
+const isTxt = selectedDoc.title?.toLowerCase().endsWith(".txt");
       if (!isTxt) {
         setTextContent("");
         return;
@@ -342,7 +340,7 @@ const res = await apiClient.get("/api/rag/documents");
       try {
         setIsLoadingText(true);
 
-        const response = await apiClient.get(`/${selectedDoc.file_path}`);
+        const response = await apiClient.get(`/${selectedDoc.filePath}`);
 
         console.log("TXT content loaded:", response.data);
 
