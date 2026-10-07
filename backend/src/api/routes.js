@@ -3,7 +3,6 @@ import authRoutes from "./auth/routes/auth.routes.js";
 import questionRoutes from "../question/routes.js";
 import postQuestionRoutes from "./Routes/questionRoutes.js";
 import questionDetailRoutes from "./Routes/questionDetailAIroutes.js";
-import userRoutes from "./Routes/userRoutes.js";
 import ragRoutes from "./Routes/rag.Routes.js";
 import supportRoutes from '../api/support/support.routes.js';
 export const mainRouter = express.Router();
@@ -20,8 +19,6 @@ mainRouter.use("/questions", questionRoutes);
 // 3. question detail routes
 mainRouter.use("/questions", questionDetailRoutes);
 
-// 4. profile/user update routes
-mainRouter.use("/users", userRoutes);
 
 //* 5. RAG
 mainRouter.use("/rag", ragRoutes);

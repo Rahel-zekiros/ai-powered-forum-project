@@ -328,46 +328,8 @@ export const cosineSimilarity = (vectorA, vectorB) => {
 };
 
 // ==========================================
-// Get Document Chunks
-// ==========================================
-
-export const getDocumentChunks = async (documentId) => {
-  const result = await safeExecute(
-    `
-      SELECT
-        dc.chunk_id,
-        dc.document_id,
-        dc.content,
-        dc.chunk_index,
-        dc.page_start,
-        dc.page_end,
-        dcv.embedding_vector AS embedding,
-        dcv.embedding_vector AS embedding_vector
-      FROM document_chunks AS dc
-      INNER JOIN document_chunk_vectors AS dcv
-        ON dc.chunk_id = dcv.chunk_id
-      WHERE dc.document_id = ?
-        AND dcv.status = ?
-      ORDER BY dc.chunk_index ASC
-    `,
-    [documentId, "ready"],
-  );
-
-  if (Array.isArray(result)) {
-    return result;
-  }
-
-  if (result && Array.isArray(result[0])) {
-    return result[0];
-  }
-
-  return [];
-};
-
-// ==========================================
 // Rank Chunks
 // ==========================================
-
 export const rankChunks = (chunks, queryEmbedding) => {
   return chunks
     .map((chunk) => {
@@ -375,15 +337,22 @@ export const rankChunks = (chunks, queryEmbedding) => {
 
       try {
         storedVector =
-          typeof chunk.embedding === "string"
-            ? JSON.parse(chunk.embedding)
-            : chunk.embedding;
+          typeof chunk.embedding_vector === "string"
+            ? JSON.parse(chunk.embedding_vector)
+            : chunk.embedding_vector;
       } catch (err) {
-        console.error(`Invalid embedding for chunk ${chunk.chunk_id}`, err);
+        console.error(
+          `Invalid embedding for chunk ${chunk.chunk_id}`,
+          err,
+        );
         return null;
       }
 
-      const rawSimilarity = cosineSimilarity(queryEmbedding, storedVector);
+      const rawSimilarity = cosineSimilarity(
+        queryEmbedding,
+        storedVector,
+      );
+
       const score = Number(rawSimilarity.toFixed(3));
 
       return {
@@ -400,7 +369,6 @@ export const rankChunks = (chunks, queryEmbedding) => {
     .filter(Boolean)
     .sort((a, b) => b.similarity - a.similarity);
 };
-
 // ==========================================
 // Get Ready Document
 // ==========================================
@@ -446,35 +414,53 @@ export const searchDocument = async ({ userId, documentId, query }) => {
   let document = null;
 
   if (documentId) {
-    document = await getReadyDocument({
-      documentId,
-      userId,
-    });
+  document = await getReadyDocument({
+    documentId,
+    userId,
+  });
 
-    chunks = await getDocumentChunks(documentId);
-  } else {
-    chunks = await safeExecute(
-      `
-        SELECT
-          dc.chunk_id,
-          dc.document_id,
-          dc.content,
-          dc.chunk_index,
-          dc.page_start,
-          dc.page_end,
-          dcv.embedding_vector
-        FROM document_chunks AS dc
-        INNER JOIN document_chunk_vectors AS dcv
-          ON dc.chunk_id = dcv.chunk_id
-        INNER JOIN documents AS d
-          ON dc.document_id = d.document_id
-        WHERE d.user_id = ?
-          AND d.status = 'ready'
-      `,
-      [userId],
-    );
-  }
-
+  chunks = await safeExecute(
+    `
+      SELECT
+        dc.chunk_id,
+        dc.document_id,
+        dc.content,
+        dc.chunk_index,
+        dc.page_start,
+        dc.page_end,
+        dcv.embedding_vector
+      FROM document_chunks AS dc
+      INNER JOIN document_chunk_vectors AS dcv
+        ON dc.chunk_id = dcv.chunk_id
+      WHERE dc.document_id = ?
+        AND dcv.status = 'ready'
+      ORDER BY dc.chunk_index ASC
+    `,
+    [documentId],
+  );
+} else {
+  chunks = await safeExecute(
+    `
+      SELECT
+        dc.chunk_id,
+        dc.document_id,
+        dc.content,
+        dc.chunk_index,
+        dc.page_start,
+        dc.page_end,
+        dcv.embedding_vector
+      FROM document_chunks AS dc
+      INNER JOIN document_chunk_vectors AS dcv
+        ON dc.chunk_id = dcv.chunk_id
+      INNER JOIN documents AS d
+        ON dc.document_id = d.document_id
+      WHERE d.user_id = ?
+        AND d.status = 'ready'
+      ORDER BY dc.chunk_index ASC
+    `,
+    [userId],
+  );
+}
   console.log("Creating query embedding...");
 
   const queryEmbedding = await createEmbedding(query);
@@ -491,22 +477,9 @@ export const searchDocument = async ({ userId, documentId, query }) => {
   }
 
   const rankedChunks = rankChunks(chunks, queryEmbedding);
-  const normalizedQuery = normalizeSearchText(query);
-
-  const exactMatches = rankedChunks.filter((chunk) =>
-    normalizeSearchText(chunk.content).includes(normalizedQuery),
-  );
-
-  const relevantChunks =
-    exactMatches.length > 0
-      ? exactMatches.slice(0, TOP_K)
-      : rankedChunks
-          .filter((chunk) => chunk.similarity >= SIMILARITY_THRESHOLD)
-          .slice(0, TOP_K);
-
-  const results =
-    relevantChunks.length > 0 ? relevantChunks : rankedChunks.slice(0, TOP_K);
-
+  const results = rankedChunks
+    .filter((chunk) => chunk.similarity >= SIMILARITY_THRESHOLD)
+    .slice(0, TOP_K);
   return {
     documentId: documentId || null,
     filename: document ? document.title : "All Documents",

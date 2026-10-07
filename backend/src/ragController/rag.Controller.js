@@ -4,7 +4,6 @@ import {
   askDocument,
   listDocumentsForUserService,
   deleteDocumentService,
-  getDocumentChunks,
   getDocumentFile,
 } from "./rag.Service.js";
 
@@ -153,28 +152,6 @@ export const askDocumentAI = async (req, res) => {
 
 
 
-// ==========================================
-// Get Document Chunks (For Interactive Viewer)
-// ==========================================
-
-export const getDocumentChunksController = async (req, res, next) => {
-  try {
-    const { documentId } = req.params;
-    const chunks = await getDocumentChunks(documentId);
-
-    return res.status(200).json({
-      success: true,
-      message: "Document chunks fetched successfully.",
-      chunks: chunks,
-    });
-  } catch (error) {
-    console.error("Get Document Chunks Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Server error occurred while fetching chunks.",
-    });
-  }
-};
 // ==========================================
 // Get PDF File (For Interactive Viewer)
 // ==========================================
