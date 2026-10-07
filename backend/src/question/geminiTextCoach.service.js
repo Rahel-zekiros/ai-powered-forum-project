@@ -7,9 +7,6 @@ GEMINI CONFIGURATION
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
-  options: {
-    apiVersion: 'v1'
-  }
 });
 
 const MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-3.6-flash";
@@ -36,7 +33,6 @@ const parseJsonResponse = (text) => {
 
 /*
 ==================================================
-T-13
 AI QUESTION DRAFT COACH
 ==================================================
 */
@@ -69,17 +65,18 @@ Return ONLY valid JSON using exactly this format:
   "suggestions": [
     "suggestion 1",
     "suggestion 2",
-    "suggestion 3"
-  ]
+  ],
+  "improvedTitle": "a clearer, more specific version of the title",
+  "improvedContent": "a rewritten version of the question content that applies your suggestions"
 }
 
 Do not use markdown.
 Do not include any text outside the JSON.
 `;
-const response = await ai.models.generateContent({
-  model: MODEL, 
-  contents: prompt,
-});
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: prompt,
+  });
   const text = response.text;
 
   const result = parseJsonResponse(text);
@@ -87,5 +84,7 @@ const response = await ai.models.generateContent({
   return {
     feedback: result.feedback || "",
     suggestions: Array.isArray(result.suggestions) ? result.suggestions : [],
+    improvedTitle: result.improvedTitle || "",
+    improvedContent: result.improvedContent || "",
   };
 };
