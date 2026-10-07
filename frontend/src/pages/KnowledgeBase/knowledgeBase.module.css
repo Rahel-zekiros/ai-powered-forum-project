@@ -1715,27 +1715,39 @@
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
-
+/* Search Result Card Background & Text */
 .searchResultCard,
 .searchResultCardSelected {
-  padding: 18px 20px;
-  border-radius: calc(var(--radius-lg) - 2px);
-  cursor: pointer;
-  word-break: break-word;
+  background-color: #1e293b; /* Darker navy/slate background for contrast */
+  border: 1px solid #334155;
+  color: #f8fafc; /* Bright white text so it's fully visible */
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
 }
 
-.searchResultCard {
-  background: var(--surface-container-low);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-}
-
+/* Card Selected Highlight Border */
 .searchResultCardSelected {
-  background: var(--info-light);
-  border: 1px solid var(--info);
-  box-shadow: var(--shadow-md);
+  border-color: #3b82f6; /* Accent blue border */
+  box-shadow: 0 0 0 1px #3b82f6;
 }
 
+/* Markdown/Retrieved Content Inside Results */
+.searchResultContent,
+.retrievedContent,
+.markdownContent {
+  color: #e2e8f0 !important; /* Soft white/light gray text */
+  line-height: 1.6;
+}
+
+/* Titles inside Markdown (h1, h2, h3, strong) */
+.markdownContent h1,
+.markdownContent h2,
+.markdownContent h3,
+.markdownContent h4,
+.markdownContent strong {
+  color: #ffffff !important; /* Pure white for headers/bold text */
+}
 .resultHeader {
   display: flex;
   justify-content: space-between;
@@ -1760,18 +1772,72 @@
   font-size: calc(var(--text-xs) - 1px);
   color: var(--text-tertiary);
 }
-
-/* ==========================================
-   OLD SELECTED RESULT CLASS COMPATIBILITY
-   ========================================== */
-
+/* 1. Selected Result Panel */
 .selectedResultPanel {
-  margin-top: 24px;
+  background-color: #0f172a !important; /* Deep dark Slate Background */
+  border: 1px solid #1e293b;
+  border-radius: 8px;
   padding: 20px;
-  background: var(--surface);
-  border: 2px solid var(--info);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  margin-top: 16px;
+  color: #f1f5f9;
+}
+
+/* 2.  Retrived Content Card */
+.retrievedContent {
+  background-color: #1e293b !important; /*  Slate/Navy Background */
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 10px;
+  color: #f8fafc !important; 
+}
+
+/* 3. Search Result Cards */
+.searchResultCard,
+.searchResultCardSelected {
+  background-color: #1e293b !important;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  color: #f8fafc !important;
+}
+
+/* 4. Inside Content Text & Headings  */
+.retrievedContent p,
+.retrievedContent span,
+.retrievedContent div,
+.retrievedContent li,
+.retrievedContent td,
+.retrievedContent th,
+.searchResultCard p,
+.searchResultCard span,
+.searchResultCard div,
+.searchResultCard li,
+.searchResultCard td,
+.searchResultCard th,
+.markdownContent p,
+.markdownContent span,
+.markdownContent div,
+.markdownContent li,
+.markdownContent td,
+.markdownContent th {
+  color: #e2e8f0 !important; /*Light Slate Gray Text */
+  line-height: 1.6;
+}
+
+/* 5. Bold & Headings Text */
+.retrievedContent h1,
+.retrievedContent h2,
+.retrievedContent h3,
+.retrievedContent h4,
+.retrievedContent strong,
+.searchResultCard strong,
+.markdownContent strong {
+  color: #ffffff !important; 
+}
+.documentInformation {
+  color: #94a3b8; /* Muted slate gray for meta text */
 }
 
 .selectedResultHeader {
@@ -1835,7 +1901,7 @@
 }
 
 /* ==========================================
-   OLD CHAT CLASS COMPATIBILITY
+    CHAT CLASS COMPATIBILITY
    ========================================== */
 
 .chatHeader {
@@ -1952,6 +2018,32 @@
 
 .aiQuestionForm .inputGroup {
   margin-bottom: 12px;
+}
+/* AI Chat Assistant Response Box */
+.assistantChatMessage {
+  background-color: #f8fafc !important; /* Soft light background */
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  color: #0f172a !important; 
+}
+
+/* AI response inside markdown text */
+.assistantChatMessage p,
+.assistantChatMessage span,
+.assistantChatMessage div,
+.assistantChatMessage li,
+.chatMarkdownContent p,
+.chatMarkdownContent span,
+.chatMarkdownContent div {
+  color: #1e293b !important; /* Dark Slate text for crisp readability */
+  line-height: 1.6;
+}
+
+/* Disabled or placeholder response text (For missing resources) */
+.assistantChatMessage {
+  opacity: 1 !important; 
 }
 
 /* ==========================================

@@ -13,16 +13,20 @@ if (!JWT_SECRET) {
  * Middleware: Validates JWT Access Token from HTTP Authorization Header
  */
 export const verifyAuthToken = (req, res, next) => {
-  // console.log("Verifying JWT token for request:", req.method, req.originalUrl,req.headers);
   const authHeader = req.headers.authorization;
+  
+  let token = null;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+if (authHeader && authHeader.startsWith("Bearer ")) {
+  token = authHeader.split(" ")[1];
+} else if (req.query?.token) {
+  token = req.query.token;
+}
+  if (!token) {
     throw new UnauthenticatedError(
       "Access denied. No authentication token provided.",
     );
   }
-
-  const token = authHeader.split(" ")[1];
 
   try {
     const decodedPayload = jwt.verify(token, JWT_SECRET);
@@ -45,7 +49,6 @@ export const verifyAuthToken = (req, res, next) => {
     throw new UnauthenticatedError("Invalid authentication token.");
   }
 };
-
 /**
  * Middleware: Optional JWT validation 
  */

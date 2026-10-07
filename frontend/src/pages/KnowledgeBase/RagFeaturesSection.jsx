@@ -67,7 +67,7 @@ export default function RagFeaturesSection({
       </div>
     );
   };
-
+  const token = localStorage.getItem("authToken") || "";
   return (
     <>
       {/* ======================================
@@ -99,8 +99,8 @@ export default function RagFeaturesSection({
                 )
               ) : (
                 <iframe
-                  src={`http://localhost:5000/${selectedDoc.file_path}`}
-                  title={selectedDoc.filename}
+                  src={`http://localhost:5000/api/rag/documents/${selectedDoc?.documentId}/file?token=${encodeURIComponent(token)}`}
+                  title={selectedDoc?.title || selectedDoc?.filename}
                   className={styles.pdfIframe}
                 />
               )}
@@ -388,15 +388,15 @@ export default function RagFeaturesSection({
                               : styles.assistantMessageLabel
                           }
                         >
-                          {msg.role === "user" ? "You" : "AI Assistant Response"}
+                          {msg.role === "user"
+                            ? "You"
+                            : "AI Assistant Response"}
                         </span>
 
                         {msg.role === "assistant" && (
                           <button
                             type="button"
-                            onClick={() =>
-                              handleCopyAnswer(msg.content, index)
-                            }
+                            onClick={() => handleCopyAnswer(msg.content, index)}
                             className={
                               copiedIndex === index
                                 ? styles.copyButtonCopied
@@ -436,7 +436,7 @@ export default function RagFeaturesSection({
                                   setActiveTab("search"); // Switch to search tab on source click
                                   const matchingResult = searchResults.find(
                                     (result) =>
-                                      result.chunkId === source.chunkId
+                                      result.chunkId === source.chunkId,
                                   );
 
                                   if (matchingResult) {

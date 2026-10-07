@@ -2,7 +2,7 @@ import { apiClient } from "../core/api.client.js";
 
 async function registerAccount(formData) {
   try {
-    clearSessionData(); // አዲስ ከማስመዝገብህ በፊት የቀደመውን አጽዳ
+    clearSessionData(); 
     const res = await apiClient.post("/api/auth/register", formData);
     return { user: res.data.user };
   } catch (err) {
@@ -12,7 +12,6 @@ async function registerAccount(formData) {
 
 async function loginAccount(credentials) {
   try {
-    // 1. አዲስ ሰው Login ከማድረጉ በፊት የቀደመውን አካውንት መረጃ ሙሉ በሙሉ ማፅዳት
     clearSessionData();
 
     const res = await apiClient.post("/api/auth/login", credentials);
@@ -22,7 +21,6 @@ async function loginAccount(credentials) {
 
     if (token) {
       localStorage.setItem("authToken", token);
-      // 2. apiClient header ላይ አዲሱን Token በቅጽበት ማደስ
       apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
 
@@ -41,7 +39,6 @@ async function verifyActiveSession() {
   try {
     const token = retrieveAuthToken();
     if (token) {
-      // API ጥያቄ ከመላኩ በፊት Header-ሁ አዲሱን Token መያዙን ማረጋገጥ
       apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
 

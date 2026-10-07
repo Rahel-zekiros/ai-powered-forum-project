@@ -13,7 +13,7 @@ const isRetryableError = (error) => {
   const status = Number(
     error?.status ?? error?.code ?? error?.response?.status,
   );
-  // Fetch timeout/Network failure ወይም Temporary Server Overload ከሆነ
+  // Fetch timeout/Network failure  Temporary Server Overload 
   return [429, 500, 502, 503, 504].includes(status) || error?.message?.includes("fetch failed");
 };
 

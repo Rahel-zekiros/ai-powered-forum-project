@@ -102,6 +102,7 @@ export const rankChunks = (chunks, queryEmbedding) => {
             typeof chunk.embedding_vector === "string"
               ? JSON.parse(chunk.embedding_vector)
               : chunk.embedding_vector;
+              
         } catch (err) {
           console.error(`Invalid embedding for chunk ${chunk.chunk_id}`, err);
 
